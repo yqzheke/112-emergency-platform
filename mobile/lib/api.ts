@@ -1,2 +1,2 @@
 export const API_URL =
-  'http://192.168.0.192:3000/api'
+  'https://one12-emergency-platform.onrender.com/api'

@@ -1,1 +1,2 @@
-export const API_URL = 'http://localhost:3000/api'
+export const API_URL =
+  'https://one12-emergency-platform.onrender.com/api'
