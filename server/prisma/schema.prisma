@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum UserRole {
+  USER
+  OPERATOR
+  RESPONDER
+  ADMIN
+}
+
+enum EmergencyType {
+  MEDICAL
+  POLICE
+  FIRE
+}
+
+enum EmergencyStatus {
+  PENDING
+  ACCEPTED
+  DISPATCHED
+  RESPONDING
+  COMPLETED
+  CANCELLED
+}
+
+model SafetyAlert {
+  id       Int           @id @default(autoincrement())
+  title    String
+  message  String
+  region   String
+  severity AlertSeverity @default(INFO)
+  isActive Boolean       @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById Int?
+  createdBy   User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  fullName     String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+
+  createdAlerts SafetyAlert[]
+
+  emergencies EmergencyRequest[]
+
+  emergencyContacts EmergencyContact[]
+
+  assignedEmergencies EmergencyRequest[] @relation("ResponderAssignments")
+}
+
+model EmergencyRequest {
+  id          Int             @id @default(autoincrement())
+  type        EmergencyType
+  description String
+  latitude    Float
+  longitude   Float
+  status      EmergencyStatus @default(PENDING)
+
+  aiService          String?
+  aiSummary          String?
+  aiUrgency          String?
+  aiImportantDetails String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  notifiedContacts EmergencyRequestContact[]
+
+  assignedResponderId Int?
+  assignedResponder   User? @relation("ResponderAssignments", fields: [assignedResponderId], references: [id], onDelete: SetNull)
+
+  responderLatitude          Float?
+  responderLongitude         Float?
+  responderLocationUpdatedAt DateTime?
+
+  responderAssignedAt DateTime?
+  responderAcceptedAt DateTime?
+  responderArrivedAt  DateTime?
+}
+
+model EmergencyRequestContact {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String
+  createdAt DateTime @default(now())
+
+  emergencyId Int
+  emergency   EmergencyRequest @relation(fields: [emergencyId], references: [id], onDelete: Cascade)
+}
+
+model EmergencyContact {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, phone])
+}
