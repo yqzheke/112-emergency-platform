@@ -19,10 +19,20 @@ export type EmergencyUser = Pick<
   'id' | 'fullName' | 'email'
 >
 
-export type ResponderUser = Pick<
-  User,
-  'id' | 'fullName' | 'email' | 'role'
->
+export interface ResponderUser {
+  id: number
+  fullName: string
+  email: string
+  role: User['role']
+
+  isBusy: boolean
+
+  activeEmergencyId: number | null
+
+  activeEmergencyStatus:
+    | EmergencyStatus
+    | null
+}
 
 export interface Emergency {
   id: number

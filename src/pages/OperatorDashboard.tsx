@@ -17,27 +17,6 @@ import type {
   ResponderUser,
 } from '../types/emergency'
 
-const nextStatus: Record<
-  OperatorEmergency['status'],
-  OperatorEmergency['status'] | null
-> = {
-  PENDING: 'ACCEPTED',
-  ACCEPTED: 'DISPATCHED',
-  DISPATCHED: 'RESPONDING',
-  RESPONDING: 'COMPLETED',
-  COMPLETED: null,
-  CANCELLED: null,
-}
-
-const actionLabels: Partial<
-  Record<OperatorEmergency['status'], string>
-> = {
-  PENDING: 'Accept request',
-  ACCEPTED: 'Dispatch responder',
-  DISPATCHED: 'Mark responder on the way',
-  RESPONDING: 'Complete emergency',
-}
-
 const emergencyNames: Record<
   OperatorEmergency['type'],
   string
@@ -56,8 +35,12 @@ function OperatorDashboard() {
   const [responders, setResponders] =
     useState<ResponderUser[]>([])
 
-  const [selectedResponders, setSelectedResponders] =
-    useState<Record<number, number | null>>({})
+  const [
+    selectedResponders,
+    setSelectedResponders,
+  ] = useState<
+    Record<number, number | null>
+  >({})
 
   const [loading, setLoading] =
     useState(true)
@@ -74,10 +57,11 @@ function OperatorDashboard() {
   const getToken = () =>
     localStorage.getItem('token')
 
-  const handleUnauthorized = () => {
-    clearAuth()
-    navigate('/login')
-  }
+  const handleUnauthorized =
+    useCallback(() => {
+      clearAuth()
+      navigate('/login')
+    }, [navigate])
 
   const loadEmergencies =
     useCallback(async () => {
@@ -119,8 +103,11 @@ function OperatorDashboard() {
           return
         }
 
+        const nextEmergencies =
+          data.emergencies ?? []
+
         setEmergencies(
-          data.emergencies ?? [],
+          nextEmergencies,
         )
 
         setSelectedResponders(
@@ -130,7 +117,7 @@ function OperatorDashboard() {
             }
 
             for (const emergency of
-              data.emergencies ?? []) {
+              nextEmergencies) {
               if (
                 emergency.assignedResponderId
               ) {
@@ -153,7 +140,7 @@ function OperatorDashboard() {
       } finally {
         setLoading(false)
       }
-    }, [navigate])
+    }, [handleUnauthorized])
 
   const loadResponders =
     useCallback(async () => {
@@ -204,22 +191,29 @@ function OperatorDashboard() {
           'Could not load responders',
         )
       }
-    }, [navigate])
+    }, [handleUnauthorized])
 
   useEffect(() => {
-    Promise.all([
-      loadEmergencies(),
-      loadResponders(),
-    ])
+    loadEmergencies()
+    loadResponders()
+
+    const interval = window.setInterval(
+      () => {
+        loadEmergencies()
+      },
+      5000,
+    )
+
+    return () => {
+      window.clearInterval(interval)
+    }
   }, [
     loadEmergencies,
     loadResponders,
   ])
 
-  const updateStatus = async (
+  const acceptEmergency = async (
     emergencyId: number,
-    status:
-      OperatorEmergency['status'],
   ) => {
     const token = getToken()
 
@@ -230,6 +224,7 @@ function OperatorDashboard() {
 
     try {
       setUpdatingId(emergencyId)
+      setError('')
 
       const response = await fetch(
         `${API_URL}/operator/emergencies/${emergencyId}/status`,
@@ -239,12 +234,13 @@ function OperatorDashboard() {
           headers: {
             'Content-Type':
               'application/json',
+
             Authorization:
               `Bearer ${token}`,
           },
 
           body: JSON.stringify({
-            status,
+            status: 'ACCEPTED',
           }),
         },
       )
@@ -262,7 +258,7 @@ function OperatorDashboard() {
       if (!response.ok) {
         setError(
           data.message ||
-            'Could not update emergency',
+            'Could not accept emergency',
         )
         return
       }
@@ -283,7 +279,9 @@ function OperatorDashboard() {
     emergencyId: number,
   ) => {
     const responderId =
-      selectedResponders[emergencyId]
+      selectedResponders[
+        emergencyId
+      ]
 
     if (!responderId) {
       setError(
@@ -311,6 +309,7 @@ function OperatorDashboard() {
           headers: {
             'Content-Type':
               'application/json',
+
             Authorization:
               `Bearer ${token}`,
           },
@@ -523,10 +522,16 @@ function OperatorDashboard() {
             <div className="request-list">
               {activeEmergencies.map(
                 (emergency) => {
-                  const next =
-                    nextStatus[
-                      emergency.status
-                    ]
+                  const responderArrived =
+                    Boolean(
+                      emergency
+                        .responderArrivedAt,
+                    )
+
+                  const responderEnRoute =
+                    emergency.status ===
+                      'RESPONDING' &&
+                    !responderArrived
 
                   return (
                     <article
@@ -544,8 +549,7 @@ function OperatorDashboard() {
                           >
                             {
                               emergencyNames[
-                                emergency
-                                  .type
+                                emergency.type
                               ]
                             }
                           </div>
@@ -554,9 +558,9 @@ function OperatorDashboard() {
                         <span
                           className={`request-status status-${emergency.status.toLowerCase()}`}
                         >
-                          {
-                            emergency.status
-                          }
+                          {responderArrived
+                            ? 'ON SCENE'
+                            : emergency.status}
                         </span>
                       </div>
 
@@ -665,7 +669,8 @@ function OperatorDashboard() {
                           <p className="operator-ai-note">
                             AI-generated intake
                             assistance. Operator
-                            verification is required.
+                            verification is
+                            required.
                           </p>
                         </div>
                       )}
@@ -739,7 +744,11 @@ function OperatorDashboard() {
 
                             <strong>
                               {emergency.assignedResponder
-                                ? 'Assigned'
+                                ? responderArrived
+                                  ? 'Responder on scene'
+                                  : responderEnRoute
+                                    ? 'Responder en route'
+                                    : 'Assigned'
                                 : 'Not assigned'}
                             </strong>
                           </div>
@@ -766,10 +775,15 @@ function OperatorDashboard() {
                             </div>
 
                             <span className="responder-assigned-badge">
-                              ASSIGNED
+                              {responderArrived
+                                ? 'ON SCENE'
+                                : responderEnRoute
+                                  ? 'EN ROUTE'
+                                  : 'ASSIGNED'}
                             </span>
                           </div>
-                        ) : (
+                        ) : emergency.status ===
+                          'ACCEPTED' ? (
                           <div className="responder-assignment-controls">
                             <select
                               value={
@@ -777,7 +791,9 @@ function OperatorDashboard() {
                                   emergency.id
                                 ] ?? ''
                               }
-                              onChange={(event) => {
+                              onChange={(
+                                event,
+                              ) => {
                                 const value =
                                   Number(
                                     event.target
@@ -785,11 +801,14 @@ function OperatorDashboard() {
                                   )
 
                                 setSelectedResponders(
-                                  (current) => ({
+                                  (
+                                    current,
+                                  ) => ({
                                     ...current,
 
                                     [emergency.id]:
-                                      value || null,
+                                      value ||
+                                      null,
                                   }),
                                 )
                               }}
@@ -799,21 +818,18 @@ function OperatorDashboard() {
                               </option>
 
                               {responders.map(
-                                (responder) => (
-                                  <option
-                                    key={
-                                      responder.id
-                                    }
-                                    value={
-                                      responder.id
-                                    }
-                                  >
-                                    {
-                                      responder.fullName
-                                    }
-                                  </option>
-                                ),
-                              )}
+  (responder) => (
+    <option
+      key={responder.id}
+      value={responder.id}
+      disabled={responder.isBusy}
+    >
+      {responder.isBusy
+        ? `${responder.fullName} — Busy on #${responder.activeEmergencyId}`
+        : `${responder.fullName} — Available`}
+    </option>
+  ),
+)}
                             </select>
 
                             <button
@@ -837,13 +853,20 @@ function OperatorDashboard() {
                                 : 'Assign responder'}
                             </button>
                           </div>
+                        ) : (
+                          <p className="responder-empty-note">
+                            Accept this request
+                            before assigning a
+                            responder.
+                          </p>
                         )}
 
                         {responders.length ===
                           0 && (
                           <p className="responder-empty-note">
-                            No RESPONDER accounts
-                            are available.
+                            No RESPONDER
+                            accounts are
+                            available.
                           </p>
                         )}
 
@@ -852,6 +875,50 @@ function OperatorDashboard() {
                             Assigned{' '}
                             {new Date(
                               emergency.responderAssignedAt,
+                            ).toLocaleString()}
+                          </p>
+                        )}
+
+                        {emergency.responderAcceptedAt && (
+                          <p className="responder-time">
+                            Assignment accepted{' '}
+                            {new Date(
+                              emergency.responderAcceptedAt,
+                            ).toLocaleString()}
+                          </p>
+                        )}
+
+                        {emergency.responderLocationUpdatedAt &&
+                          !responderArrived && (
+                            <p className="responder-time">
+                              GPS updated{' '}
+                              {new Date(
+                                emergency.responderLocationUpdatedAt,
+                              ).toLocaleTimeString()}
+                            </p>
+                          )}
+
+                        {emergency.responderLatitude !=
+                          null &&
+                          emergency.responderLongitude !=
+                            null && (
+                            <p className="responder-time">
+                              Responder GPS:{' '}
+                              {emergency.responderLatitude.toFixed(
+                                5,
+                              )}
+                              ,{' '}
+                              {emergency.responderLongitude.toFixed(
+                                5,
+                              )}
+                            </p>
+                          )}
+
+                        {emergency.responderArrivedAt && (
+                          <p className="responder-time">
+                            Arrived{' '}
+                            {new Date(
+                              emergency.responderArrivedAt,
                             ).toLocaleString()}
                           </p>
                         )}
@@ -881,13 +948,15 @@ function OperatorDashboard() {
                           .length ===
                         0 ? (
                           <p className="operator-no-contacts">
-                            No emergency contacts
-                            attached.
+                            No emergency
+                            contacts attached.
                           </p>
                         ) : (
                           <div className="operator-contact-list">
                             {emergency.notifiedContacts.map(
-                              (contact) => (
+                              (
+                                contact,
+                              ) => (
                                 <div
                                   key={
                                     contact.id
@@ -923,16 +992,17 @@ function OperatorDashboard() {
                           0 && (
                           <p className="notification-note">
                             Contact notification
-                            delivery is simulated in
-                            this MVP.
+                            delivery is simulated
+                            in this MVP.
                           </p>
                         )}
                       </div>
 
-                      {next && (
+                      {emergency.status ===
+                        'PENDING' && (
                         <div className="request-footer">
                           <div className="request-next">
-                            Next action
+                            Operator action
                           </div>
 
                           <button
@@ -942,21 +1012,65 @@ function OperatorDashboard() {
                               emergency.id
                             }
                             onClick={() =>
-                              updateStatus(
+                              acceptEmergency(
                                 emergency.id,
-                                next,
                               )
                             }
                           >
                             {updatingId ===
                             emergency.id
-                              ? 'Updating...'
-                              : actionLabels[
-                                  emergency.status
-                                ]}
+                              ? 'Accepting...'
+                              : 'Accept request'}
                           </button>
                         </div>
                       )}
+
+                      {emergency.status ===
+                        'ACCEPTED' &&
+                        !emergency.assignedResponder && (
+                          <div className="request-footer">
+                            <div className="request-next">
+                              Select and assign a
+                              responder above
+                            </div>
+                          </div>
+                        )}
+
+                      {emergency.status ===
+                        'DISPATCHED' && (
+                          <div className="request-footer">
+                            <div className="request-next">
+                              Waiting for
+                              responder to accept
+                              assignment
+                            </div>
+                          </div>
+                        )}
+
+                      {emergency.status ===
+                        'RESPONDING' &&
+                        !responderArrived && (
+                          <div className="request-footer">
+                            <div className="request-next">
+                              Responder is en
+                              route. Status is
+                              controlled from the
+                              responder app.
+                            </div>
+                          </div>
+                        )}
+
+                      {emergency.status ===
+                        'RESPONDING' &&
+                        responderArrived && (
+                          <div className="request-footer">
+                            <div className="request-next">
+                              Responder is on
+                              scene. Waiting for
+                              completion.
+                            </div>
+                          </div>
+                        )}
                     </article>
                   )
                 },

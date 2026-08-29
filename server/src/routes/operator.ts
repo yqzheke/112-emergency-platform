@@ -24,6 +24,11 @@ const allowedStatuses: EmergencyStatus[] = [
   'CANCELLED',
 ]
 
+const activeResponderStatuses: EmergencyStatus[] = [
+  'DISPATCHED',
+  'RESPONDING',
+]
+
 function isEmergencyStatus(
   value: unknown,
 ): value is EmergencyStatus {
@@ -80,7 +85,8 @@ router.get(
       )
 
       return res.status(500).json({
-        message: 'Internal server error',
+        message:
+          'Internal server error',
       })
     }
   },
@@ -88,6 +94,9 @@ router.get(
 
 /*
   GET /api/operator/responders
+
+  Returns responders together with
+  their current availability.
 */
 router.get(
   '/responders',
@@ -108,11 +117,54 @@ router.get(
             fullName: true,
             email: true,
             role: true,
+
+            assignedEmergencies: {
+              where: {
+                status: {
+                  in: activeResponderStatuses,
+                },
+              },
+
+              select: {
+                id: true,
+                status: true,
+              },
+
+              take: 1,
+            },
           },
         })
 
+      const formattedResponders =
+        responders.map(
+          ({
+            assignedEmergencies,
+            ...responder
+          }) => {
+            const activeEmergency =
+              assignedEmergencies[0] ??
+              null
+
+            return {
+              ...responder,
+
+              isBusy:
+                activeEmergency !== null,
+
+              activeEmergencyId:
+                activeEmergency?.id ??
+                null,
+
+              activeEmergencyStatus:
+                activeEmergency?.status ??
+                null,
+            }
+          },
+        )
+
       return res.json({
-        responders,
+        responders:
+          formattedResponders,
       })
     } catch (error) {
       console.error(
@@ -130,6 +182,11 @@ router.get(
 
 /*
   PATCH /api/operator/emergencies/:id/assign
+
+  Assigns an available responder.
+
+  A responder cannot be assigned to more
+  than one active emergency at a time.
 */
 router.patch(
   '/emergencies/:id/assign',
@@ -142,7 +199,9 @@ router.patch(
         Number(req.body.responderId)
 
       if (
-        !Number.isInteger(emergencyId) ||
+        !Number.isInteger(
+          emergencyId,
+        ) ||
         emergencyId <= 0
       ) {
         return res.status(400).json({
@@ -152,7 +211,9 @@ router.patch(
       }
 
       if (
-        !Number.isInteger(responderId) ||
+        !Number.isInteger(
+          responderId,
+        ) ||
         responderId <= 0
       ) {
         return res.status(400).json({
@@ -161,10 +222,20 @@ router.patch(
         })
       }
 
+      /*
+        Load emergency.
+      */
       const emergency =
         await prisma.emergencyRequest.findUnique({
           where: {
             id: emergencyId,
+          },
+
+          select: {
+            id: true,
+            status: true,
+            assignedResponderId:
+              true,
           },
         })
 
@@ -175,9 +246,15 @@ router.patch(
         })
       }
 
+      /*
+        Closed requests cannot receive
+        responders.
+      */
       if (
-        emergency.status === 'COMPLETED' ||
-        emergency.status === 'CANCELLED'
+        emergency.status ===
+          'COMPLETED' ||
+        emergency.status ===
+          'CANCELLED'
       ) {
         return res.status(400).json({
           message:
@@ -185,6 +262,36 @@ router.patch(
         })
       }
 
+      /*
+        Operator should accept the request
+        before dispatching a responder.
+      */
+      if (
+        emergency.status !==
+        'ACCEPTED'
+      ) {
+        return res.status(400).json({
+          message:
+            'Emergency must be accepted before assigning a responder',
+        })
+      }
+
+      /*
+        Don't silently overwrite an
+        existing responder assignment.
+      */
+      if (
+        emergency.assignedResponderId
+      ) {
+        return res.status(409).json({
+          message:
+            'This emergency already has an assigned responder',
+        })
+      }
+
+      /*
+        Verify responder account.
+      */
       const responder =
         await prisma.user.findFirst({
           where: {
@@ -207,6 +314,49 @@ router.patch(
         })
       }
 
+      /*
+        Check whether this responder is
+        already handling another active
+        emergency.
+      */
+      const existingAssignment =
+        await prisma.emergencyRequest.findFirst({
+          where: {
+            assignedResponderId:
+              responder.id,
+
+            id: {
+              not: emergencyId,
+            },
+
+            status: {
+              in: activeResponderStatuses,
+            },
+          },
+
+          select: {
+            id: true,
+            status: true,
+          },
+        })
+
+      if (existingAssignment) {
+        return res.status(409).json({
+          message:
+            `Responder is already assigned to emergency #${existingAssignment.id}`,
+        })
+      }
+
+      /*
+        Assignment succeeds.
+
+        ACCEPTED → DISPATCHED
+
+        From this point forward the
+        responder app controls:
+        DISPATCHED → RESPONDING
+        RESPONDING → COMPLETED
+      */
       const updatedEmergency =
         await prisma.emergencyRequest.update({
           where: {
@@ -220,10 +370,27 @@ router.patch(
             responderAssignedAt:
               new Date(),
 
-            status:
-              emergency.status === 'ACCEPTED'
-                ? 'DISPATCHED'
-                : emergency.status,
+            /*
+              Reset responder lifecycle fields
+              in case this emergency ever
+              receives a fresh assignment.
+            */
+            responderAcceptedAt:
+              null,
+
+            responderArrivedAt:
+              null,
+
+            responderLatitude:
+              null,
+
+            responderLongitude:
+              null,
+
+            responderLocationUpdatedAt:
+              null,
+
+            status: 'DISPATCHED',
           },
 
           include: {
@@ -274,7 +441,10 @@ router.patch(
 */
 router.patch(
   '/emergencies/:id/status',
-  async (req: AuthRequest, res) => {
+  async (
+    req: AuthRequest,
+    res,
+  ) => {
     try {
       const emergencyId =
         Number(req.params.id)
@@ -282,7 +452,9 @@ router.patch(
       const { status } = req.body
 
       if (
-        !Number.isInteger(emergencyId) ||
+        !Number.isInteger(
+          emergencyId,
+        ) ||
         emergencyId <= 0
       ) {
         return res.status(400).json({
@@ -291,7 +463,9 @@ router.patch(
         })
       }
 
-      if (!isEmergencyStatus(status)) {
+      if (
+        !isEmergencyStatus(status)
+      ) {
         return res.status(400).json({
           message:
             'Invalid emergency status',
@@ -309,6 +483,26 @@ router.patch(
         return res.status(404).json({
           message:
             'Emergency not found',
+        })
+      }
+
+      /*
+        Once a responder controls the
+        emergency lifecycle, the operator
+        should not manually move it through
+        responder states.
+      */
+      if (
+        existing.assignedResponderId &&
+        (
+          status === 'DISPATCHED' ||
+          status === 'RESPONDING' ||
+          status === 'COMPLETED'
+        )
+      ) {
+        return res.status(400).json({
+          message:
+            'Responder-controlled status cannot be changed manually by the operator',
         })
       }
 
