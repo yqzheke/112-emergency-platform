@@ -1,3 +1,4 @@
+import ResponderBottomNav from '../components/ResponderBottomNav'
 import {
   useCallback,
   useEffect,
@@ -409,6 +410,7 @@ export default function ResponderScreen() {
             Loading assignments...
           </Text>
         </View>
+        
       </SafeAreaView>
     )
   }
@@ -1233,6 +1235,7 @@ export default function ResponderScreen() {
           Emergency response system
         </Text>
       </ScrollView>
+      <ResponderBottomNav active="assignments" />
     </SafeAreaView>
   )
 }

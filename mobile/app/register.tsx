@@ -117,6 +117,7 @@ export default function RegisterScreen() {
           }
         >
           {/* BRAND */}
+          
 
           <View style={styles.brandRow}>
             <View style={styles.logoBadge}>

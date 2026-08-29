@@ -1,3 +1,5 @@
+import ResponderBottomNav from '../components/ResponderBottomNav'
+
 import {
   useCallback,
   useEffect,
@@ -902,6 +904,7 @@ export default function ResponderDashboard() {
           112 Responder Platform
         </Text>
       </ScrollView>
+      <ResponderBottomNav active="home" />
     </SafeAreaView>
   )
 }

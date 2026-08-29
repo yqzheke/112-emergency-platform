@@ -1,3 +1,4 @@
+import ResponderBottomNav from '../components/ResponderBottomNav'
 import {
   useCallback,
   useEffect,
@@ -1209,6 +1210,7 @@ export default function ResponderMapScreen() {
           </Text>
         </View>
       </ScrollView>
+      <ResponderBottomNav active="map" />
     </SafeAreaView>
   )
 }

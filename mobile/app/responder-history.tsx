@@ -1,3 +1,5 @@
+import ResponderBottomNav from '../components/ResponderBottomNav'
+
 import {
   useCallback,
   useEffect,
@@ -741,6 +743,7 @@ export default function ResponderHistoryScreen() {
           </Text>
         </View>
       </ScrollView>
+      <ResponderBottomNav active="history" />
     </SafeAreaView>
   )
 }
