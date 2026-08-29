@@ -1,5 +1,4 @@
-import { API_URL } from '../lib/api'
-import { getToken } from '../lib/auth'
+import { apiFetch } from '../lib/api'
 
 import type { Contact } from '../types/contact'
 
@@ -7,34 +6,23 @@ interface ErrorResponse {
   message?: string
 }
 
-async function requireToken() {
-  const token = await getToken()
-
-  if (!token) {
-    throw new Error('You are not logged in')
-  }
-
-  return token
+async function readJson<T>(
+  response: Response,
+): Promise<T> {
+  return (await response.json()) as T
 }
 
 export async function getContacts(): Promise<
   Contact[]
 > {
-  const token = await requireToken()
-
-  const response = await fetch(
-    `${API_URL}/contacts`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
+  const response = await apiFetch(
+    '/contacts',
   )
 
-  const data = (await response.json()) as {
+  const data = await readJson<{
     contacts?: Contact[]
     message?: string
-  }
+  }>(response)
 
   if (!response.ok) {
     throw new Error(
@@ -50,18 +38,10 @@ export async function createContact(
   name: string,
   phone: string,
 ): Promise<Contact> {
-  const token = await requireToken()
-
-  const response = await fetch(
-    `${API_URL}/contacts`,
+  const response = await apiFetch(
+    '/contacts',
     {
       method: 'POST',
-
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-
       body: JSON.stringify({
         name,
         phone,
@@ -69,10 +49,10 @@ export async function createContact(
     },
   )
 
-  const data = (await response.json()) as {
+  const data = await readJson<{
     contact?: Contact
     message?: string
-  }
+  }>(response)
 
   if (!response.ok) {
     throw new Error(
@@ -93,21 +73,17 @@ export async function createContact(
 export async function deleteContact(
   contactId: number,
 ): Promise<void> {
-  const token = await requireToken()
-
-  const response = await fetch(
-    `${API_URL}/contacts/${contactId}`,
+  const response = await apiFetch(
+    `/contacts/${contactId}`,
     {
       method: 'DELETE',
-
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     },
   )
 
   const data =
-    (await response.json()) as ErrorResponse
+    await readJson<ErrorResponse>(
+      response,
+    )
 
   if (!response.ok) {
     throw new Error(

@@ -1,5 +1,4 @@
-import { API_URL } from '../lib/api'
-import { getToken } from '../lib/auth'
+import { apiFetch } from '../lib/api'
 
 import type {
   Emergency,
@@ -23,33 +22,27 @@ interface ErrorResponse {
   message?: string
 }
 
+async function readJson<T>(
+  response: Response,
+): Promise<T> {
+  return (await response.json()) as T
+}
+
 export async function createEmergency(
   input: CreateEmergencyInput,
 ): Promise<Emergency> {
-  const token = await getToken()
-
-  if (!token) {
-    throw new Error('You are not logged in')
-  }
-
-  const response = await fetch(
-    `${API_URL}/emergencies`,
+  const response = await apiFetch(
+    '/emergencies',
     {
       method: 'POST',
-
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-
       body: JSON.stringify(input),
     },
   )
 
-  const data = (await response.json()) as {
+  const data = await readJson<{
     emergency?: Emergency
     message?: string
-  }
+  }>(response)
 
   if (!response.ok) {
     throw new Error(
@@ -70,25 +63,14 @@ export async function createEmergency(
 export async function getEmergency(
   emergencyId: number,
 ): Promise<EmergencyWithContacts> {
-  const token = await getToken()
-
-  if (!token) {
-    throw new Error('You are not logged in')
-  }
-
-  const response = await fetch(
-    `${API_URL}/emergencies/${emergencyId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
+  const response = await apiFetch(
+    `/emergencies/${emergencyId}`,
   )
 
-  const data = (await response.json()) as {
+  const data = await readJson<{
     emergency?: EmergencyWithContacts
     message?: string
-  }
+  }>(response)
 
   if (!response.ok) {
     throw new Error(
@@ -109,25 +91,14 @@ export async function getEmergency(
 export async function getEmergencies(): Promise<
   Emergency[]
 > {
-  const token = await getToken()
-
-  if (!token) {
-    throw new Error('You are not logged in')
-  }
-
-  const response = await fetch(
-    `${API_URL}/emergencies`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
+  const response = await apiFetch(
+    '/emergencies',
   )
 
-  const data = (await response.json()) as {
+  const data = await readJson<{
     emergencies?: Emergency[]
     message?: string
-  }
+  }>(response)
 
   if (!response.ok) {
     throw new Error(

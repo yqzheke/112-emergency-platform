@@ -9,6 +9,12 @@ interface ErrorResponse {
   message?: string
 }
 
+async function readJson<T>(
+  response: Response,
+): Promise<T> {
+  return (await response.json()) as T
+}
+
 export async function login(
   email: string,
   password: string,
@@ -29,15 +35,18 @@ export async function login(
     },
   )
 
-  const data = (await response.json()) as
-    | AuthResponse
-    | ErrorResponse
+  const data =
+    await readJson<
+      AuthResponse | ErrorResponse
+    >(response)
 
   if (!response.ok) {
-    const errorData = data as ErrorResponse
+    const errorData =
+      data as ErrorResponse
 
     throw new Error(
-      errorData.message || 'Login failed',
+      errorData.message ||
+        'Login failed',
     )
   }
 
@@ -66,14 +75,15 @@ export async function register(
     },
   )
 
-  const data = (await response.json()) as {
+  const data = await readJson<{
     user?: User
     message?: string
-  }
+  }>(response)
 
   if (!response.ok) {
     throw new Error(
-      data.message || 'Registration failed',
+      data.message ||
+        'Registration failed',
     )
   }
 

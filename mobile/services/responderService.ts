@@ -1,5 +1,4 @@
-import { API_URL } from '../lib/api'
-import { getToken } from '../lib/auth'
+import { apiFetch } from '../lib/api'
 
 import type { Emergency } from '../types/emergency'
 
@@ -27,21 +26,6 @@ interface EmergencyResponse {
   message?: string
 }
 
-async function getAuthHeaders() {
-  const token = await getToken()
-
-  if (!token) {
-    throw new Error(
-      'You are not signed in.',
-    )
-  }
-
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
-  }
-}
-
 async function readError(
   response: Response,
 ) {
@@ -62,14 +46,8 @@ async function readError(
 export async function getResponderEmergencies(): Promise<
   ResponderEmergency[]
 > {
-  const headers =
-    await getAuthHeaders()
-
-  const response = await fetch(
-    `${API_URL}/responder/emergencies`,
-    {
-      headers,
-    },
+  const response = await apiFetch(
+    '/responder/emergencies',
   )
 
   if (!response.ok) {
@@ -87,14 +65,8 @@ export async function getResponderEmergencies(): Promise<
 export async function getResponderEmergency(
   emergencyId: number,
 ): Promise<ResponderEmergency> {
-  const headers =
-    await getAuthHeaders()
-
-  const response = await fetch(
-    `${API_URL}/responder/emergencies/${emergencyId}`,
-    {
-      headers,
-    },
+  const response = await apiFetch(
+    `/responder/emergencies/${emergencyId}`,
   )
 
   if (!response.ok) {
@@ -112,14 +84,10 @@ export async function getResponderEmergency(
 export async function acceptResponderEmergency(
   emergencyId: number,
 ): Promise<ResponderEmergency> {
-  const headers =
-    await getAuthHeaders()
-
-  const response = await fetch(
-    `${API_URL}/responder/emergencies/${emergencyId}/accept`,
+  const response = await apiFetch(
+    `/responder/emergencies/${emergencyId}/accept`,
     {
       method: 'PATCH',
-      headers,
     },
   )
 
@@ -140,15 +108,10 @@ export async function updateResponderLocation(
   latitude: number,
   longitude: number,
 ): Promise<ResponderEmergency> {
-  const headers =
-    await getAuthHeaders()
-
-  const response = await fetch(
-    `${API_URL}/responder/emergencies/${emergencyId}/location`,
+  const response = await apiFetch(
+    `/responder/emergencies/${emergencyId}/location`,
     {
       method: 'PATCH',
-
-      headers,
 
       body: JSON.stringify({
         latitude,
@@ -172,14 +135,10 @@ export async function updateResponderLocation(
 export async function markResponderArrived(
   emergencyId: number,
 ): Promise<ResponderEmergency> {
-  const headers =
-    await getAuthHeaders()
-
-  const response = await fetch(
-    `${API_URL}/responder/emergencies/${emergencyId}/arrive`,
+  const response = await apiFetch(
+    `/responder/emergencies/${emergencyId}/arrive`,
     {
       method: 'PATCH',
-      headers,
     },
   )
 
@@ -198,14 +157,10 @@ export async function markResponderArrived(
 export async function completeResponderEmergency(
   emergencyId: number,
 ): Promise<ResponderEmergency> {
-  const headers =
-    await getAuthHeaders()
-
-  const response = await fetch(
-    `${API_URL}/responder/emergencies/${emergencyId}/complete`,
+  const response = await apiFetch(
+    `/responder/emergencies/${emergencyId}/complete`,
     {
       method: 'PATCH',
-      headers,
     },
   )
 

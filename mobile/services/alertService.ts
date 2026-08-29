@@ -1,30 +1,22 @@
-import { API_URL } from '../lib/api'
-import { getToken } from '../lib/auth'
+import { apiFetch } from '../lib/api'
 
 import type { SafetyAlert } from '../types/alert'
+
+async function readJson<T>(
+  response: Response,
+): Promise<T> {
+  return (await response.json()) as T
+}
 
 export async function getAlerts(): Promise<
   SafetyAlert[]
 > {
-  const token = await getToken()
+  const response = await apiFetch('/alerts')
 
-  if (!token) {
-    throw new Error('You are not logged in')
-  }
-
-  const response = await fetch(
-    `${API_URL}/alerts`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  )
-
-  const data = (await response.json()) as {
+  const data = await readJson<{
     alerts?: SafetyAlert[]
     message?: string
-  }
+  }>(response)
 
   if (!response.ok) {
     throw new Error(
