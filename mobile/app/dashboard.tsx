@@ -156,6 +156,84 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
 
+        {/* AI ASSISTANT */}
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionLabel}>
+            112 AI ASSISTANT
+          </Text>
+
+          <Text
+            style={
+              styles.sectionDescription
+            }
+          >
+            Get help understanding emergency
+            services and using the platform.
+          </Text>
+        </View>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.aiCard,
+
+            pressed
+              ? styles.cardPressed
+              : null,
+          ]}
+          onPress={() =>
+            router.push('/ai-chat')
+          }
+        >
+          <View style={styles.aiCardTop}>
+            <View style={styles.aiIcon}>
+              <Ionicons
+                name="sparkles"
+                size={22}
+                color="#FFFFFF"
+              />
+            </View>
+
+            <View style={styles.aiBadge}>
+              <View style={styles.aiBadgeDot} />
+
+              <Text
+                style={styles.aiBadgeText}
+              >
+                AVAILABLE
+              </Text>
+            </View>
+          </View>
+
+          <Text style={styles.aiTitle}>
+            Ask 112 AI
+          </Text>
+
+          <Text style={styles.aiSubtitle}>
+            Ask questions about emergency
+            services, prepare a request, or get
+            help navigating the 112 platform.
+          </Text>
+
+          <View style={styles.aiActionRow}>
+            <Text
+              style={styles.aiActionText}
+            >
+              Open assistant
+            </Text>
+
+            <View
+              style={styles.aiArrowCircle}
+            >
+              <Ionicons
+                name="arrow-forward"
+                size={16}
+                color="#FFFFFF"
+              />
+            </View>
+          </View>
+        </Pressable>
+
         {/* SERVICES */}
 
         <View style={styles.sectionHeader}>
@@ -575,6 +653,92 @@ const styles = StyleSheet.create({
 
   heroButtonIcon: {
     marginLeft: 9,
+  },
+
+  aiCard: {
+    marginBottom: 24,
+    padding: 18,
+    borderRadius: 22,
+    backgroundColor: '#1B2431',
+  },
+
+  aiCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  aiIcon: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 15,
+    backgroundColor:
+      'rgba(255,255,255,0.10)',
+  },
+
+  aiBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor:
+      'rgba(255,255,255,0.08)',
+  },
+
+  aiBadgeDot: {
+    width: 6,
+    height: 6,
+    marginRight: 6,
+    borderRadius: 3,
+    backgroundColor: '#4ADE80',
+  },
+
+  aiBadgeText: {
+    color: '#C6CDD6',
+    fontSize: 7,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+  },
+
+  aiTitle: {
+    marginTop: 16,
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+
+  aiSubtitle: {
+    marginTop: 7,
+    maxWidth: 315,
+    color: '#BCC4CF',
+    fontSize: 11,
+    lineHeight: 17,
+  },
+
+  aiActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 17,
+  },
+
+  aiActionText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
+  aiArrowCircle: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 17,
+    backgroundColor:
+      'rgba(255,255,255,0.12)',
   },
 
   emergencyCard: {
