@@ -558,4 +558,182 @@ router.patch(
   },
 )
 
+/*
+  PATCH /api/operator/emergencies/:id/demo-location
+
+  DEMO ONLY.
+
+  Simulates responder movement toward the
+  emergency so the MVP can be demonstrated
+  without a second physical responder device.
+*/
+router.patch(
+  '/emergencies/:id/demo-location',
+  async (req: AuthRequest, res) => {
+    try {
+      const emergencyId =
+        Number(req.params.id)
+
+      const progress =
+        Number(req.body.progress)
+
+      if (
+        !Number.isInteger(emergencyId) ||
+        emergencyId <= 0
+      ) {
+        return res.status(400).json({
+          message:
+            'Invalid emergency ID',
+        })
+      }
+
+      if (
+        !Number.isFinite(progress) ||
+        progress < 0 ||
+        progress > 1
+      ) {
+        return res.status(400).json({
+          message:
+            'Demo progress must be between 0 and 1',
+        })
+      }
+
+      const emergency =
+        await prisma.emergencyRequest.findUnique({
+          where: {
+            id: emergencyId,
+          },
+        })
+
+      if (!emergency) {
+        return res.status(404).json({
+          message:
+            'Emergency not found',
+        })
+      }
+
+      if (
+        !emergency.assignedResponderId
+      ) {
+        return res.status(400).json({
+          message:
+            'Assign a responder before starting demo tracking',
+        })
+      }
+
+      if (
+        emergency.status ===
+          'COMPLETED' ||
+        emergency.status ===
+          'CANCELLED'
+      ) {
+        return res.status(400).json({
+          message:
+            'Cannot simulate tracking for a closed emergency',
+        })
+      }
+
+      /*
+        Demo starting point.
+
+        Roughly north-east of the caller.
+        As progress approaches 1, the responder
+        approaches the emergency coordinates.
+      */
+      const startLatitude =
+        emergency.latitude + 0.012
+
+      const startLongitude =
+        emergency.longitude + 0.012
+
+      const responderLatitude =
+        startLatitude +
+        (emergency.latitude -
+          startLatitude) *
+          progress
+
+      const responderLongitude =
+        startLongitude +
+        (emergency.longitude -
+          startLongitude) *
+          progress
+
+      const arrived =
+        progress >= 1
+
+      const updatedEmergency =
+        await prisma.emergencyRequest.update({
+          where: {
+            id: emergencyId,
+          },
+
+          data: {
+            responderLatitude,
+
+            responderLongitude,
+
+            responderLocationUpdatedAt:
+              new Date(),
+
+            responderAcceptedAt:
+              emergency.responderAcceptedAt ??
+              new Date(),
+
+            responderArrivedAt:
+              arrived
+                ? emergency.responderArrivedAt ??
+                  new Date()
+                : null,
+
+            status: 'RESPONDING',
+          },
+
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+              },
+            },
+
+            notifiedContacts: true,
+
+            assignedResponder: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+                role: true,
+              },
+            },
+          },
+        })
+
+      return res.json({
+        message: arrived
+          ? 'Demo responder arrived'
+          : 'Demo responder location updated',
+
+        demo: true,
+
+        progress,
+
+        emergency:
+          updatedEmergency,
+      })
+    } catch (error) {
+      console.error(
+        'Demo responder movement error:',
+        error,
+      )
+
+      return res.status(500).json({
+        message:
+          'Could not update demo responder location',
+      })
+    }
+  },
+)
+
 export default router
