@@ -14,6 +14,7 @@ import {
 } from 'react-native'
 
 import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 
 import BottomNav from '../components/BottomNav'
 
@@ -58,8 +59,10 @@ export default function ProfileScreen() {
         {
           text: 'Log out',
           style: 'destructive',
+
           onPress: async () => {
             await clearAuth()
+
             router.replace('/login')
           },
         },
@@ -87,39 +90,60 @@ export default function ProfileScreen() {
 
         <View style={styles.header}>
           <View style={styles.headerText}>
-            <Text style={styles.logo}>
-              112
-            </Text>
+            <View style={styles.brandRow}>
+              <View style={styles.logoBadge}>
+                <Text style={styles.logoText}>
+                  112
+                </Text>
+              </View>
+
+              <View>
+                <Text style={styles.brandTitle}>
+                  Your account
+                </Text>
+
+                <Text
+                  style={
+                    styles.brandSubtitle
+                  }
+                >
+                  Emergency profile
+                </Text>
+              </View>
+            </View>
 
             <Text style={styles.eyebrow}>
-              YOUR ACCOUNT
+              PROFILE
             </Text>
 
             <Text style={styles.title}>
-              Profile
+              Account & safety
             </Text>
 
             <Text style={styles.subtitle}>
-              Manage your emergency profile
-              and safety preferences.
+              Manage your emergency profile,
+              contacts, support options, and
+              account access.
             </Text>
           </View>
 
           <Pressable
             style={({ pressed }) => [
               styles.backButton,
-              pressed &&
-                styles.buttonPressed,
+
+              pressed
+                ? styles.buttonPressed
+                : null,
             ]}
             onPress={() =>
               router.replace('/dashboard')
             }
           >
-            <Text
-              style={styles.backText}
-            >
-              ←
-            </Text>
+            <Ionicons
+              name="arrow-back"
+              size={20}
+              color="#111827"
+            />
           </Pressable>
         </View>
 
@@ -151,30 +175,47 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.roleBadge}>
-              <Text
-                style={styles.roleText}
-              >
+              <Text style={styles.roleText}>
                 {user?.role || 'USER'}
               </Text>
             </View>
           </View>
 
-          <View style={styles.profileDivider} />
+          <View
+            style={styles.profileDivider}
+          />
 
-          <View style={styles.accountStatusRow}>
-            <View style={styles.accountStatusLeft}>
+          <View
+            style={
+              styles.accountStatusRow
+            }
+          >
+            <View
+              style={
+                styles.accountStatusLeft
+              }
+            >
               <View
-                style={styles.accountStatusDot}
+                style={
+                  styles.accountStatusDot
+                }
               />
 
               <Text
-                style={styles.accountStatusText}
+                style={
+                  styles.accountStatusText
+                }
               >
-                Account ready for emergency use
+                Account ready for emergency
+                use
               </Text>
             </View>
 
-            <Text style={styles.accountStatusLabel}>
+            <Text
+              style={
+                styles.accountStatusLabel
+              }
+            >
               ACTIVE
             </Text>
           </View>
@@ -187,14 +228,25 @@ export default function ProfileScreen() {
         </Text>
 
         <View style={styles.settingCard}>
-          <View style={styles.settingIcon}>
-            <Text style={styles.settingIconText}>
-              GPS
-            </Text>
+          <View
+            style={[
+              styles.settingIcon,
+              styles.gpsIcon,
+            ]}
+          >
+            <Ionicons
+              name="location"
+              size={20}
+              color="#2563EB"
+            />
           </View>
 
-          <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>
+          <View
+            style={styles.settingContent}
+          >
+            <Text
+              style={styles.settingTitle}
+            >
               Automatic GPS Sharing
             </Text>
 
@@ -210,9 +262,13 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.enabledBadge}>
-            <View style={styles.enabledDot} />
+            <View
+              style={styles.enabledDot}
+            />
 
-            <Text style={styles.enabledText}>
+            <Text
+              style={styles.enabledText}
+            >
               Enabled
             </Text>
           </View>
@@ -221,23 +277,34 @@ export default function ProfileScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.settingCard,
-            pressed &&
-              styles.cardPressed,
+
+            pressed
+              ? styles.cardPressed
+              : null,
           ]}
           onPress={() =>
             router.push('/contacts')
           }
         >
-          <View style={styles.settingIcon}>
-            <Text
-              style={styles.settingIconText}
-            >
-              +
-            </Text>
+          <View
+            style={[
+              styles.settingIcon,
+              styles.contactsIcon,
+            ]}
+          >
+            <Ionicons
+              name="people-outline"
+              size={20}
+              color="#111827"
+            />
           </View>
 
-          <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>
+          <View
+            style={styles.settingContent}
+          >
+            <Text
+              style={styles.settingTitle}
+            >
               Emergency Contacts
             </Text>
 
@@ -252,9 +319,11 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.arrowCircle}>
-            <Text style={styles.arrow}>
-              ›
-            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={17}
+              color="#7A838D"
+            />
           </View>
         </Pressable>
 
@@ -267,20 +336,36 @@ export default function ProfileScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.settingCard,
-            pressed &&
-              styles.cardPressed,
+
+            pressed
+              ? styles.cardPressed
+              : null,
           ]}
+          onPress={() =>
+            router.push(
+              '/help-support' as never,
+            )
+          }
         >
-          <View style={styles.settingIcon}>
-            <Text
-              style={styles.settingIconText}
-            >
-              ?
-            </Text>
+          <View
+            style={[
+              styles.settingIcon,
+              styles.supportIcon,
+            ]}
+          >
+            <Ionicons
+              name="help-circle-outline"
+              size={21}
+              color="#111827"
+            />
           </View>
 
-          <View style={styles.settingContent}>
-            <Text style={styles.settingTitle}>
+          <View
+            style={styles.settingContent}
+          >
+            <Text
+              style={styles.settingTitle}
+            >
               Help & Support
             </Text>
 
@@ -289,15 +374,73 @@ export default function ProfileScreen() {
                 styles.settingDescription
               }
             >
-              Information about using the
-              112 emergency platform.
+              Get answers, contact support,
+              or ask 112 AI for help.
             </Text>
           </View>
 
           <View style={styles.arrowCircle}>
-            <Text style={styles.arrow}>
-              ›
+            <Ionicons
+              name="chevron-forward"
+              size={17}
+              color="#7A838D"
+            />
+          </View>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.settingCard,
+
+            pressed
+              ? styles.cardPressed
+              : null,
+          ]}
+          onPress={() =>
+            router.push(
+              '/ai-chat' as never,
+            )
+          }
+        >
+          <View
+            style={[
+              styles.settingIcon,
+              styles.aiIcon,
+            ]}
+          >
+            <Ionicons
+              name="sparkles"
+              size={20}
+              color="#FFFFFF"
+            />
+          </View>
+
+          <View
+            style={styles.settingContent}
+          >
+            <Text
+              style={styles.settingTitle}
+            >
+              Ask 112 AI
             </Text>
+
+            <Text
+              style={
+                styles.settingDescription
+              }
+            >
+              Ask questions about safety,
+              emergency services, and using
+              the platform.
+            </Text>
+          </View>
+
+          <View style={styles.arrowCircle}>
+            <Ionicons
+              name="chevron-forward"
+              size={17}
+              color="#7A838D"
+            />
           </View>
         </Pressable>
 
@@ -310,14 +453,30 @@ export default function ProfileScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.logoutCard,
-            pressed &&
-              styles.logoutPressed,
+
+            pressed
+              ? styles.logoutPressed
+              : null,
           ]}
           onPress={handleLogout}
         >
-          <View style={styles.logoutContent}>
-            <Text style={styles.logoutTitle}>
-              Logout
+          <View
+            style={styles.logoutIcon}
+          >
+            <Ionicons
+              name="log-out-outline"
+              size={20}
+              color="#B42318"
+            />
+          </View>
+
+          <View
+            style={styles.logoutContent}
+          >
+            <Text
+              style={styles.logoutTitle}
+            >
+              Log out
             </Text>
 
             <Text
@@ -329,19 +488,26 @@ export default function ProfileScreen() {
             </Text>
           </View>
 
-          <Text
-            style={styles.logoutArrow}
-          >
-            ›
-          </Text>
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color="#C89A96"
+          />
         </Pressable>
 
+        {/* FOOTER */}
+
         <View style={styles.footerInfo}>
-          <View style={styles.footerDot} />
+          <Ionicons
+            name="shield-checkmark-outline"
+            size={14}
+            color="#929AA4"
+          />
 
           <Text style={styles.footerText}>
-            Keep your account information and
-            emergency contacts up to date.
+            Keep your account information
+            and emergency contacts up to
+            date.
           </Text>
         </View>
       </ScrollView>
@@ -366,7 +532,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    justifyContent:
+      'space-between',
     marginBottom: 22,
   },
 
@@ -375,14 +542,41 @@ const styles = StyleSheet.create({
     paddingRight: 15,
   },
 
-  logo: {
-    color: '#111827',
-    fontSize: 23,
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  logoBadge: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    borderRadius: 14,
+    backgroundColor: '#111827',
+  },
+
+  logoText: {
+    color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '900',
   },
 
+  brandTitle: {
+    color: '#29333D',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
+  brandSubtitle: {
+    marginTop: 2,
+    color: '#929AA4',
+    fontSize: 8,
+  },
+
   eyebrow: {
-    marginTop: 22,
+    marginTop: 24,
     color: '#929AA4',
     fontSize: 9,
     fontWeight: '900',
@@ -398,7 +592,7 @@ const styles = StyleSheet.create({
 
   subtitle: {
     marginTop: 6,
-    maxWidth: 280,
+    maxWidth: 290,
     color: '#7A838D',
     fontSize: 12,
     lineHeight: 18,
@@ -413,13 +607,6 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     borderRadius: 15,
     backgroundColor: '#FFFFFF',
-  },
-
-  backText: {
-    marginTop: -2,
-    color: '#111827',
-    fontSize: 24,
-    fontWeight: '700',
   },
 
   profileCard: {
@@ -489,7 +676,8 @@ const styles = StyleSheet.create({
   accountStatusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent:
+      'space-between',
   },
 
   accountStatusLeft: {
@@ -547,13 +735,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
     borderRadius: 14,
+  },
+
+  gpsIcon: {
+    backgroundColor: '#EFF6FF',
+  },
+
+  contactsIcon: {
     backgroundColor: '#EEF2F6',
   },
 
-  settingIconText: {
-    color: '#111827',
-    fontSize: 11,
-    fontWeight: '900',
+  supportIcon: {
+    backgroundColor: '#EEF2F6',
+  },
+
+  aiIcon: {
+    backgroundColor: '#111827',
   },
 
   settingContent: {
@@ -606,25 +803,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
 
-  arrow: {
-    marginTop: -2,
-    color: '#7A838D',
-    fontSize: 22,
-  },
-
   logoutCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
+    padding: 15,
     borderWidth: 1,
     borderColor: '#F1D5D2',
     borderRadius: 18,
     backgroundColor: '#FFFFFF',
   },
 
+  logoutIcon: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    borderRadius: 14,
+    backgroundColor: '#FEF2F2',
+  },
+
   logoutContent: {
     flex: 1,
+    paddingRight: 10,
   },
 
   logoutTitle: {
@@ -639,11 +840,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
 
-  logoutArrow: {
-    color: '#C89A96',
-    fontSize: 25,
-  },
-
   footerInfo: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -651,17 +847,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
 
-  footerDot: {
-    width: 6,
-    height: 6,
-    marginTop: 4,
-    marginRight: 7,
-    borderRadius: 3,
-    backgroundColor: '#9CA3AF',
-  },
-
   footerText: {
     flex: 1,
+    marginLeft: 7,
     color: '#929AA4',
     fontSize: 8,
     lineHeight: 13,
@@ -669,6 +857,7 @@ const styles = StyleSheet.create({
 
   buttonPressed: {
     opacity: 0.86,
+
     transform: [
       {
         scale: 0.99,
@@ -678,6 +867,7 @@ const styles = StyleSheet.create({
 
   cardPressed: {
     opacity: 0.82,
+
     transform: [
       {
         scale: 0.99,
@@ -687,6 +877,7 @@ const styles = StyleSheet.create({
 
   logoutPressed: {
     opacity: 0.7,
+
     transform: [
       {
         scale: 0.99,
