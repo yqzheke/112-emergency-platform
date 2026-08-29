@@ -6060,3 +6060,43 @@ button {
     display: none;
   }
 }
+
+/* =========================================================
+   LEAFLET MAP STACKING FIX
+   Keep map inside the operator dashboard card
+   ========================================================= */
+
+.operator-shell .leaflet-container {
+  position: relative;
+  z-index: 0 !important;
+}
+
+.operator-shell .leaflet-pane,
+.operator-shell .leaflet-top,
+.operator-shell .leaflet-bottom {
+  z-index: 1 !important;
+}
+
+.operator-shell .operator-map-card,
+.operator-shell .operator-map-section,
+.operator-shell .emergency-map,
+.operator-shell .map-container {
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Dashboard chrome must always stay above Leaflet */
+
+.operator-sidebar {
+  position: fixed;
+  z-index: 1200 !important;
+}
+
+.operator-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1100 !important;
+  background: #ffffff;
+}
