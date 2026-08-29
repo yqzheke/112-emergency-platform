@@ -726,15 +726,62 @@ function OperatorDashboard() {
 
                       <div className="operator-map-wrapper">
                         <EmergencyMap
-                          latitude={
-                            emergency.latitude
-                          }
-                          longitude={
-                            emergency.longitude
-                          }
-                        />
+  latitude={emergency.latitude}
+  longitude={emergency.longitude}
+  responderLatitude={
+    emergency.responderLatitude
+  }
+  responderLongitude={
+    emergency.responderLongitude
+  }
+/>
                       </div>
+                        <div className="operator-tracking-status">
+  <div className="operator-tracking-row">
+    <span
+      className={`operator-tracking-dot ${
+        emergency.responderLatitude != null &&
+        emergency.responderLongitude != null
+          ? 'active'
+          : 'waiting'
+      }`}
+    />
 
+    <strong>
+      {emergency.responderLatitude != null &&
+      emergency.responderLongitude != null
+        ? 'Responder GPS live'
+        : emergency.assignedResponder
+          ? 'Waiting for responder GPS'
+          : 'No responder assigned'}
+    </strong>
+  </div>
+
+  {emergency.responderLocationUpdatedAt && (
+    <span className="operator-tracking-time">
+      Last updated{' '}
+      {new Date(
+        emergency.responderLocationUpdatedAt,
+      ).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })}
+    </span>
+  )}
+
+  <div className="operator-map-legend">
+    <div>
+      <span className="legend-marker emergency" />
+      <span>Emergency</span>
+    </div>
+
+    <div>
+      <span className="legend-marker responder" />
+      <span>Responder</span>
+    </div>
+  </div>
+</div>
                       <div className="operator-responder-section">
                         <div className="operator-responder-header">
                           <div>

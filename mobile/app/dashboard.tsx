@@ -1,4 +1,8 @@
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useState,
+} from 'react'
+
 import {
   Pressable,
   SafeAreaView,
@@ -7,13 +11,19 @@ import {
   Text,
   View,
 } from 'react-native'
+
 import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 
 import { getStoredUser } from '../lib/auth'
+import BottomNav from '../components/BottomNav'
 
 import type { User } from '../types/auth'
-import type { EmergencyRequestType } from '../types/emergency'
-import BottomNav from '../components/BottomNav'
+
+type EmergencyRequestType =
+  | 'medical'
+  | 'police'
+  | 'fire'
 
 export default function DashboardScreen() {
   const router = useRouter()
@@ -42,29 +52,39 @@ export default function DashboardScreen() {
   ) => {
     router.push({
       pathname: '/emergency',
-      params: { type },
+      params: {
+        type,
+      },
     })
   }
 
   const firstName =
-    user?.fullName.split(' ')[0] || 'User'
+    user?.fullName
+      ?.trim()
+      .split(' ')[0] || 'User'
 
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={
+          styles.content
+        }
+        showsVerticalScrollIndicator={
+          false
+        }
       >
         {/* HEADER */}
 
         <View style={styles.header}>
-          <View>
+          <View style={styles.headerText}>
             <Text style={styles.greeting}>
               Hey {firstName},
             </Text>
 
-            <Text style={styles.greetingSub}>
-              We&apos;re here for you.
+            <Text
+              style={styles.greetingSub}
+            >
+              How can 112 help you today?
             </Text>
           </View>
 
@@ -75,157 +95,347 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* EMERGENCY ASSISTANCE */}
+        {/* HERO */}
 
         <Text style={styles.sectionLabel}>
           EMERGENCY ASSISTANCE
         </Text>
 
         <View style={styles.heroCard}>
+          <View
+            style={styles.heroStatusRow}
+          >
+            <View
+              style={styles.heroStatusDot}
+            />
+
+            <Text
+              style={styles.heroStatusText}
+            >
+              112 READY
+            </Text>
+          </View>
+
           <Text style={styles.heroTitle}>
             Need emergency help?
           </Text>
 
-          <Text style={styles.heroDescription}>
-            Choose the service you need and
-            we&apos;ll guide you through the request.
+          <Text
+            style={styles.heroDescription}
+          >
+            Choose the emergency service
+            you need and share your
+            location with the response
+            system.
           </Text>
 
           <Pressable
-            style={styles.heroButton}
+            style={({ pressed }) => [
+              styles.heroButton,
+
+              pressed
+                ? styles.buttonPressed
+                : null,
+            ]}
             onPress={() =>
               openEmergency('medical')
             }
           >
-            <Text style={styles.heroButtonText}>
+            <Text
+              style={styles.heroButtonText}
+            >
               Start emergency request
             </Text>
+
+            <Ionicons
+              name="arrow-forward"
+              size={16}
+              color="#111827"
+              style={styles.heroButtonIcon}
+            />
           </Pressable>
         </View>
 
-        {/* ONE-TAP SERVICES */}
+        {/* SERVICES */}
 
-        <Text style={styles.sectionLabel}>
-          ONE-TAP SERVICES
-        </Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionLabel}>
+            ONE-TAP SERVICES
+          </Text>
+
+          <Text
+            style={
+              styles.sectionDescription
+            }
+          >
+            Select the emergency service
+            you need.
+          </Text>
+        </View>
+
+        {/* MEDICAL */}
 
         <Pressable
-          style={[
+          style={({ pressed }) => [
             styles.emergencyCard,
-            styles.medicalCard,
+
+            pressed
+              ? styles.cardPressed
+              : null,
           ]}
           onPress={() =>
             openEmergency('medical')
           }
         >
-          <View>
-            <Text style={styles.cardIcon}>
-              ✚
-            </Text>
+          <View
+            style={[
+              styles.serviceAccent,
+              styles.medicalAccent,
+            ]}
+          />
 
-            <Text style={styles.cardTitle}>
-              Medical
-            </Text>
+          <View style={styles.cardContent}>
+            <View
+              style={[
+                styles.serviceIcon,
+                styles.medicalIcon,
+              ]}
+            >
+              <Ionicons
+                name="medical"
+                size={24}
+                color="#DC2626"
+              />
+            </View>
 
-            <Text style={styles.cardSubtitle}>
-              Ambulance assistance
-            </Text>
+            <View
+              style={styles.cardTextContent}
+            >
+              <Text style={styles.cardTitle}>
+                Medical
+              </Text>
+
+              <Text
+                style={styles.cardSubtitle}
+              >
+                Ambulance and medical
+                assistance
+              </Text>
+            </View>
           </View>
 
-          <Text style={styles.arrow}>
-            ›
-          </Text>
+          <View style={styles.arrowCircle}>
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color="#6B7280"
+            />
+          </View>
         </Pressable>
 
+        {/* POLICE */}
+
         <Pressable
-          style={[
+          style={({ pressed }) => [
             styles.emergencyCard,
-            styles.policeCard,
+
+            pressed
+              ? styles.cardPressed
+              : null,
           ]}
           onPress={() =>
             openEmergency('police')
           }
         >
-          <View>
-            <Text style={styles.cardIcon}>
-              ◈
-            </Text>
+          <View
+            style={[
+              styles.serviceAccent,
+              styles.policeAccent,
+            ]}
+          />
 
-            <Text style={styles.cardTitle}>
-              Police
-            </Text>
+          <View style={styles.cardContent}>
+            <View
+              style={[
+                styles.serviceIcon,
+                styles.policeIcon,
+              ]}
+            >
+              <Ionicons
+                name="shield-checkmark"
+                size={24}
+                color="#2563EB"
+              />
+            </View>
 
-            <Text style={styles.cardSubtitle}>
-              Police assistance
-            </Text>
+            <View
+              style={styles.cardTextContent}
+            >
+              <Text style={styles.cardTitle}>
+                Police
+              </Text>
+
+              <Text
+                style={styles.cardSubtitle}
+              >
+                Police and security
+                assistance
+              </Text>
+            </View>
           </View>
 
-          <Text style={styles.arrow}>
-            ›
-          </Text>
+          <View style={styles.arrowCircle}>
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color="#6B7280"
+            />
+          </View>
         </Pressable>
 
+        {/* FIRE */}
+
         <Pressable
-          style={[
+          style={({ pressed }) => [
             styles.emergencyCard,
-            styles.fireCard,
+
+            pressed
+              ? styles.cardPressed
+              : null,
           ]}
           onPress={() =>
             openEmergency('fire')
           }
         >
-          <View>
-            <Text style={styles.cardIcon}>
-              △
-            </Text>
+          <View
+            style={[
+              styles.serviceAccent,
+              styles.fireAccent,
+            ]}
+          />
 
-            <Text style={styles.cardTitle}>
-              Fire & Rescue
-            </Text>
+          <View style={styles.cardContent}>
+            <View
+              style={[
+                styles.serviceIcon,
+                styles.fireIcon,
+              ]}
+            >
+              <Ionicons
+                name="flame"
+                size={24}
+                color="#EA580C"
+              />
+            </View>
 
-            <Text style={styles.cardSubtitle}>
-              Fire and rescue assistance
-            </Text>
+            <View
+              style={styles.cardTextContent}
+            >
+              <Text style={styles.cardTitle}>
+                Fire & Rescue
+              </Text>
+
+              <Text
+                style={styles.cardSubtitle}
+              >
+                Fire and rescue assistance
+              </Text>
+            </View>
           </View>
 
-          <Text style={styles.arrow}>
-            ›
-          </Text>
+          <View style={styles.arrowCircle}>
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color="#6B7280"
+            />
+          </View>
         </Pressable>
 
         {/* MORE */}
 
-        <Text style={styles.sectionLabel}>
-          MORE
-        </Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionLabel}>
+            MORE
+          </Text>
+
+          <Text
+            style={
+              styles.sectionDescription
+            }
+          >
+            Manage your emergency setup.
+          </Text>
+        </View>
 
         <Pressable
-          style={[
+          style={({ pressed }) => [
             styles.secondaryCard,
-            styles.secondaryCardSpacing,
+
+            pressed
+              ? styles.cardPressed
+              : null,
           ]}
           onPress={() =>
             router.push('/contacts')
           }
         >
-          <View style={styles.secondaryContent}>
-            <Text style={styles.secondaryTitle}>
+          <View style={styles.secondaryIcon}>
+            <Ionicons
+              name="people-outline"
+              size={21}
+              color="#111827"
+            />
+          </View>
+
+          <View
+            style={styles.secondaryContent}
+          >
+            <Text
+              style={styles.secondaryTitle}
+            >
               Emergency Contacts
             </Text>
 
             <Text
-              style={styles.secondarySubtitle}
+              style={
+                styles.secondarySubtitle
+              }
             >
-              Manage your emergency contact list
+              Manage people linked to your
+              emergency profile.
             </Text>
           </View>
 
-          <Text style={styles.secondaryArrow}>
-            ›
-          </Text>
+          <View
+            style={
+              styles.secondaryArrowCircle
+            }
+          >
+            <Ionicons
+              name="chevron-forward"
+              size={17}
+              color="#7A838D"
+            />
+          </View>
         </Pressable>
 
-            </ScrollView>
+        {/* LOCATION */}
+
+        <View style={styles.footerCard}>
+          <Ionicons
+            name="location-outline"
+            size={15}
+            color="#8B949E"
+          />
+
+          <Text style={styles.footerText}>
+            Your location is shared when you
+            submit an emergency request so
+            responders can locate you.
+          </Text>
+        </View>
+      </ScrollView>
 
       <BottomNav active="home" />
     </SafeAreaView>
@@ -240,27 +450,34 @@ const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 25,
+    paddingTop: 18,
+    paddingBottom: 30,
   },
 
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 30,
+    justifyContent:
+      'space-between',
+    marginBottom: 28,
+  },
+
+  headerText: {
+    flex: 1,
+    paddingRight: 16,
   },
 
   greeting: {
-    fontSize: 27,
-    fontWeight: '800',
     color: '#17202A',
+    fontSize: 27,
+    fontWeight: '900',
   },
 
   greetingSub: {
-    marginTop: 3,
-    fontSize: 15,
+    marginTop: 4,
     color: '#7B8490',
+    fontSize: 14,
+    lineHeight: 20,
   },
 
   logoBadge: {
@@ -268,7 +485,7 @@ const styles = StyleSheet.create({
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 18,
+    borderRadius: 17,
     backgroundColor: '#111827',
   },
 
@@ -278,131 +495,260 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
 
-  sectionLabel: {
+  sectionHeader: {
     marginTop: 8,
     marginBottom: 10,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.2,
+  },
+
+  sectionLabel: {
+    marginBottom: 8,
     color: '#929AA4',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1.2,
+  },
+
+  sectionDescription: {
+    marginTop: -3,
+    color: '#9AA2AA',
+    fontSize: 10,
   },
 
   heroCard: {
+    marginBottom: 24,
     padding: 22,
-    marginBottom: 22,
     borderRadius: 24,
     backgroundColor: '#111827',
   },
 
+  heroStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 13,
+  },
+
+  heroStatusDot: {
+    width: 7,
+    height: 7,
+    marginRight: 7,
+    borderRadius: 4,
+    backgroundColor: '#4ADE80',
+  },
+
+  heroStatusText: {
+    color: '#AEB6C1',
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 23,
+    fontWeight: '900',
   },
 
   heroDescription: {
     marginTop: 8,
-    color: '#D1D5DB',
-    fontSize: 14,
+    maxWidth: 310,
+    color: '#C7CDD6',
+    fontSize: 13,
     lineHeight: 20,
   },
 
   heroButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
-    marginTop: 20,
-    paddingVertical: 12,
+    marginTop: 19,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: 12,
+    borderRadius: 13,
     backgroundColor: '#FFFFFF',
   },
 
   heroButtonText: {
     color: '#111827',
-    fontSize: 13,
-    fontWeight: '800',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+
+  heroButtonIcon: {
+    marginLeft: 9,
   },
 
   emergencyCard: {
-    minHeight: 130,
+    position: 'relative',
+    minHeight: 96,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-    padding: 20,
-    borderRadius: 22,
+    justifyContent:
+      'space-between',
+    overflow: 'hidden',
+    marginBottom: 10,
+    paddingVertical: 15,
+    paddingLeft: 18,
+    paddingRight: 15,
+    borderWidth: 1,
+    borderColor: '#E6E9ED',
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
   },
 
-  medicalCard: {
-    backgroundColor: '#E7E9FF',
+  serviceAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 18,
+    bottom: 18,
+    width: 4,
+    borderRadius: 4,
   },
 
-  policeCard: {
-    backgroundColor: '#FFE9DF',
+  medicalAccent: {
+    backgroundColor: '#DC2626',
   },
 
-  fireCard: {
-    backgroundColor: '#E2F5ED',
+  policeAccent: {
+    backgroundColor: '#2563EB',
   },
 
-  cardIcon: {
-    marginBottom: 15,
-    fontSize: 25,
-    fontWeight: '800',
-    color: '#25303B',
+  fireAccent: {
+    backgroundColor: '#EA580C',
+  },
+
+  cardContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  serviceIcon: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+    borderRadius: 15,
+  },
+
+  medicalIcon: {
+    backgroundColor: '#FEF2F2',
+  },
+
+  policeIcon: {
+    backgroundColor: '#EFF6FF',
+  },
+
+  fireIcon: {
+    backgroundColor: '#FFF7ED',
+  },
+
+  cardTextContent: {
+    flex: 1,
+    paddingRight: 8,
   },
 
   cardTitle: {
-    fontSize: 19,
-    fontWeight: '800',
     color: '#1F2933',
+    fontSize: 17,
+    fontWeight: '900',
   },
 
   cardSubtitle: {
     marginTop: 4,
-    fontSize: 12,
     color: '#727C87',
+    fontSize: 11,
+    lineHeight: 16,
   },
 
-  arrow: {
-    fontSize: 34,
-    color: '#727C87',
+  arrowCircle: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 17,
+    backgroundColor: '#F4F5F7',
   },
 
   secondaryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 18,
+    padding: 15,
     borderWidth: 1,
     borderColor: '#E4E7EB',
-    borderRadius: 17,
+    borderRadius: 18,
     backgroundColor: '#FFFFFF',
   },
 
-  secondaryCardSpacing: {
-    marginBottom: 10,
+  secondaryIcon: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    borderRadius: 14,
+    backgroundColor: '#EEF2F6',
   },
 
   secondaryContent: {
     flex: 1,
-    paddingRight: 15,
+    paddingRight: 10,
   },
 
   secondaryTitle: {
-    fontSize: 15,
-    fontWeight: '800',
     color: '#26313C',
+    fontSize: 14,
+    fontWeight: '900',
   },
 
   secondarySubtitle: {
     marginTop: 3,
-    fontSize: 11,
-    lineHeight: 16,
     color: '#8A939D',
+    fontSize: 10,
+    lineHeight: 15,
   },
 
-  secondaryArrow: {
-    fontSize: 27,
-    color: '#9AA2AA',
+  secondaryArrowCircle: {
+    width: 31,
+    height: 31,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    backgroundColor: '#F4F5F7',
+  },
+
+  footerCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 14,
+    paddingHorizontal: 4,
+  },
+
+  footerText: {
+    flex: 1,
+    marginLeft: 7,
+    color: '#929AA4',
+    fontSize: 9,
+    lineHeight: 14,
+  },
+
+  buttonPressed: {
+    opacity: 0.88,
+
+    transform: [
+      {
+        scale: 0.99,
+      },
+    ],
+  },
+
+  cardPressed: {
+    opacity: 0.72,
+
+    transform: [
+      {
+        scale: 0.99,
+      },
+    ],
   },
 })

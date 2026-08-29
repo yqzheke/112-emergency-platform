@@ -55,8 +55,10 @@ export default function ResponderScreen() {
   const [actionId, setActionId] =
     useState<number | null>(null)
 
-  const [sharingEmergencyId, setSharingEmergencyId] =
-    useState<number | null>(null)
+  const [
+    sharingEmergencyId,
+    setSharingEmergencyId,
+  ] = useState<number | null>(null)
 
   const [lastLocation, setLastLocation] =
     useState<{
@@ -117,9 +119,11 @@ export default function ResponderScreen() {
 
   const stopLocationSharing = () => {
     locationSubscription.current?.remove()
+
     locationSubscription.current = null
 
     setSharingEmergencyId(null)
+    setLastLocation(null)
   }
 
   const startLocationSharing = async (
@@ -137,7 +141,8 @@ export default function ResponderScreen() {
         setError(
           'Location permission is required to share responder position.',
         )
-        return
+
+        return false
       }
 
       stopLocationSharing()
@@ -211,6 +216,8 @@ export default function ResponderScreen() {
       setSharingEmergencyId(
         emergencyId,
       )
+
+      return true
     } catch (error) {
       console.error(
         'Location sharing error:',
@@ -222,6 +229,8 @@ export default function ResponderScreen() {
           ? error.message
           : 'Could not start location sharing',
       )
+
+      return false
     }
   }
 
@@ -274,31 +283,49 @@ export default function ResponderScreen() {
   const handleArrived = async (
     emergencyId: number,
   ) => {
-    try {
-      setActionId(emergencyId)
-      setError('')
+    Alert.alert(
+      'Confirm arrival',
+      'Confirm that you have reached the emergency location.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'I have arrived',
+          onPress: async () => {
+            try {
+              setActionId(
+                emergencyId,
+              )
 
-      await markResponderArrived(
-        emergencyId,
-      )
+              setError('')
 
-      stopLocationSharing()
+              await markResponderArrived(
+                emergencyId,
+              )
 
-      await loadEmergencies()
-    } catch (error) {
-      console.error(
-        'Responder arrival error:',
-        error,
-      )
+              stopLocationSharing()
 
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'Could not mark arrival',
-      )
-    } finally {
-      setActionId(null)
-    }
+              await loadEmergencies()
+            } catch (error) {
+              console.error(
+                'Responder arrival error:',
+                error,
+              )
+
+              setError(
+                error instanceof Error
+                  ? error.message
+                  : 'Could not mark arrival',
+              )
+            } finally {
+              setActionId(null)
+            }
+          },
+        },
+      ],
+    )
   }
 
   const handleComplete = async (
@@ -306,7 +333,7 @@ export default function ResponderScreen() {
   ) => {
     Alert.alert(
       'Complete emergency?',
-      'This will close the emergency request.',
+      'Only complete the emergency when response at the scene is finished.',
       [
         {
           text: 'Cancel',
@@ -362,15 +389,18 @@ export default function ResponderScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView
-        style={styles.screen}
-      >
+      <SafeAreaView style={styles.screen}>
         <View
           style={styles.loadingContainer}
         >
+          <Text style={styles.loadingLogo}>
+            112
+          </Text>
+
           <ActivityIndicator
             size="large"
             color="#111827"
+            style={styles.loadingIndicator}
           />
 
           <Text
@@ -384,27 +414,25 @@ export default function ResponderScreen() {
   }
 
   return (
-    <SafeAreaView
-      style={styles.screen}
-    >
+    <SafeAreaView style={styles.screen}>
       <ScrollView
         contentContainerStyle={
           styles.content
+        }
+        showsVerticalScrollIndicator={
+          false
         }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
+            tintColor="#111827"
           />
         }
       >
-        <View
-          style={styles.header}
-        >
+        <View style={styles.header}>
           <View>
-            <Text
-              style={styles.logo}
-            >
+            <Text style={styles.logo}>
               112
             </Text>
 
@@ -429,37 +457,54 @@ export default function ResponderScreen() {
           </Pressable>
         </View>
 
-        <View
-          style={styles.hero}
-        >
-          <Text
-            style={styles.heroEyebrow}
-          >
-            ACTIVE DUTY
-          </Text>
+        <View style={styles.hero}>
+          <View style={styles.heroBadgeRow}>
+  <View
+    style={[
+      styles.dutyBadge,
+      sharingEmergencyId !== null
+        ? styles.dutyBadgeActive
+        : styles.dutyBadgeWaiting,
+    ]}
+  >
+    <View
+      style={[
+        styles.dutyDot,
+        sharingEmergencyId !== null
+          ? styles.dutyDotActive
+          : styles.dutyDotWaiting,
+      ]}
+    />
 
-          <Text
-            style={styles.heroTitle}
-          >
-            Responder dashboard
-          </Text>
+    <Text style={styles.dutyBadgeText}>
+      {sharingEmergencyId !== null
+        ? 'TRACKING'
+        : 'READY'}
+    </Text>
+  </View>
+</View>
+
+<Text style={styles.heroEyebrow}>
+  ACTIVE DUTY
+</Text>
+
+<Text style={styles.heroTitle}>
+  Responder dashboard
+</Text>
 
           <Text
             style={styles.heroSubtitle}
           >
-            Assigned incidents appear
-            here in real time.
+            Receive assignments, share
+            live GPS, and update incident
+            status from the field.
           </Text>
 
           <View
-            style={
-              styles.heroStatRow
-            }
+            style={styles.heroStatRow}
           >
             <View
-              style={
-                styles.heroStat
-              }
+              style={styles.heroStat}
             >
               <Text
                 style={
@@ -479,21 +524,20 @@ export default function ResponderScreen() {
             </View>
 
             <View
-              style={
-                styles.heroDivider
-              }
+              style={styles.heroDivider}
             />
 
             <View
-              style={
-                styles.heroStat
-              }
+              style={styles.heroStat}
             >
               <Text
-                style={
-                  styles.heroStatValue
-                }
-              >
+  style={[
+    styles.heroStatValue,
+    sharingEmergencyId !== null
+      ? styles.heroGpsActive
+      : null,
+  ]}
+>
                 {sharingEmergencyId
                   ? 'ON'
                   : 'OFF'}
@@ -514,6 +558,12 @@ export default function ResponderScreen() {
           <View
             style={styles.errorCard}
           >
+            <Text
+              style={styles.errorTitle}
+            >
+              Action required
+            </Text>
+
             <Text
               style={styles.errorText}
             >
@@ -539,6 +589,16 @@ export default function ResponderScreen() {
             }
           >
             Assigned emergencies
+          </Text>
+
+          <Text
+            style={
+              styles.sectionDescription
+            }
+          >
+            Pull down to refresh. New
+            assignments also appear
+            automatically.
           </Text>
         </View>
 
@@ -567,8 +627,9 @@ export default function ResponderScreen() {
             <Text
               style={styles.emptyText}
             >
-              New emergencies assigned
-              by the control center will
+              You are ready for dispatch.
+              New emergencies assigned by
+              the control center will
               appear here automatically.
             </Text>
           </View>
@@ -595,6 +656,13 @@ export default function ResponderScreen() {
                 actionId ===
                 emergency.id
 
+              const responderState =
+                arrived
+                  ? 'ON SCENE'
+                  : accepted
+                    ? 'EN ROUTE'
+                    : 'DISPATCHED'
+
               return (
                 <View
                   key={emergency.id}
@@ -607,7 +675,11 @@ export default function ResponderScreen() {
                       styles.emergencyHeader
                     }
                   >
-                    <View>
+                    <View
+                      style={
+                        styles.emergencyTitleArea
+                      }
+                    >
                       <Text
                         style={
                           styles.emergencyNumber
@@ -631,18 +703,30 @@ export default function ResponderScreen() {
                     </View>
 
                     <View
-                      style={
-                        styles.statusBadge
-                      }
+                      style={[
+                        styles.statusBadge,
+
+                        accepted &&
+                          !arrived &&
+                          styles.statusBadgeActive,
+
+                        arrived &&
+                          styles.statusBadgeArrived,
+                      ]}
                     >
                       <Text
-                        style={
-                          styles.statusBadgeText
-                        }
+                        style={[
+                          styles.statusBadgeText,
+
+                          accepted &&
+                            !arrived &&
+                            styles.statusBadgeTextActive,
+
+                          arrived &&
+                            styles.statusBadgeTextArrived,
+                        ]}
                       >
-                        {
-                          emergency.status
-                        }
+                        {responderState}
                       </Text>
                     </View>
                   </View>
@@ -693,6 +777,7 @@ export default function ResponderScreen() {
                         style={
                           styles.detailValue
                         }
+                        numberOfLines={2}
                       >
                         {
                           emergency.user
@@ -711,7 +796,7 @@ export default function ResponderScreen() {
                           styles.detailLabel
                         }
                       >
-                        STATUS
+                        RESPONSE STATE
                       </Text>
 
                       <Text
@@ -719,11 +804,7 @@ export default function ResponderScreen() {
                           styles.detailValue
                         }
                       >
-                        {arrived
-                          ? 'ARRIVED'
-                          : accepted
-                            ? 'EN ROUTE'
-                            : 'DISPATCHED'}
+                        {responderState}
                       </Text>
                     </View>
                   </View>
@@ -733,27 +814,49 @@ export default function ResponderScreen() {
                       styles.locationCard
                     }
                   >
-                    <Text
+                    <View
                       style={
-                        styles.detailLabel
+                        styles.locationHeader
                       }
                     >
-                      EMERGENCY LOCATION
-                    </Text>
+                      <View>
+                        <Text
+                          style={
+                            styles.detailLabel
+                          }
+                        >
+                          EMERGENCY LOCATION
+                        </Text>
 
-                    <Text
-                      style={
-                        styles.locationValue
-                      }
-                    >
-                      {emergency.latitude.toFixed(
-                        5,
-                      )}
-                      ,{' '}
-                      {emergency.longitude.toFixed(
-                        5,
-                      )}
-                    </Text>
+                        <Text
+                          style={
+                            styles.locationValue
+                          }
+                        >
+                          {emergency.latitude.toFixed(
+                            5,
+                          )}
+                          ,{' '}
+                          {emergency.longitude.toFixed(
+                            5,
+                          )}
+                        </Text>
+                      </View>
+
+                      <View
+                        style={
+                          styles.locationBadge
+                        }
+                      >
+                        <Text
+                          style={
+                            styles.locationBadgeText
+                          }
+                        >
+                          GPS
+                        </Text>
+                      </View>
+                    </View>
 
                     <Text
                       style={
@@ -761,64 +864,165 @@ export default function ResponderScreen() {
                       }
                     >
                       Exact coordinates
-                      shared by caller
+                      provided by the
+                      emergency request.
                     </Text>
                   </View>
+
+                  {!accepted ? (
+                    <View
+                      style={
+                        styles.instructionCard
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.instructionNumber
+                        }
+                      >
+                        1
+                      </Text>
+
+                      <View
+                        style={
+                          styles.instructionContent
+                        }
+                      >
+                        <Text
+                          style={
+                            styles.instructionTitle
+                          }
+                        >
+                          Accept dispatch
+                        </Text>
+
+                        <Text
+                          style={
+                            styles.instructionText
+                          }
+                        >
+                          Accepting starts
+                          the response and
+                          automatically
+                          attempts to enable
+                          live GPS sharing.
+                        </Text>
+                      </View>
+                    </View>
+                  ) : null}
 
                   {accepted &&
                     !arrived && (
                       <View
-                        style={
-                          styles.trackingCard
-                        }
+                        style={[
+                          styles.trackingCard,
+                          isSharing &&
+                            styles.trackingCardActive,
+                        ]}
                       >
-                        <View>
-                          <Text
-                            style={
-                              styles.trackingTitle
-                            }
-                          >
-                            Live location
-                          </Text>
+                        <View
+                          style={
+                            styles.trackingStatusRow
+                          }
+                        >
+                          <View
+                            style={[
+                              styles.liveDot,
+                              isSharing
+                                ? styles.liveDotActive
+                                : styles.liveDotInactive,
+                            ]}
+                          />
 
                           <Text
                             style={
-                              styles.trackingText
+                              styles.trackingStatusText
                             }
                           >
                             {isSharing
-                              ? 'Your location is being shared with the 112 platform.'
-                              : 'Location sharing is currently stopped.'}
+                              ? 'LIVE GPS ACTIVE'
+                              : 'GPS NOT SHARING'}
                           </Text>
                         </View>
 
-                        <View
-                          style={[
-                            styles.liveDot,
-                            isSharing
-                              ? styles.liveDotActive
-                              : styles.liveDotInactive,
-                          ]}
-                        />
+                        <Text
+                          style={
+                            styles.trackingTitle
+                          }
+                        >
+                          {isSharing
+                            ? 'Location sharing active'
+                            : 'Start location sharing'}
+                        </Text>
+
+                        <Text
+                          style={
+                            styles.trackingText
+                          }
+                        >
+                          {isSharing
+                            ? 'Your position is being shared with the 112 operator and the citizen in real time.'
+                            : 'Live GPS must be active while responding so the operator and citizen can track your position.'}
+                        </Text>
                       </View>
                     )}
 
                   {isSharing &&
                     lastLocation && (
-                      <Text
+                      <View
                         style={
-                          styles.currentGps
+                          styles.currentGpsCard
                         }
                       >
-                        GPS:{' '}
-                        {lastLocation.latitude.toFixed(
-                          5,
-                        )}
-                        ,{' '}
-                        {lastLocation.longitude.toFixed(
-                          5,
-                        )}
-                      </Text>
+                        <View
+                          style={
+                            styles.currentGpsHeader
+                          }
+                        >
+                          <Text
+                            style={
+                              styles.currentGpsLabel
+                            }
+                          >
+                            CURRENT RESPONDER
+                            POSITION
+                          </Text>
+
+                          <View
+                            style={
+                              styles.currentGpsLiveBadge
+                            }
+                          >
+                            <View
+                              style={
+                                styles.currentGpsLiveDot
+                              }
+                            />
+
+                            <Text
+                              style={
+                                styles.currentGpsLiveText
+                              }
+                            >
+                              LIVE
+                            </Text>
+                          </View>
+                        </View>
+
+                        <Text
+                          style={
+                            styles.currentGpsValue
+                          }
+                        >
+                          {lastLocation.latitude.toFixed(
+                            5,
+                          )}
+                          ,{' '}
+                          {lastLocation.longitude.toFixed(
+                            5,
+                          )}
+                        </Text>
+                      </View>
                     )}
 
                   {!accepted ? (
@@ -837,7 +1041,7 @@ export default function ResponderScreen() {
                     >
                       {busy ? (
                         <ActivityIndicator
-                          color="#ffffff"
+                          color="#FFFFFF"
                         />
                       ) : (
                         <Text
@@ -867,13 +1071,19 @@ export default function ResponderScreen() {
                         )
                       }
                     >
-                      <Text
-                        style={
-                          styles.secondaryButtonText
-                        }
-                      >
-                        Start GPS sharing
-                      </Text>
+                      {busy ? (
+                        <ActivityIndicator
+                          color="#111827"
+                        />
+                      ) : (
+                        <Text
+                          style={
+                            styles.secondaryButtonText
+                          }
+                        >
+                          Start GPS sharing
+                        </Text>
+                      )}
                     </Pressable>
                   ) : null}
 
@@ -883,10 +1093,15 @@ export default function ResponderScreen() {
                       style={[
                         styles.primaryButton,
                         styles.buttonSpacing,
-                        busy &&
+
+                        (!isSharing ||
+                          busy) &&
                           styles.disabledButton,
                       ]}
-                      disabled={busy}
+                      disabled={
+                        !isSharing ||
+                        busy
+                      }
                       onPress={() =>
                         handleArrived(
                           emergency.id,
@@ -895,7 +1110,7 @@ export default function ResponderScreen() {
                     >
                       {busy ? (
                         <ActivityIndicator
-                          color="#ffffff"
+                          color="#FFFFFF"
                         />
                       ) : (
                         <Text
@@ -903,10 +1118,26 @@ export default function ResponderScreen() {
                             styles.primaryButtonText
                           }
                         >
-                          Mark as arrived
+                          {isSharing
+                            ? 'Mark as arrived'
+                            : 'Start GPS before arrival'}
                         </Text>
                       )}
                     </Pressable>
+                  ) : null}
+
+                  {accepted &&
+                    !arrived &&
+                    !isSharing ? (
+                    <Text
+                      style={
+                        styles.arrivalRequirement
+                      }
+                    >
+                      Arrival becomes
+                      available after live
+                      GPS sharing starts.
+                    </Text>
                   ) : null}
 
                   {arrived ? (
@@ -916,28 +1147,53 @@ export default function ResponderScreen() {
                           styles.arrivedCard
                         }
                       >
-                        <Text
+                        <View
                           style={
-                            styles.arrivedTitle
+                            styles.arrivedIcon
                           }
                         >
-                          Responder arrived
-                        </Text>
+                          <Text
+                            style={
+                              styles.arrivedIconText
+                            }
+                          >
+                            ✓
+                          </Text>
+                        </View>
 
-                        <Text
+                        <View
                           style={
-                            styles.arrivedText
+                            styles.arrivedContent
                           }
                         >
-                          The incident is
-                          currently being
-                          handled on scene.
-                        </Text>
+                          <Text
+                            style={
+                              styles.arrivedTitle
+                            }
+                          >
+                            You are on scene
+                          </Text>
+
+                          <Text
+                            style={
+                              styles.arrivedText
+                            }
+                          >
+                            Live GPS sharing
+                            has stopped. Handle
+                            the incident and
+                            complete the
+                            emergency when
+                            response is
+                            finished.
+                          </Text>
+                        </View>
                       </View>
 
                       <Pressable
                         style={[
                           styles.completeButton,
+
                           busy &&
                             styles.disabledButton,
                         ]}
@@ -950,7 +1206,7 @@ export default function ResponderScreen() {
                       >
                         {busy ? (
                           <ActivityIndicator
-                            color="#ffffff"
+                            color="#FFFFFF"
                           />
                         ) : (
                           <Text
@@ -974,8 +1230,7 @@ export default function ResponderScreen() {
           style={styles.footerNote}
         >
           112 Responder Platform ·
-          Prototype emergency response
-          system
+          Emergency response system
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -1000,6 +1255,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  loadingLogo: {
+    color: '#111827',
+    fontSize: 34,
+    fontWeight: '900',
+  },
+
+  loadingIndicator: {
+    marginTop: 22,
+  },
+
   loadingText: {
     marginTop: 12,
     color: '#6B7280',
@@ -1009,7 +1274,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent:
+      'space-between',
     marginBottom: 18,
   },
 
@@ -1048,6 +1314,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#111827',
   },
 
+  heroBadgeRow: {
+  flexDirection: 'row',
+  justifyContent: 'flex-end',
+  marginBottom: 10,
+},
+
   heroEyebrow: {
     fontSize: 10,
     fontWeight: '800',
@@ -1056,18 +1328,56 @@ const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    marginTop: 7,
-    fontSize: 27,
-    fontWeight: '900',
-    color: '#FFFFFF',
-  },
+  marginTop: 7,
+  fontSize: 24,
+  fontWeight: '900',
+  color: '#FFFFFF',
+},
 
   heroSubtitle: {
-    marginTop: 7,
-    maxWidth: 290,
-    fontSize: 14,
+    marginTop: 10,
+    maxWidth: 300,
+    fontSize: 13,
     lineHeight: 20,
     color: '#C7CDD6',
+  },
+
+  dutyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+    borderRadius: 12,
+  },
+
+  dutyBadgeActive: {
+    backgroundColor: '#163D2B',
+  },
+
+  dutyBadgeWaiting: {
+    backgroundColor: '#25303E',
+  },
+
+  dutyDot: {
+    width: 7,
+    height: 7,
+    marginRight: 6,
+    borderRadius: 4,
+  },
+
+  dutyDotActive: {
+    backgroundColor: '#4ADE80',
+  },
+
+  dutyDotWaiting: {
+    backgroundColor: '#94A3B8',
+  },
+
+  dutyBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 0.7,
   },
 
   heroStatRow: {
@@ -1084,6 +1394,10 @@ const styles = StyleSheet.create({
     fontSize: 21,
     fontWeight: '900',
     color: '#FFFFFF',
+  },
+
+  heroGpsActive: {
+    color: '#4ADE80',
   },
 
   heroStatLabel: {
@@ -1106,10 +1420,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEE2E2',
   },
 
+  errorTitle: {
+    color: '#991B1B',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
   errorText: {
+    marginTop: 4,
     color: '#B91C1C',
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 17,
   },
 
   sectionHeader: {
@@ -1129,6 +1450,13 @@ const styles = StyleSheet.create({
     fontSize: 21,
     fontWeight: '800',
     color: '#111827',
+  },
+
+  sectionDescription: {
+    marginTop: 4,
+    color: '#8A929C',
+    fontSize: 10,
+    lineHeight: 15,
   },
 
   emptyCard: {
@@ -1181,8 +1509,14 @@ const styles = StyleSheet.create({
 
   emergencyHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
+    justifyContent:
+      'space-between',
+  },
+
+  emergencyTitleArea: {
+    flex: 1,
+    marginRight: 12,
   },
 
   emergencyNumber: {
@@ -1206,11 +1540,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF2F6',
   },
 
+  statusBadgeActive: {
+    backgroundColor: '#EEF2FF',
+  },
+
+  statusBadgeArrived: {
+    backgroundColor: '#DCFCE7',
+  },
+
   statusBadgeText: {
     fontSize: 8,
     fontWeight: '900',
     letterSpacing: 0.6,
-    color: '#111827',
+    color: '#4B5563',
+  },
+
+  statusBadgeTextActive: {
+    color: '#3730A3',
+  },
+
+  statusBadgeTextArrived: {
+    color: '#166534',
   },
 
   descriptionCard: {
@@ -1263,6 +1613,27 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
 
+  locationHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent:
+      'space-between',
+  },
+
+  locationBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#EEF2F6',
+  },
+
+  locationBadgeText: {
+    color: '#6B7280',
+    fontSize: 7,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+  },
+
   locationValue: {
     marginTop: 6,
     fontSize: 15,
@@ -1276,34 +1647,91 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
 
-  trackingCard: {
+  instructionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     marginTop: 12,
     padding: 14,
     borderRadius: 15,
     backgroundColor: '#F7F8FA',
   },
 
-  trackingTitle: {
+  instructionNumber: {
+    width: 30,
+    height: 30,
+    textAlign: 'center',
+    lineHeight: 30,
+    borderRadius: 15,
+    overflow: 'hidden',
+    backgroundColor: '#111827',
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
+  instructionContent: {
+    flex: 1,
+    marginLeft: 11,
+  },
+
+  instructionTitle: {
+    color: '#111827',
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '900',
+  },
+
+  instructionText: {
+    marginTop: 3,
+    color: '#6B7280',
+    fontSize: 10,
+    lineHeight: 15,
+  },
+
+  trackingCard: {
+    marginTop: 12,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    backgroundColor: '#F8F9FA',
+  },
+
+  trackingCardActive: {
+    borderColor: '#BBF7D0',
+    backgroundColor: '#F0FDF4',
+  },
+
+  trackingStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  trackingStatusText: {
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 1,
+    color: '#6B7280',
+  },
+
+  trackingTitle: {
+    marginTop: 9,
+    fontSize: 13,
+    fontWeight: '900',
     color: '#111827',
   },
 
   trackingText: {
-    maxWidth: 265,
-    marginTop: 3,
+    marginTop: 4,
     fontSize: 10,
     lineHeight: 15,
     color: '#6B7280',
   },
 
   liveDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    marginRight: 7,
+    borderRadius: 4,
   },
 
   liveDotActive: {
@@ -1314,10 +1742,52 @@ const styles = StyleSheet.create({
     backgroundColor: '#9CA3AF',
   },
 
-  currentGps: {
+  currentGpsCard: {
     marginTop: 9,
-    fontSize: 9,
-    color: '#6B7280',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#F7F8FA',
+  },
+
+  currentGpsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent:
+      'space-between',
+  },
+
+  currentGpsLabel: {
+    fontSize: 7,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+    color: '#9CA3AF',
+  },
+
+  currentGpsLiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  currentGpsLiveDot: {
+    width: 6,
+    height: 6,
+    marginRight: 4,
+    borderRadius: 3,
+    backgroundColor: '#16A34A',
+  },
+
+  currentGpsLiveText: {
+    color: '#16A34A',
+    fontSize: 7,
+    fontWeight: '900',
+  },
+
+  currentGpsValue: {
+    marginTop: 5,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#4B5563',
   },
 
   primaryButton: {
@@ -1359,14 +1829,44 @@ const styles = StyleSheet.create({
   },
 
   disabledButton: {
-    opacity: 0.5,
+    opacity: 0.45,
+  },
+
+  arrivalRequirement: {
+    marginTop: 7,
+    textAlign: 'center',
+    color: '#9CA3AF',
+    fontSize: 9,
+    lineHeight: 13,
   },
 
   arrivedCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 14,
-    padding: 14,
-    borderRadius: 15,
+    padding: 15,
+    borderRadius: 16,
     backgroundColor: '#ECFDF3',
+  },
+
+  arrivedIcon: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: '#166534',
+  },
+
+  arrivedIconText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+
+  arrivedContent: {
+    flex: 1,
+    marginLeft: 12,
   },
 
   arrivedTitle: {

@@ -1,9 +1,8 @@
-import BottomNav from '../components/BottomNav'
-
 import {
   useCallback,
   useState,
 } from 'react'
+
 import {
   ActivityIndicator,
   Pressable,
@@ -14,10 +13,12 @@ import {
   Text,
   View,
 } from 'react-native'
+
 import {
   useFocusEffect,
-  useRouter,
 } from 'expo-router'
+
+import BottomNav from '../components/BottomNav'
 
 import { getAlerts } from '../services/alertService'
 
@@ -36,8 +37,6 @@ const severityNames: Record<
 }
 
 export default function AlertsScreen() {
-  const router = useRouter()
-
   const [alerts, setAlerts] =
     useState<SafetyAlert[]>([])
 
@@ -47,21 +46,28 @@ export default function AlertsScreen() {
   const [refreshing, setRefreshing] =
     useState(false)
 
-  const [error, setError] = useState('')
+  const [error, setError] =
+    useState('')
 
   const loadAlerts = useCallback(
-    async (refresh = false) => {
+    async (
+      refresh = false,
+    ) => {
       try {
         if (refresh) {
           setRefreshing(true)
         }
 
-        const result = await getAlerts()
+        const result =
+          await getAlerts()
 
         setAlerts(result)
         setError('')
       } catch (error) {
-        console.error(error)
+        console.error(
+          'Safety alert loading error:',
+          error,
+        )
 
         setError(
           error instanceof Error
@@ -85,8 +91,14 @@ export default function AlertsScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.screen}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.logo}>
+        <View
+          style={
+            styles.loadingContainer
+          }
+        >
+          <Text
+            style={styles.loadingLogo}
+          >
             112
           </Text>
 
@@ -96,7 +108,9 @@ export default function AlertsScreen() {
             style={styles.loader}
           />
 
-          <Text style={styles.loadingText}>
+          <Text
+            style={styles.loadingText}
+          >
             Loading safety alerts...
           </Text>
         </View>
@@ -107,17 +121,24 @@ export default function AlertsScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={
+          styles.content
+        }
+        showsVerticalScrollIndicator={
+          false
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() =>
               loadAlerts(true)
             }
+            tintColor="#111827"
           />
         }
       >
+        {/* HEADER */}
+
         <View style={styles.header}>
           <View>
             <Text style={styles.logo}>
@@ -131,69 +152,175 @@ export default function AlertsScreen() {
             <Text style={styles.title}>
               Alerts
             </Text>
-          </View>
 
+            <Text
+              style={styles.subtitle}
+            >
+              Official safety information
+              and important notices for
+              your area.
+            </Text>
+          </View>
         </View>
 
-        <Text style={styles.subtitle}>
-          Official safety information and
-          important notices for your area.
-        </Text>
+        {/* STATUS SUMMARY */}
+
+        <View style={styles.summaryCard}>
+          <View
+            style={styles.summaryIcon}
+          >
+            <Text
+              style={styles.summaryIconText}
+            >
+              !
+            </Text>
+          </View>
+
+          <View
+            style={styles.summaryContent}
+          >
+            <Text
+              style={styles.summaryTitle}
+            >
+              {alerts.length === 0
+                ? 'No active alerts'
+                : `${alerts.length} ${
+                    alerts.length === 1
+                      ? 'active alert'
+                      : 'active alerts'
+                  }`}
+            </Text>
+
+            <Text
+              style={styles.summaryText}
+            >
+              Safety notices are published
+              through the 112 operator
+              system.
+            </Text>
+          </View>
+        </View>
+
+        {/* ERROR */}
 
         {error ? (
           <View style={styles.errorCard}>
-            <Text style={styles.errorTitle}>
+            <Text
+              style={styles.errorTitle}
+            >
               Could not load alerts
             </Text>
 
-            <Text style={styles.errorText}>
+            <Text
+              style={styles.errorText}
+            >
               {error}
             </Text>
 
             <Pressable
-              onPress={() => loadAlerts()}
+              style={({ pressed }) => [
+                styles.retryButton,
+                pressed &&
+                  styles.buttonPressed,
+              ]}
+              onPress={() =>
+                loadAlerts()
+              }
             >
-              <Text style={styles.retry}>
+              <Text
+                style={styles.retryText}
+              >
                 Try again
               </Text>
             </Pressable>
           </View>
         ) : null}
 
+        {/* EMPTY */}
+
         {!error &&
         alerts.length === 0 ? (
           <View style={styles.emptyCard}>
-            <View style={styles.safeBadge}>
-              <Text style={styles.safeBadgeText}>
+            <View
+              style={styles.safeBadge}
+            >
+              <View
+                style={styles.safeDot}
+              />
+
+              <Text
+                style={
+                  styles.safeBadgeText
+                }
+              >
                 ALL CLEAR
               </Text>
             </View>
 
-            <Text style={styles.emptyTitle}>
+            <Text
+              style={styles.emptyTitle}
+            >
               No active safety alerts
             </Text>
 
-            <Text style={styles.emptyText}>
-              There are currently no active public
-              safety notices.
+            <Text
+              style={styles.emptyText}
+            >
+              There are currently no active
+              public safety notices.
             </Text>
           </View>
         ) : null}
 
-        <View style={styles.alertList}>
-          {alerts.map((alert) => (
-            <AlertCard
-              key={alert.id}
-              alert={alert}
-            />
-          ))}
-        </View>
+        {/* ALERTS */}
 
-        <Text style={styles.footerNote}>
-          Safety alerts shown here are published
-          through the 112 operator system.
-        </Text>
-            </ScrollView>
+        {alerts.length > 0 ? (
+          <>
+            <View
+              style={styles.sectionHeader}
+            >
+              <Text
+                style={
+                  styles.sectionLabel
+                }
+              >
+                ACTIVE NOTICES
+              </Text>
+
+              <Text
+                style={
+                  styles.sectionCount
+                }
+              >
+                {alerts.length}
+              </Text>
+            </View>
+
+            <View
+              style={styles.alertList}
+            >
+              {alerts.map((alert) => (
+                <AlertCard
+                  key={alert.id}
+                  alert={alert}
+                />
+              ))}
+            </View>
+          </>
+        ) : null}
+
+        <View style={styles.footerInfo}>
+          <View style={styles.footerDot} />
+
+          <Text
+            style={styles.footerNote}
+          >
+            Pull down to refresh for the
+            latest public safety
+            information.
+          </Text>
+        </View>
+      </ScrollView>
 
       <BottomNav active="alerts" />
     </SafeAreaView>
@@ -205,19 +332,31 @@ function AlertCard({
 }: {
   alert: SafetyAlert
 }) {
+  const critical =
+    alert.severity === 'CRITICAL'
+
+  const warning =
+    alert.severity === 'WARNING'
+
+  const info =
+    alert.severity === 'INFO'
+
   return (
     <View
       style={[
         styles.alertCard,
 
-        alert.severity === 'INFO' &&
-          styles.infoCard,
+        info
+          ? styles.infoCard
+          : null,
 
-        alert.severity === 'WARNING' &&
-          styles.warningCard,
+        warning
+          ? styles.warningCard
+          : null,
 
-        alert.severity === 'CRITICAL' &&
-          styles.criticalCard,
+        critical
+          ? styles.criticalCard
+          : null,
       ]}
     >
       <View style={styles.alertTop}>
@@ -225,35 +364,62 @@ function AlertCard({
           style={[
             styles.severityBadge,
 
-            alert.severity === 'INFO' &&
-              styles.infoBadge,
+            info
+              ? styles.infoBadge
+              : null,
 
-            alert.severity === 'WARNING' &&
-              styles.warningBadge,
+            warning
+              ? styles.warningBadge
+              : null,
 
-            alert.severity === 'CRITICAL' &&
-              styles.criticalBadge,
+            critical
+              ? styles.criticalBadge
+              : null,
           ]}
         >
+          <View
+            style={[
+              styles.severityDot,
+
+              info
+                ? styles.infoDot
+                : null,
+
+              warning
+                ? styles.warningDot
+                : null,
+
+              critical
+                ? styles.criticalDot
+                : null,
+            ]}
+          />
+
           <Text
             style={[
               styles.severityText,
 
-              alert.severity === 'INFO' &&
-                styles.infoText,
+              info
+                ? styles.infoText
+                : null,
 
-              alert.severity === 'WARNING' &&
-                styles.warningText,
+              warning
+                ? styles.warningText
+                : null,
 
-              alert.severity === 'CRITICAL' &&
-                styles.criticalText,
+              critical
+                ? styles.criticalText
+                : null,
             ]}
           >
             {severityNames[alert.severity]}
           </Text>
         </View>
 
-        <Text style={styles.alertRegion}>
+        <Text
+          style={styles.alertRegion}
+          numberOfLines={1}
+        >
           {alert.region}
         </Text>
       </View>
@@ -262,17 +428,31 @@ function AlertCard({
         {alert.title}
       </Text>
 
-      <Text style={styles.alertMessage}>
+      <Text
+        style={styles.alertMessage}
+      >
         {alert.message}
       </Text>
 
       <View style={styles.divider} />
 
-      <Text style={styles.alertDate}>
-        {new Date(
-          alert.createdAt,
-        ).toLocaleString()}
-      </Text>
+      <View
+        style={styles.alertFooter}
+      >
+        <Text
+          style={styles.alertDateLabel}
+        >
+          PUBLISHED
+        </Text>
+
+        <Text
+          style={styles.alertDate}
+        >
+          {new Date(
+            alert.createdAt,
+          ).toLocaleString()}
+        </Text>
+      </View>
     </View>
   )
 }
@@ -286,7 +466,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 25,
+    paddingBottom: 28,
   },
 
   loadingContainer: {
@@ -295,86 +475,223 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  loadingLogo: {
+    color: '#111827',
+    fontSize: 30,
+    fontWeight: '900',
+  },
+
   loader: {
-    marginTop: 25,
+    marginTop: 24,
   },
 
   loadingText: {
-    marginTop: 12,
+    marginTop: 11,
     color: '#7A838D',
-    fontSize: 13,
+    fontSize: 12,
   },
 
   header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    marginBottom: 20,
   },
 
   logo: {
+    color: '#111827',
     fontSize: 23,
     fontWeight: '900',
-    color: '#111827',
   },
 
   eyebrow: {
-    marginTop: 24,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.2,
+    marginTop: 22,
     color: '#929AA4',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1.1,
   },
 
   title: {
-    marginTop: 7,
-    fontSize: 30,
-    fontWeight: '800',
+    marginTop: 6,
     color: '#18212B',
-  },
-
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 15,
-    backgroundColor: '#FFFFFF',
-  },
-
-  backText: {
-    fontSize: 25,
-    color: '#111827',
+    fontSize: 29,
+    fontWeight: '900',
   },
 
   subtitle: {
-    maxWidth: 300,
-    marginTop: 10,
-    marginBottom: 28,
+    maxWidth: 310,
+    marginTop: 7,
     color: '#7A838D',
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+
+  summaryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    padding: 15,
+    borderRadius: 18,
+    backgroundColor: '#111827',
+  },
+
+  summaryIcon: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    borderRadius: 14,
+    backgroundColor: '#25303E',
+  },
+
+  summaryIconText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '900',
+  },
+
+  summaryContent: {
+    flex: 1,
+  },
+
+  summaryTitle: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+
+  summaryText: {
+    marginTop: 4,
+    color: '#AEB6C1',
+    fontSize: 9,
+    lineHeight: 14,
+  },
+
+  errorCard: {
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 18,
+    backgroundColor: '#FEF2F2',
+  },
+
+  errorTitle: {
+    color: '#991B1B',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+
+  errorText: {
+    marginTop: 5,
+    color: '#B42318',
+    fontSize: 10,
+    lineHeight: 15,
+  },
+
+  retryButton: {
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+  },
+
+  retryText: {
+    color: '#991B1B',
+    fontSize: 9,
+    fontWeight: '900',
+  },
+
+  emptyCard: {
+    padding: 22,
+    borderWidth: 1,
+    borderColor: '#E7EAEE',
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+  },
+
+  safeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: '#E2F5ED',
+  },
+
+  safeDot: {
+    width: 6,
+    height: 6,
+    marginRight: 5,
+    borderRadius: 3,
+    backgroundColor: '#16A34A',
+  },
+
+  safeBadgeText: {
+    color: '#277355',
+    fontSize: 7,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+  },
+
+  emptyTitle: {
+    marginTop: 15,
+    color: '#202831',
+    fontSize: 17,
+    fontWeight: '900',
+  },
+
+  emptyText: {
+    marginTop: 5,
+    color: '#929AA4',
+    fontSize: 10,
+    lineHeight: 16,
+  },
+
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+
+  sectionLabel: {
+    color: '#929AA4',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1.1,
+  },
+
+  sectionCount: {
+    color: '#9CA3AF',
+    fontSize: 9,
+    fontWeight: '900',
   },
 
   alertList: {
-    gap: 12,
+    gap: 11,
   },
 
   alertCard: {
-    padding: 19,
+    padding: 18,
+    borderWidth: 1,
     borderLeftWidth: 4,
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
   },
 
   infoCard: {
+    borderColor: '#E3E7F0',
     borderLeftColor: '#6977A8',
   },
 
   warningCard: {
+    borderColor: '#F3E2C6',
     borderLeftColor: '#C88026',
   },
 
   criticalCard: {
+    borderColor: '#F2D7D4',
     borderLeftColor: '#B42318',
   },
 
@@ -385,7 +702,9 @@ const styles = StyleSheet.create({
   },
 
   severityBadge: {
-    paddingHorizontal: 9,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
     paddingVertical: 6,
     borderRadius: 12,
   },
@@ -402,10 +721,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEE9E7',
   },
 
+  severityDot: {
+    width: 6,
+    height: 6,
+    marginRight: 5,
+    borderRadius: 3,
+  },
+
+  infoDot: {
+    backgroundColor: '#59678F',
+  },
+
+  warningDot: {
+    backgroundColor: '#C88026',
+  },
+
+  criticalDot: {
+    backgroundColor: '#B42318',
+  },
+
   severityText: {
-    fontSize: 8,
+    fontSize: 7,
     fontWeight: '900',
-    letterSpacing: 0.7,
+    letterSpacing: 0.6,
   },
 
   infoText: {
@@ -421,101 +759,79 @@ const styles = StyleSheet.create({
   },
 
   alertRegion: {
+    maxWidth: 125,
     color: '#929AA4',
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700',
   },
 
   alertTitle: {
-    marginTop: 17,
+    marginTop: 16,
     color: '#202831',
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 17,
+    fontWeight: '900',
   },
 
   alertMessage: {
-    marginTop: 8,
+    marginTop: 7,
     color: '#59636D',
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 12,
+    lineHeight: 19,
   },
 
   divider: {
     height: 1,
-    marginVertical: 15,
+    marginVertical: 14,
     backgroundColor: '#ECEFF2',
+  },
+
+  alertFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  alertDateLabel: {
+    color: '#A0A7AF',
+    fontSize: 7,
+    fontWeight: '900',
+    letterSpacing: 0.7,
   },
 
   alertDate: {
     color: '#929AA4',
-    fontSize: 10,
+    fontSize: 9,
   },
 
-  emptyCard: {
-    padding: 22,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
+  footerInfo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 18,
+    paddingHorizontal: 4,
   },
 
-  safeBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    borderRadius: 12,
-    backgroundColor: '#E2F5ED',
-  },
-
-  safeBadgeText: {
-    color: '#277355',
-    fontSize: 8,
-    fontWeight: '900',
-  },
-
-  emptyTitle: {
-    marginTop: 15,
-    color: '#202831',
-    fontSize: 17,
-    fontWeight: '800',
-  },
-
-  emptyText: {
-    marginTop: 5,
-    color: '#929AA4',
-    fontSize: 11,
-    lineHeight: 17,
-  },
-
-  errorCard: {
-    padding: 18,
-    marginBottom: 15,
-    borderRadius: 18,
-    backgroundColor: '#FFFFFF',
-  },
-
-  errorTitle: {
-    color: '#B42318',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-
-  errorText: {
-    marginTop: 5,
-    color: '#7A838D',
-    fontSize: 11,
-  },
-
-  retry: {
-    marginTop: 12,
-    color: '#111827',
-    fontSize: 12,
-    fontWeight: '800',
+  footerDot: {
+    width: 6,
+    height: 6,
+    marginTop: 4,
+    marginRight: 7,
+    borderRadius: 3,
+    backgroundColor: '#9CA3AF',
   },
 
   footerNote: {
-    marginTop: 25,
-    textAlign: 'center',
+    flex: 1,
     color: '#A0A7AF',
-    fontSize: 9,
-    lineHeight: 14,
+    fontSize: 8,
+    lineHeight: 13,
+  },
+
+  buttonPressed: {
+    opacity: 0.86,
+    transform: [
+      {
+        scale: 0.99,
+      },
+    ],
   },
 })

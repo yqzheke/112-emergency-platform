@@ -1,4 +1,5 @@
 import { useState } from 'react'
+
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -20,12 +21,13 @@ import {
 import { analyzeEmergency } from '../services/aiService'
 
 import type {
-  EmergencyRequestType,
-} from '../types/emergency'
-
-import type {
   EmergencyAIAnalysis,
 } from '../types/ai'
+
+type EmergencyRequestType =
+  | 'medical'
+  | 'police'
+  | 'fire'
 
 const emergencyNames: Record<
   EmergencyRequestType,
@@ -36,13 +38,13 @@ const emergencyNames: Record<
   fire: 'Fire Emergency',
 }
 
-const emergencyDescriptions: Record<
+const emergencyLabels: Record<
   EmergencyRequestType,
   string
 > = {
-  medical: 'Ambulance assistance',
-  police: 'Police assistance',
-  fire: 'Fire and rescue assistance',
+  medical: 'MEDICAL',
+  police: 'POLICE',
+  fire: 'FIRE & RESCUE',
 }
 
 function isEmergencyType(
@@ -107,7 +109,10 @@ export default function EmergencyScreen() {
 
       setAiAnalysis(analysis)
     } catch (error) {
-      console.error(error)
+      console.error(
+        'AI emergency analysis error:',
+        error,
+      )
 
       setAiError(
         error instanceof Error
@@ -122,10 +127,10 @@ export default function EmergencyScreen() {
   const handleContinue = () => {
     setError('')
 
-    const trimmedDescription =
+    const cleanDescription =
       description.trim()
 
-    if (!trimmedDescription) {
+    if (!cleanDescription) {
       setError(
         'Please briefly describe the emergency.',
       )
@@ -138,47 +143,68 @@ export default function EmergencyScreen() {
     }
 
     router.push({
-  pathname: '/emergency-confirm',
+      pathname: '/emergency-confirm',
 
-  params: {
-    type,
-    description: trimmedDescription,
+      params: {
+        type,
 
-    aiService:
-      aiAnalysis?.service ?? '',
+        description:
+          cleanDescription,
 
-    aiSummary:
-      aiAnalysis?.summary ?? '',
+        aiService:
+          aiAnalysis?.service ?? '',
 
-    aiUrgency:
-      aiAnalysis?.urgency ?? '',
+        aiSummary:
+          aiAnalysis?.summary ?? '',
 
-    aiImportantDetails:
-      aiAnalysis
-        ? JSON.stringify(
-            aiAnalysis.importantDetails,
-          )
-        : '',
-  },
-})
+        aiUrgency:
+          aiAnalysis?.urgency ?? '',
+
+        aiImportantDetails:
+          aiAnalysis
+            ? JSON.stringify(
+                aiAnalysis.importantDetails,
+              )
+            : '',
+      },
+    })
   }
 
   if (!type) {
     return (
       <SafeAreaView style={styles.screen}>
-        <View style={styles.invalidContainer}>
-          <Text style={styles.logo}>
+        <View
+          style={styles.invalidContainer}
+        >
+          <Text
+            style={styles.invalidLogo}
+          >
             112
           </Text>
 
-          <Text style={styles.title}>
+          <Text
+            style={styles.invalidTitle}
+          >
             Invalid emergency type
           </Text>
 
+          <Text
+            style={styles.invalidText}
+          >
+            Return to the dashboard and
+            select an emergency service.
+          </Text>
+
           <Pressable
-            style={styles.primaryButton}
+            style={({ pressed }) => [
+              styles.primaryButton,
+              pressed &&
+                styles.buttonPressed,
+            ]}
             onPress={() =>
-              router.replace('/dashboard')
+              router.replace(
+                '/dashboard',
+              )
             }
           >
             <Text
@@ -213,130 +239,297 @@ export default function EmergencyScreen() {
             false
           }
         >
+          {/* HEADER */}
+
           <View style={styles.topRow}>
             <Pressable
-              onPress={() => router.back()}
+              style={({ pressed }) => [
+                styles.backButton,
+                pressed &&
+                  styles.buttonPressed,
+              ]}
+              onPress={() =>
+                router.back()
+              }
             >
-              <Text style={styles.backButton}>
+              <Text
+                style={
+                  styles.backButtonText
+                }
+              >
                 ←
               </Text>
             </Pressable>
 
-            <Text style={styles.logo}>
-              112
-            </Text>
+            <View
+              style={styles.logoBadge}
+            >
+              <Text style={styles.logo}>
+                112
+              </Text>
+            </View>
           </View>
 
-          <Text style={styles.eyebrow}>
-            {emergencyDescriptions[
-              type
-            ].toUpperCase()}
-          </Text>
+          {/* EMERGENCY TYPE */}
+
+          <View
+            style={styles.serviceBadge}
+          >
+            <View
+              style={
+                styles.serviceBadgeDot
+              }
+            />
+
+            <Text
+              style={
+                styles.serviceBadgeText
+              }
+            >
+              {emergencyLabels[type]}
+            </Text>
+          </View>
 
           <Text style={styles.title}>
             {emergencyNames[type]}
           </Text>
 
           <Text style={styles.subtitle}>
-            Tell us briefly what happened.
+            Tell us what happened. Keep the
+            description short and clear so
+            the operator can understand the
+            situation quickly.
           </Text>
 
-          <Text style={styles.label}>
-            What happened?
-          </Text>
+          {/* DESCRIPTION */}
+
+          <View
+            style={
+              styles.inputSectionHeader
+            }
+          >
+            <Text style={styles.label}>
+              What happened?
+            </Text>
+
+            <Text
+              style={styles.requiredText}
+            >
+              Required
+            </Text>
+          </View>
 
           <TextInput
-            style={styles.textArea}
+            style={[
+              styles.textArea,
+
+              error
+                ? styles.textAreaError
+                : null,
+            ]}
             value={description}
             onChangeText={(value) => {
               setDescription(value)
+              setError('')
+              setAiError('')
 
-              // Previous AI result no longer
-              // represents the edited description.
               if (aiAnalysis) {
                 setAiAnalysis(null)
               }
             }}
-            placeholder="Describe the emergency"
+            placeholder="Example: A person has collapsed and is not responding."
             placeholderTextColor="#9CA3AF"
             multiline
             textAlignVertical="top"
             maxLength={500}
           />
 
-          <Text style={styles.counter}>
-            {description.length}/500
-          </Text>
+          <View
+            style={styles.inputFooter}
+          >
+            <Text
+              style={
+                styles.inputFooterText
+              }
+            >
+              Include the most important
+              details first.
+            </Text>
+
+            <Text
+              style={styles.counter}
+            >
+              {description.length}/500
+            </Text>
+          </View>
 
           {error ? (
-            <Text style={styles.error}>
-              {error}
-            </Text>
+            <View
+              style={styles.errorCard}
+            >
+              <Text
+                style={styles.errorText}
+              >
+                {error}
+              </Text>
+            </View>
           ) : null}
 
           {/* AI ASSIST */}
 
           <View style={styles.aiCard}>
             <View style={styles.aiHeader}>
-              <View>
-                <Text style={styles.aiEyebrow}>
+              <View
+                style={styles.aiTitleArea}
+              >
+                <Text
+                  style={styles.aiEyebrow}
+                >
                   AI EMERGENCY ASSIST
                 </Text>
 
-                <Text style={styles.aiTitle}>
-                  Analyze description
+                <Text
+                  style={styles.aiTitle}
+                >
+                  Organize your report
                 </Text>
               </View>
 
-              <View style={styles.aiBadge}>
-                <Text style={styles.aiBadgeText}>
+              <View
+                style={styles.aiBadge}
+              >
+                <Text
+                  style={
+                    styles.aiBadgeText
+                  }
+                >
                   AI
                 </Text>
               </View>
             </View>
 
-            <Text style={styles.aiDescription}>
-              AI can organize your report into a
-              concise emergency summary. This is
-              optional and does not delay your
-              request.
+            <Text
+              style={styles.aiDescription}
+            >
+              AI can summarize your report,
+              suggest the likely service,
+              and highlight useful details
+              for the operator.
             </Text>
 
+            <View style={styles.aiInfoRow}>
+              <View
+                style={styles.aiInfoDot}
+              />
+
+              <Text
+                style={styles.aiInfoText}
+              >
+                Optional — AI is not
+                required to send an
+                emergency request.
+              </Text>
+            </View>
+
             <Pressable
-              style={[
+              style={({ pressed }) => [
                 styles.aiButton,
+
                 aiLoading &&
                   styles.disabledButton,
+
+                pressed &&
+                  !aiLoading &&
+                  styles.buttonPressed,
               ]}
-              onPress={handleAnalyze}
               disabled={aiLoading}
+              onPress={handleAnalyze}
             >
               {aiLoading ? (
-                <ActivityIndicator
-                  color="#111827"
-                />
+                <>
+                  <ActivityIndicator
+                    size="small"
+                    color="#111827"
+                  />
+
+                  <Text
+                    style={
+                      styles.aiLoadingText
+                    }
+                  >
+                    Analyzing...
+                  </Text>
+                </>
               ) : (
-                <Text style={styles.aiButtonText}>
-                  Analyze with AI
-                </Text>
+                <>
+                  <Text
+                    style={
+                      styles.aiButtonText
+                    }
+                  >
+                    Analyze with AI
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.aiButtonArrow
+                    }
+                  >
+                    ›
+                  </Text>
+                </>
               )}
             </Pressable>
 
             {aiError ? (
-              <Text style={styles.aiError}>
+              <Text
+                style={styles.aiError}
+              >
                 {aiError}
               </Text>
             ) : null}
           </View>
 
-          {aiAnalysis ? (
-            <View style={styles.analysisCard}>
-              <View style={styles.analysisTop}>
-                <Text style={styles.analysisEyebrow}>
-                  AI ANALYSIS
-                </Text>
+          {/* AI RESULT */}
 
-                <View style={styles.analysisReady}>
+          {aiAnalysis ? (
+            <View
+              style={styles.analysisCard}
+            >
+              <View
+                style={
+                  styles.analysisTop
+                }
+              >
+                <View>
+                  <Text
+                    style={
+                      styles.analysisEyebrow
+                    }
+                  >
+                    AI ANALYSIS
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.analysisTitle
+                    }
+                  >
+                    Intake summary
+                  </Text>
+                </View>
+
+                <View
+                  style={
+                    styles.analysisReady
+                  }
+                >
+                  <View
+                    style={
+                      styles.analysisReadyDot
+                    }
+                  />
+
                   <Text
                     style={
                       styles.analysisReadyText
@@ -347,38 +540,53 @@ export default function EmergencyScreen() {
                 </View>
               </View>
 
-              <Text style={styles.resultLabel}>
+              <Text
+                style={styles.resultLabel}
+              >
                 LIKELY SERVICE
               </Text>
 
-              <Text style={styles.resultPrimary}>
+              <Text
+                style={styles.resultPrimary}
+              >
                 {aiAnalysis.service}
               </Text>
 
               <View style={styles.divider} />
 
-              <Text style={styles.resultLabel}>
+              <Text
+                style={styles.resultLabel}
+              >
                 OPERATOR SUMMARY
               </Text>
 
-              <Text style={styles.resultText}>
+              <Text
+                style={styles.resultText}
+              >
                 {aiAnalysis.summary}
               </Text>
 
               <View style={styles.divider} />
 
-              <Text style={styles.resultLabel}>
+              <Text
+                style={styles.resultLabel}
+              >
                 URGENCY
               </Text>
 
-              <Text style={styles.resultPrimary}>
+              <Text
+                style={styles.resultPrimary}
+              >
                 {aiAnalysis.urgency}
               </Text>
 
-              {aiAnalysis.importantDetails
-                .length > 0 && (
+              {aiAnalysis
+                .importantDetails.length >
+                0 && (
                 <>
-                  <View style={styles.divider} />
+                  <View
+                    style={styles.divider}
+                  />
 
                   <Text
                     style={
@@ -389,15 +597,30 @@ export default function EmergencyScreen() {
                   </Text>
 
                   {aiAnalysis.importantDetails.map(
-                    (detail, index) => (
-                      <Text
+                    (
+                      detail,
+                      index,
+                    ) => (
+                      <View
                         key={`${detail}-${index}`}
                         style={
-                          styles.detailItem
+                          styles.detailRow
                         }
                       >
-                        • {detail}
-                      </Text>
+                        <View
+                          style={
+                            styles.detailBullet
+                          }
+                        />
+
+                        <Text
+                          style={
+                            styles.detailItem
+                          }
+                        >
+                          {detail}
+                        </Text>
+                      </View>
                     ),
                   )}
                 </>
@@ -405,7 +628,9 @@ export default function EmergencyScreen() {
 
               {aiAnalysis.followUpQuestion ? (
                 <>
-                  <View style={styles.divider} />
+                  <View
+                    style={styles.divider}
+                  />
 
                   <Text
                     style={
@@ -416,7 +641,9 @@ export default function EmergencyScreen() {
                   </Text>
 
                   <Text
-                    style={styles.resultText}
+                    style={
+                      styles.resultText
+                    }
                   >
                     {
                       aiAnalysis.followUpQuestion
@@ -425,30 +652,65 @@ export default function EmergencyScreen() {
                 </>
               ) : null}
 
-              <Text style={styles.aiDisclaimer}>
-                AI analysis assists emergency
-                intake and may be inaccurate.
-              </Text>
+              <View
+                style={
+                  styles.aiDisclaimerCard
+                }
+              >
+                <Text
+                  style={
+                    styles.aiDisclaimer
+                  }
+                >
+                  AI assists emergency
+                  intake and may be
+                  inaccurate. Your original
+                  description is still sent
+                  with the request.
+                </Text>
+              </View>
             </View>
           ) : null}
 
-          {/* Continue always remains available */}
+          {/* CONTINUE */}
 
-          <Pressable
-            style={styles.primaryButton}
-            onPress={handleContinue}
+          <View
+            style={styles.continueSection}
           >
-            <Text
-              style={styles.primaryButtonText}
-            >
-              Continue
-            </Text>
-          </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.primaryButton,
 
-          <Text style={styles.continueNote}>
-            You can continue without using AI
-            Assist.
-          </Text>
+                pressed &&
+                  styles.buttonPressed,
+              ]}
+              onPress={handleContinue}
+            >
+              <Text
+                style={
+                  styles.primaryButtonText
+                }
+              >
+                Continue
+              </Text>
+
+              <Text
+                style={
+                  styles.primaryButtonArrow
+                }
+              >
+                ›
+              </Text>
+            </Pressable>
+
+            <Text
+              style={styles.continueNote}
+            >
+              Next you will confirm your
+              current location and review
+              the request before sending it.
+            </Text>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -462,89 +724,189 @@ const styles = StyleSheet.create({
   },
 
   container: {
-    paddingHorizontal: 22,
-    paddingTop: 18,
+    paddingHorizontal: 20,
+    paddingTop: 14,
     paddingBottom: 40,
   },
 
   invalidContainer: {
     flex: 1,
+    justifyContent: 'center',
     padding: 22,
+  },
+
+  invalidLogo: {
+    color: '#111827',
+    fontSize: 30,
+    fontWeight: '900',
+  },
+
+  invalidTitle: {
+    marginTop: 22,
+    color: '#18212B',
+    fontSize: 28,
+    fontWeight: '900',
+  },
+
+  invalidText: {
+    marginTop: 8,
+    color: '#7A838D',
+    fontSize: 13,
+    lineHeight: 19,
   },
 
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 55,
+    marginBottom: 38,
   },
 
   backButton: {
-    fontSize: 30,
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+  },
+
+  backButtonText: {
+    marginTop: -2,
     color: '#26313C',
+    fontSize: 23,
+    fontWeight: '700',
+  },
+
+  logoBadge: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    backgroundColor: '#111827',
   },
 
   logo: {
-    fontSize: 22,
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '900',
-    color: '#111827',
   },
 
-  eyebrow: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    color: '#969EA7',
+  serviceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+  },
+
+  serviceBadgeDot: {
+    width: 6,
+    height: 6,
+    marginRight: 6,
+    borderRadius: 3,
+    backgroundColor: '#111827',
+  },
+
+  serviceBadgeText: {
+    color: '#5B6470',
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 0.9,
   },
 
   title: {
-    marginTop: 8,
-    fontSize: 30,
-    fontWeight: '800',
     color: '#18212B',
+    fontSize: 30,
+    fontWeight: '900',
   },
 
   subtitle: {
     marginTop: 8,
-    marginBottom: 32,
-    fontSize: 15,
+    marginBottom: 28,
+    maxWidth: 340,
     color: '#7A838D',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+
+  inputSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
 
   label: {
-    marginBottom: 8,
-    fontSize: 13,
-    fontWeight: '700',
     color: '#38434E',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+
+  requiredText: {
+    color: '#9CA3AF',
+    fontSize: 9,
+    fontWeight: '700',
   },
 
   textArea: {
-    minHeight: 150,
+    minHeight: 145,
     padding: 16,
     borderWidth: 1,
     borderColor: '#E1E5E9',
-    borderRadius: 17,
+    borderRadius: 18,
     backgroundColor: '#F8F9FA',
-    fontSize: 15,
-    lineHeight: 21,
     color: '#18212B',
+    fontSize: 14,
+    lineHeight: 21,
+  },
+
+  textAreaError: {
+    borderColor: '#FCA5A5',
+    backgroundColor: '#FFF7F7',
+  },
+
+  inputFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 7,
+  },
+
+  inputFooterText: {
+    flex: 1,
+    paddingRight: 12,
+    color: '#9AA2AA',
+    fontSize: 9,
   },
 
   counter: {
-    marginTop: 7,
-    textAlign: 'right',
-    fontSize: 10,
     color: '#9AA2AA',
+    fontSize: 9,
   },
 
-  error: {
+  errorCard: {
     marginTop: 10,
-    color: '#DC2626',
-    fontSize: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
+  },
+
+  errorText: {
+    color: '#B91C1C',
+    fontSize: 10,
+    lineHeight: 15,
   },
 
   aiCard: {
-    marginTop: 24,
+    marginTop: 22,
     padding: 18,
     borderWidth: 1,
     borderColor: '#E3E6EA',
@@ -558,18 +920,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
+  aiTitleArea: {
+    flex: 1,
+    paddingRight: 12,
+  },
+
   aiEyebrow: {
-    fontSize: 9,
+    color: '#929AA4',
+    fontSize: 8,
     fontWeight: '900',
     letterSpacing: 1.1,
-    color: '#929AA4',
   },
 
   aiTitle: {
     marginTop: 5,
-    fontSize: 17,
-    fontWeight: '800',
     color: '#202831',
+    fontSize: 17,
+    fontWeight: '900',
   },
 
   aiBadge: {
@@ -589,16 +956,38 @@ const styles = StyleSheet.create({
 
   aiDescription: {
     marginTop: 11,
+    color: '#7A838D',
     fontSize: 11,
     lineHeight: 17,
-    color: '#7A838D',
+  },
+
+  aiInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+
+  aiInfoDot: {
+    width: 6,
+    height: 6,
+    marginRight: 6,
+    borderRadius: 3,
+    backgroundColor: '#9CA3AF',
+  },
+
+  aiInfoText: {
+    flex: 1,
+    color: '#8A929C',
+    fontSize: 9,
+    lineHeight: 14,
   },
 
   aiButton: {
-    height: 46,
+    minHeight: 46,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 15,
     borderWidth: 1,
     borderColor: '#D8DDE3',
     borderRadius: 13,
@@ -608,6 +997,19 @@ const styles = StyleSheet.create({
   aiButtonText: {
     color: '#111827',
     fontSize: 12,
+    fontWeight: '900',
+  },
+
+  aiButtonArrow: {
+    marginLeft: 10,
+    color: '#111827',
+    fontSize: 20,
+  },
+
+  aiLoadingText: {
+    marginLeft: 9,
+    color: '#111827',
+    fontSize: 11,
     fontWeight: '800',
   },
 
@@ -618,7 +1020,8 @@ const styles = StyleSheet.create({
   aiError: {
     marginTop: 10,
     color: '#B42318',
-    fontSize: 11,
+    fontSize: 10,
+    lineHeight: 15,
   },
 
   analysisCard: {
@@ -632,26 +1035,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 19,
+    marginBottom: 18,
   },
 
   analysisEyebrow: {
     color: '#AEB6C2',
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '900',
     letterSpacing: 1.1,
   },
 
+  analysisTitle: {
+    marginTop: 4,
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+
   analysisReady: {
-    paddingHorizontal: 8,
-    paddingVertical: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 9,
+    paddingVertical: 6,
     borderRadius: 10,
     backgroundColor: '#273244',
   },
 
+  analysisReadyDot: {
+    width: 6,
+    height: 6,
+    marginRight: 5,
+    borderRadius: 3,
+    backgroundColor: '#4ADE80',
+  },
+
   analysisReadyText: {
     color: '#FFFFFF',
-    fontSize: 8,
+    fontSize: 7,
     fontWeight: '900',
   },
 
@@ -666,21 +1086,36 @@ const styles = StyleSheet.create({
     marginTop: 5,
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: '800',
+    fontWeight: '900',
   },
 
   resultText: {
     marginTop: 6,
     color: '#E3E7EC',
-    fontSize: 12,
+    fontSize: 11,
     lineHeight: 18,
   },
 
-  detailItem: {
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 7,
+  },
+
+  detailBullet: {
+    width: 5,
+    height: 5,
     marginTop: 6,
+    marginRight: 8,
+    borderRadius: 3,
+    backgroundColor: '#9CA3AF',
+  },
+
+  detailItem: {
+    flex: 1,
     color: '#E3E7EC',
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 17,
   },
 
   divider: {
@@ -689,32 +1124,60 @@ const styles = StyleSheet.create({
     backgroundColor: '#303A49',
   },
 
+  aiDisclaimerCard: {
+    marginTop: 18,
+    padding: 11,
+    borderRadius: 12,
+    backgroundColor: '#182230',
+  },
+
   aiDisclaimer: {
-    marginTop: 20,
     color: '#8993A1',
-    fontSize: 9,
-    lineHeight: 14,
+    fontSize: 8,
+    lineHeight: 13,
+  },
+
+  continueSection: {
+    marginTop: 24,
   },
 
   primaryButton: {
-    height: 54,
+    minHeight: 54,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 24,
+    paddingHorizontal: 16,
     borderRadius: 15,
     backgroundColor: '#111827',
   },
 
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+
+  primaryButtonArrow: {
+    marginLeft: 10,
+    color: '#FFFFFF',
+    fontSize: 22,
   },
 
   continueNote: {
     marginTop: 9,
+    paddingHorizontal: 18,
     textAlign: 'center',
     color: '#9AA2AA',
     fontSize: 9,
+    lineHeight: 14,
+  },
+
+  buttonPressed: {
+    opacity: 0.86,
+    transform: [
+      {
+        scale: 0.99,
+      },
+    ],
   },
 })

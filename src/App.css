@@ -2351,3 +2351,76 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+/* OPERATOR LIVE TRACKING */
+
+.operator-tracking-status {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.operator-tracking-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.operator-tracking-row strong {
+  color: #1f2937;
+  font-size: 12px;
+}
+
+.operator-tracking-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.operator-tracking-dot.active {
+  background: #16a34a;
+}
+
+.operator-tracking-dot.waiting {
+  background: #9ca3af;
+}
+
+.operator-tracking-time {
+  display: block;
+  margin-top: 6px;
+  color: #8b949e;
+  font-size: 10px;
+}
+
+.operator-map-legend {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.operator-map-legend > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.operator-map-legend span {
+  color: #6b7280;
+  font-size: 10px;
+}
+
+.legend-marker {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-marker.emergency {
+  background: #dc2626;
+}
+
+.legend-marker.responder {
+  background: #111827;
+}

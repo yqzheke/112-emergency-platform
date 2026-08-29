@@ -80,15 +80,17 @@ function ProgressStep({
       <View
         style={[
           styles.progressCircle,
-          completed &&
-            styles.progressCircleCompleted,
+          completed
+            ? styles.progressCircleCompleted
+            : null,
         ]}
       >
         <Text
           style={[
             styles.progressNumber,
-            completed &&
-              styles.progressNumberCompleted,
+            completed
+              ? styles.progressNumberCompleted
+              : null,
           ]}
         >
           {completed ? '✓' : number}
@@ -99,8 +101,9 @@ function ProgressStep({
         <Text
           style={[
             styles.progressTitle,
-            completed &&
-              styles.progressTitleCompleted,
+            completed
+              ? styles.progressTitleCompleted
+              : null,
           ]}
         >
           {title}
@@ -114,12 +117,6 @@ function ProgressStep({
   )
 }
 
-/*
-  Calculates straight-line distance
-  between two GPS coordinates.
-
-  This is not road/navigation distance.
-*/
 function calculateDistanceKm(
   latitude1: number,
   longitude1: number,
@@ -147,8 +144,7 @@ function calculateDistanceKm(
     Math.sin(latitudeDifference / 2) ** 2 +
     Math.cos(firstLatitude) *
       Math.cos(secondLatitude) *
-      Math.sin(longitudeDifference / 2) **
-        2
+      Math.sin(longitudeDifference / 2) ** 2
 
   const c =
     2 *
@@ -160,15 +156,6 @@ function calculateDistanceKm(
   return earthRadiusKm * c
 }
 
-/*
-  Prototype ETA only.
-
-  Uses straight-line distance and a
-  simple assumed average response speed.
-
-  Later we should replace this with a
-  real routing provider.
-*/
 function calculatePrototypeEtaMinutes(
   distanceKm: number,
 ) {
@@ -201,13 +188,18 @@ export default function EmergencyStatusScreen() {
   const mapRef =
     useRef<MapView | null>(null)
 
-  const params = useLocalSearchParams<{
-    id?: string
-  }>()
+  const params =
+    useLocalSearchParams<{
+      id?: string
+    }>()
 
-  const emergencyId = Number(params.id)
+  const emergencyId =
+    Number(params.id)
 
-  const [emergency, setEmergency] =
+  const [
+    emergency,
+    setEmergency,
+  ] =
     useState<EmergencyWithContacts | null>(
       null,
     )
@@ -229,7 +221,6 @@ export default function EmergencyStatusScreen() {
         )
 
         setLoading(false)
-
         return
       }
 
@@ -239,12 +230,17 @@ export default function EmergencyStatusScreen() {
         }
 
         const result =
-          await getEmergency(emergencyId)
+          await getEmergency(
+            emergencyId,
+          )
 
         setEmergency(result)
         setError('')
       } catch (error) {
-        console.error(error)
+        console.error(
+          'Emergency loading error:',
+          error,
+        )
 
         setError(
           error instanceof Error
@@ -263,12 +259,10 @@ export default function EmergencyStatusScreen() {
   useEffect(() => {
     loadEmergency(true)
 
-    const intervalId = setInterval(
-      () => {
+    const intervalId =
+      setInterval(() => {
         loadEmergency(false)
-      },
-      3000,
-    )
+      }, 3000)
 
     return () => {
       clearInterval(intervalId)
@@ -310,10 +304,6 @@ export default function EmergencyStatusScreen() {
       )
     }, [responderDistanceKm])
 
-  /*
-    When responder GPS appears or changes,
-    keep both emergency and responder visible.
-  */
   useEffect(() => {
     if (
       !emergency ||
@@ -391,7 +381,9 @@ export default function EmergencyStatusScreen() {
             styles.loadingContainer
           }
         >
-          <Text style={styles.logo}>
+          <Text
+            style={styles.loadingLogo}
+          >
             112
           </Text>
 
@@ -417,7 +409,9 @@ export default function EmergencyStatusScreen() {
         <View
           style={styles.errorContainer}
         >
-          <Text style={styles.logo}>
+          <Text
+            style={styles.loadingLogo}
+          >
             112
           </Text>
 
@@ -427,15 +421,18 @@ export default function EmergencyStatusScreen() {
             Emergency request
           </Text>
 
-          <Text style={styles.error}>
+          <Text style={styles.errorText}>
             {error ||
               'Emergency request not found'}
           </Text>
 
           <Pressable
-            style={
-              styles.primaryButton
-            }
+            style={({ pressed }) => [
+              styles.primaryButton,
+              pressed
+                ? styles.buttonPressed
+                : null,
+            ]}
             onPress={() =>
               router.replace(
                 '/dashboard',
@@ -460,6 +457,13 @@ export default function EmergencyStatusScreen() {
       emergency.responderArrivedAt,
     )
 
+  const isClosed =
+    emergency.status === 'COMPLETED' ||
+    emergency.status === 'CANCELLED'
+
+  const isCompleted =
+    emergency.status === 'COMPLETED'
+
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView
@@ -470,6 +474,8 @@ export default function EmergencyStatusScreen() {
           false
         }
       >
+        {/* HEADER */}
+
         <View style={styles.header}>
           <View>
             <Text style={styles.logo}>
@@ -477,23 +483,38 @@ export default function EmergencyStatusScreen() {
             </Text>
 
             <Text
-              style={
-                styles.requestNumber
-              }
+              style={styles.requestNumber}
             >
               REQUEST #{emergency.id}
             </Text>
           </View>
 
-          <View style={styles.liveBadge}>
+          <View
+            style={[
+              styles.liveBadge,
+
+              isClosed
+                ? styles.closedBadge
+                : null,
+            ]}
+          >
             <View
-              style={styles.liveDot}
+              style={[
+                styles.liveDot,
+
+                isClosed
+                  ? styles.closedDot
+                  : null,
+              ]}
             />
 
-            <Text
-              style={styles.liveText}
-            >
-              LIVE
+            <Text style={styles.liveText}>
+              {isCompleted
+                ? 'COMPLETED'
+                : emergency.status ===
+                    'CANCELLED'
+                  ? 'CANCELLED'
+                  : 'LIVE'}
             </Text>
           </View>
         </View>
@@ -507,28 +528,65 @@ export default function EmergencyStatusScreen() {
         </Text>
 
         <Text style={styles.subtitle}>
-          Status updates automatically.
+          {isClosed
+            ? 'This emergency request is no longer active.'
+            : 'Status updates automatically while the request is active.'}
         </Text>
+
+        {/* MAIN STATUS */}
 
         <View
           style={[
             styles.currentStatusCard,
 
             emergency.status ===
-              'CANCELLED' &&
-              styles.cancelledCard,
+            'CANCELLED'
+              ? styles.cancelledCard
+              : null,
+
+            emergency.status ===
+            'COMPLETED'
+              ? styles.completedCard
+              : null,
           ]}
         >
-          <Text
-            style={styles.statusLabel}
+          <View
+            style={styles.statusTopRow}
           >
-            CURRENT STATUS
-          </Text>
+            <Text
+              style={styles.statusLabel}
+            >
+              CURRENT STATUS
+            </Text>
+
+            {!isClosed ? (
+              <View
+                style={
+                  styles.statusLiveIndicator
+                }
+              >
+                <View
+                  style={
+                    styles.statusLiveDot
+                  }
+                />
+
+                <Text
+                  style={
+                    styles.statusLiveText
+                  }
+                >
+                  LIVE
+                </Text>
+              </View>
+            ) : null}
+          </View>
 
           <Text
             style={styles.statusValue}
           >
-            {responderArrived
+            {responderArrived &&
+            !isCompleted
               ? 'Responder has arrived'
               : statusNames[
                   emergency.status
@@ -538,41 +596,62 @@ export default function EmergencyStatusScreen() {
           <Text
             style={styles.statusCode}
           >
-            {responderArrived
+            {responderArrived &&
+            !isCompleted
               ? 'ON SCENE'
               : emergency.status}
           </Text>
         </View>
 
-        {emergency.assignedResponderId &&
-          emergency.status !==
-            'COMPLETED' &&
-          emergency.status !==
-            'CANCELLED' && (
-            <>
-              <Text
-                style={styles.sectionLabel}
-              >
-                RESPONDER
-              </Text>
+        {/* RESPONDER */}
 
+        {emergency.assignedResponderId &&
+        !isClosed ? (
+          <>
+            <Text
+              style={styles.sectionLabel}
+            >
+              RESPONDER TRACKING
+            </Text>
+
+            <View
+              style={styles.responderCard}
+            >
               <View
                 style={
-                  styles.responderCard
+                  styles.responderCardHeader
                 }
               >
                 <View
                   style={
-                    styles.responderCardHeader
+                    styles.responderIdentity
                   }
                 >
-                  <View>
+                  <View
+                    style={
+                      styles.responderIcon
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.responderIconText
+                      }
+                    >
+                      112
+                    </Text>
+                  </View>
+
+                  <View
+                    style={
+                      styles.responderNameArea
+                    }
+                  >
                     <Text
                       style={
                         styles.responderEyebrow
                       }
                     >
-                      ASSIGNED UNIT
+                      ASSIGNED RESPONSE UNIT
                     </Text>
 
                     <Text
@@ -583,37 +662,69 @@ export default function EmergencyStatusScreen() {
                       Emergency responder
                     </Text>
                   </View>
-
-                  <View
-                    style={[
-                      styles.responderStatusBadge,
-
-                      responderArrived &&
-                        styles.responderArrivedBadge,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.responderStatusText,
-
-                        responderArrived &&
-                          styles.responderArrivedText,
-                      ]}
-                    >
-                      {responderArrived
-                        ? 'ARRIVED'
-                        : emergency.status ===
-                            'RESPONDING'
-                          ? 'EN ROUTE'
-                          : 'DISPATCHED'}
-                    </Text>
-                  </View>
                 </View>
 
-                {responderArrived ? (
+                <View
+                  style={[
+                    styles.responderStatusBadge,
+
+                    emergency.status ===
+                    'RESPONDING'
+                      ? styles.responderEnRouteBadge
+                      : null,
+
+                    responderArrived
+                      ? styles.responderArrivedBadge
+                      : null,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.responderStatusText,
+
+                      emergency.status ===
+                      'RESPONDING'
+                        ? styles.responderEnRouteText
+                        : null,
+
+                      responderArrived
+                        ? styles.responderArrivedText
+                        : null,
+                    ]}
+                  >
+                    {responderArrived
+                      ? 'ON SCENE'
+                      : emergency.status ===
+                          'RESPONDING'
+                        ? 'EN ROUTE'
+                        : 'DISPATCHED'}
+                  </Text>
+                </View>
+              </View>
+
+              {responderArrived ? (
+                <View
+                  style={
+                    styles.arrivedNotice
+                  }
+                >
                   <View
                     style={
-                      styles.arrivedNotice
+                      styles.arrivedIcon
+                    }
+                  >
+                    <Text
+                      style={
+                        styles.arrivedIconText
+                      }
+                    >
+                      ✓
+                    </Text>
+                  </View>
+
+                  <View
+                    style={
+                      styles.arrivedNoticeContent
                     }
                   >
                     <Text
@@ -621,7 +732,7 @@ export default function EmergencyStatusScreen() {
                         styles.arrivedNoticeTitle
                       }
                     >
-                      Responder is on scene
+                      Responder has arrived
                     </Text>
 
                     <Text
@@ -629,94 +740,49 @@ export default function EmergencyStatusScreen() {
                         styles.arrivedNoticeText
                       }
                     >
-                      Emergency services have
-                      reached your location.
+                      Emergency services are
+                      now at your location
+                      and handling the
+                      incident.
                     </Text>
                   </View>
-                ) : hasResponderLocation &&
-                  responderDistanceKm !=
-                    null ? (
-                  <>
+                </View>
+              ) : hasResponderLocation &&
+                responderDistanceKm !=
+                  null ? (
+                <>
+                  <View
+                    style={
+                      styles.liveTrackingHeader
+                    }
+                  >
                     <View
                       style={
-                        styles.responderStats
+                        styles.liveTrackingLeft
                       }
                     >
                       <View
                         style={
-                          styles.responderStat
-                        }
-                      >
-                        <Text
-                          style={
-                            styles.responderStatLabel
-                          }
-                        >
-                          DISTANCE
-                        </Text>
-
-                        <Text
-                          style={
-                            styles.responderStatValue
-                          }
-                        >
-                          {formatDistance(
-                            responderDistanceKm,
-                          )}
-                        </Text>
-                      </View>
-
-                      <View
-                        style={
-                          styles.responderStatDivider
+                          styles.liveTrackingDot
                         }
                       />
 
-                      <View
-                        style={
-                          styles.responderStat
-                        }
-                      >
-                        <Text
-                          style={
-                            styles.responderStatLabel
-                          }
-                        >
-                          EST. ARRIVAL
-                        </Text>
-
-                        <Text
-                          style={
-                            styles.responderStatValue
-                          }
-                        >
-                          ~
-                          {
-                            estimatedMinutes
-                          }{' '}
-                          min
-                        </Text>
-                      </View>
-                    </View>
-
-                    <Text
-                      style={
-                        styles.etaDisclaimer
-                      }
-                    >
-                      Prototype estimate based
-                      on straight-line distance.
-                      Actual travel time may
-                      differ.
-                    </Text>
-
-                    {emergency.responderLocationUpdatedAt && (
                       <Text
                         style={
-                          styles.locationUpdatedText
+                          styles.liveTrackingText
                         }
                       >
-                        Location updated{' '}
+                        Live location active
+                      </Text>
+                    </View>
+
+                    {emergency.responderLocationUpdatedAt ? (
+                      <Text
+                        style={
+                          styles.liveUpdatedText
+                        }
+                      >
+                        Updated{' '}
                         {new Date(
                           emergency.responderLocationUpdatedAt,
                         ).toLocaleTimeString(
@@ -726,54 +792,196 @@ export default function EmergencyStatusScreen() {
                               '2-digit',
                             minute:
                               '2-digit',
-                            second:
-                              '2-digit',
                           },
                         )}
                       </Text>
-                    )}
-                  </>
-                ) : (
+                    ) : null}
+                  </View>
+
                   <View
                     style={
-                      styles.waitingLocationCard
+                      styles.responderStats
+                    }
+                  >
+                    <View
+                      style={
+                        styles.responderStat
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.responderStatLabel
+                        }
+                      >
+                        DISTANCE
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.responderStatValue
+                        }
+                      >
+                        {formatDistance(
+                          responderDistanceKm,
+                        )}
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.responderStatHint
+                        }
+                      >
+                        from your location
+                      </Text>
+                    </View>
+
+                    <View
+                      style={
+                        styles.responderStatDivider
+                      }
+                    />
+
+                    <View
+                      style={
+                        styles.responderStat
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.responderStatLabel
+                        }
+                      >
+                        EST. ARRIVAL
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.responderStatValue
+                        }
+                      >
+                        ~{estimatedMinutes} min
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.responderStatHint
+                        }
+                      >
+                        approximate
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View
+                    style={styles.etaInfo}
+                  >
+                    <Text
+                      style={
+                        styles.etaInfoText
+                      }
+                    >
+                      ETA is estimated from
+                      live GPS distance and
+                      is not yet based on
+                      road routing.
+                    </Text>
+                  </View>
+                </>
+              ) : (
+                <View
+                  style={
+                    styles.waitingLocationCard
+                  }
+                >
+                  <View
+                    style={
+                      styles.waitingLocationIcon
                     }
                   >
                     <ActivityIndicator
                       size="small"
                       color="#111827"
                     />
+                  </View>
 
-                    <View
+                  <View
+                    style={
+                      styles.waitingLocationContent
+                    }
+                  >
+                    <Text
                       style={
-                        styles.waitingLocationContent
+                        styles.waitingLocationTitle
                       }
                     >
-                      <Text
-                        style={
-                          styles.waitingLocationTitle
-                        }
-                      >
-                        Waiting for responder
-                        GPS
-                      </Text>
+                      Responder assigned
+                    </Text>
 
-                      <Text
-                        style={
-                          styles.waitingLocationText
-                        }
-                      >
-                        Live tracking will
-                        appear when the
-                        responder begins
-                        sharing location.
-                      </Text>
-                    </View>
+                    <Text
+                      style={
+                        styles.waitingLocationText
+                      }
+                    >
+                      Waiting for the
+                      responder to accept
+                      dispatch and begin
+                      sharing live location.
+                    </Text>
                   </View>
-                )}
+                </View>
+              )}
+            </View>
+          </>
+        ) : null}
+
+        {/* COMPLETED MESSAGE */}
+
+        {isCompleted ? (
+          <>
+            <Text
+              style={styles.sectionLabel}
+            >
+              RESPONSE COMPLETE
+            </Text>
+
+            <View
+              style={styles.completeCard}
+            >
+              <View
+                style={styles.completeIcon}
+              >
+                <Text
+                  style={
+                    styles.completeIconText
+                  }
+                >
+                  ✓
+                </Text>
               </View>
-            </>
-          )}
+
+              <View
+                style={styles.completeContent}
+              >
+                <Text
+                  style={styles.completeTitle}
+                >
+                  Emergency completed
+                </Text>
+
+                <Text
+                  style={styles.completeText}
+                >
+                  This response has been
+                  marked complete and is
+                  saved in your emergency
+                  history.
+                </Text>
+              </View>
+            </View>
+          </>
+        ) : null}
+
+        {/* PROGRESS */}
 
         <Text
           style={styles.sectionLabel}
@@ -795,7 +1003,7 @@ export default function EmergencyStatusScreen() {
           <ProgressStep
             number="2"
             title="Request accepted"
-            description="An operator has accepted your request."
+            description="An operator accepted your request."
             completed={hasReached(
               'ACCEPTED',
             )}
@@ -804,7 +1012,7 @@ export default function EmergencyStatusScreen() {
           <ProgressStep
             number="3"
             title="Responder dispatched"
-            description="A responder has been assigned."
+            description="A responder was assigned to your emergency."
             completed={hasReached(
               'DISPATCHED',
             )}
@@ -812,10 +1020,14 @@ export default function EmergencyStatusScreen() {
 
           <ProgressStep
             number="4"
-            title="Responder on the way"
+            title={
+              responderArrived
+                ? 'Responder arrived'
+                : 'Responder on the way'
+            }
             description={
               responderArrived
-                ? 'Responder reached your location.'
+                ? 'Emergency services reached your location.'
                 : 'Emergency services are responding.'
             }
             completed={hasReached(
@@ -833,15 +1045,15 @@ export default function EmergencyStatusScreen() {
           />
         </View>
 
+        {/* MAP */}
+
         <Text
           style={styles.sectionLabel}
         >
           LIVE RESPONSE MAP
         </Text>
 
-        <View
-          style={styles.mapContainer}
-        >
+        <View style={styles.mapContainer}>
           <MapView
             ref={mapRef}
             style={styles.map}
@@ -875,7 +1087,7 @@ export default function EmergencyStatusScreen() {
               pinColor="#DC2626"
             />
 
-            {hasResponderLocation && (
+            {hasResponderLocation ? (
               <Marker
                 coordinate={{
                   latitude:
@@ -892,16 +1104,12 @@ export default function EmergencyStatusScreen() {
                 }
                 pinColor="#111827"
               />
-            )}
+            ) : null}
           </MapView>
 
-          <View
-            style={styles.mapLegend}
-          >
+          <View style={styles.mapLegend}>
             <View
-              style={
-                styles.mapLegendItem
-              }
+              style={styles.mapLegendItem}
             >
               <View
                 style={[
@@ -919,7 +1127,7 @@ export default function EmergencyStatusScreen() {
               </Text>
             </View>
 
-            {hasResponderLocation && (
+            {hasResponderLocation ? (
               <View
                 style={
                   styles.mapLegendItem
@@ -940,37 +1148,55 @@ export default function EmergencyStatusScreen() {
                   Responder
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
         </View>
 
-        <Text
-          style={styles.coordinates}
-        >
-          Emergency:{' '}
-          {emergency.latitude.toFixed(
-            6,
-          )}
-          ,{' '}
-          {emergency.longitude.toFixed(
-            6,
-          )}
-        </Text>
-
-        {hasResponderLocation && (
-          <Text
-            style={styles.coordinates}
-          >
-            Responder:{' '}
-            {emergency.responderLatitude!.toFixed(
-              6,
-            )}
-            ,{' '}
-            {emergency.responderLongitude!.toFixed(
-              6,
-            )}
+        <View style={styles.mapInfoCard}>
+          <Text style={styles.mapInfoLabel}>
+            YOUR LOCATION
           </Text>
-        )}
+
+          <Text style={styles.mapInfoValue}>
+            {emergency.latitude.toFixed(6)}
+            {', '}
+            {emergency.longitude.toFixed(6)}
+          </Text>
+
+          {hasResponderLocation ? (
+            <>
+              <View
+                style={
+                  styles.mapInfoDivider
+                }
+              />
+
+              <Text
+                style={
+                  styles.mapInfoLabel
+                }
+              >
+                RESPONDER LOCATION
+              </Text>
+
+              <Text
+                style={
+                  styles.mapInfoValue
+                }
+              >
+                {emergency.responderLatitude!.toFixed(
+                  6,
+                )}
+                {', '}
+                {emergency.responderLongitude!.toFixed(
+                  6,
+                )}
+              </Text>
+            </>
+          ) : null}
+        </View>
+
+        {/* DETAILS */}
 
         <Text
           style={styles.sectionLabel}
@@ -991,7 +1217,7 @@ export default function EmergencyStatusScreen() {
             {emergency.description}
           </Text>
 
-          <View style={styles.divider} />
+          <View style={styles.dividerLight} />
 
           <Text
             style={styles.detailLabel}
@@ -1007,32 +1233,32 @@ export default function EmergencyStatusScreen() {
             ).toLocaleString()}
           </Text>
 
-          {emergency.responderAssignedAt && (
+          {emergency.responderAssignedAt ? (
             <>
               <View
-                style={styles.divider}
+                style={
+                  styles.dividerLight
+                }
               />
 
               <Text
-                style={
-                  styles.detailLabel
-                }
+                style={styles.detailLabel}
               >
                 RESPONDER ASSIGNED
               </Text>
 
               <Text
-                style={
-                  styles.detailValue
-                }
+                style={styles.detailValue}
               >
                 {new Date(
                   emergency.responderAssignedAt,
                 ).toLocaleString()}
               </Text>
             </>
-          )}
+          ) : null}
         </View>
+
+        {/* CONTACTS */}
 
         <Text
           style={styles.sectionLabel}
@@ -1040,8 +1266,8 @@ export default function EmergencyStatusScreen() {
           EMERGENCY CONTACTS
         </Text>
 
-        {emergency.notifiedContacts
-          .length === 0 ? (
+        {emergency.notifiedContacts.length ===
+        0 ? (
           <View
             style={styles.emptyContacts}
           >
@@ -1059,8 +1285,7 @@ export default function EmergencyStatusScreen() {
               }
             >
               No emergency contacts were
-              saved when this request was
-              created.
+              attached to this request.
             </Text>
           </View>
         ) : (
@@ -1091,7 +1316,11 @@ export default function EmergencyStatusScreen() {
                     </Text>
                   </View>
 
-                  <View>
+                  <View
+                    style={
+                      styles.contactContent
+                    }
+                  >
                     <Text
                       style={
                         styles.contactName
@@ -1114,8 +1343,16 @@ export default function EmergencyStatusScreen() {
           </View>
         )}
 
+        {/* DASHBOARD */}
+
         <Pressable
-          style={styles.primaryButton}
+          style={({ pressed }) => [
+            styles.primaryButton,
+
+            pressed
+              ? styles.buttonPressed
+              : null,
+          ]}
           onPress={() =>
             router.replace(
               '/dashboard',
@@ -1127,7 +1364,7 @@ export default function EmergencyStatusScreen() {
               styles.primaryButtonText
             }
           >
-            Dashboard
+            Back to dashboard
           </Text>
         </Pressable>
       </ScrollView>
@@ -1159,48 +1396,55 @@ const styles = StyleSheet.create({
     padding: 24,
   },
 
-  logo: {
-    fontSize: 23,
-    fontWeight: '900',
+  loadingLogo: {
     color: '#111827',
+    fontSize: 30,
+    fontWeight: '900',
   },
 
   loader: {
-    marginTop: 25,
+    marginTop: 24,
   },
 
   loadingText: {
     marginTop: 12,
     color: '#7A838D',
+    fontSize: 13,
   },
 
   errorTitle: {
-    marginTop: 25,
-    fontSize: 28,
-    fontWeight: '800',
+    marginTop: 24,
     color: '#18212B',
+    fontSize: 28,
+    fontWeight: '900',
   },
 
-  error: {
-    marginTop: 12,
+  errorText: {
+    marginTop: 10,
     color: '#DC2626',
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12,
+    lineHeight: 18,
   },
 
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 30,
+    marginBottom: 28,
+  },
+
+  logo: {
+    color: '#111827',
+    fontSize: 24,
+    fontWeight: '900',
   },
 
   requestNumber: {
-    marginTop: 5,
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 1.2,
+    marginTop: 4,
     color: '#929AA4',
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 1.1,
   },
 
   liveBadge: {
@@ -1212,35 +1456,44 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
 
+  closedBadge: {
+    backgroundColor: '#E9ECEF',
+  },
+
   liveDot: {
     width: 7,
     height: 7,
     marginRight: 6,
     borderRadius: 4,
-    backgroundColor: '#32A06D',
+    backgroundColor: '#16A34A',
+  },
+
+  closedDot: {
+    backgroundColor: '#9CA3AF',
   },
 
   liveText: {
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 1,
     color: '#58616B',
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 0.8,
   },
 
   title: {
-    fontSize: 30,
-    fontWeight: '800',
     color: '#18212B',
+    fontSize: 30,
+    fontWeight: '900',
   },
 
   subtitle: {
     marginTop: 6,
     color: '#7A838D',
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 19,
   },
 
   currentStatusCard: {
-    marginTop: 24,
+    marginTop: 22,
     padding: 20,
     borderRadius: 22,
     backgroundColor: '#111827',
@@ -1250,38 +1503,69 @@ const styles = StyleSheet.create({
     backgroundColor: '#7F1D1D',
   },
 
+  completedCard: {
+    backgroundColor: '#14532D',
+  },
+
+  statusTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
   statusLabel: {
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 1.2,
     color: '#9CA3AF',
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 1.1,
+  },
+
+  statusLiveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  statusLiveDot: {
+    width: 6,
+    height: 6,
+    marginRight: 5,
+    borderRadius: 3,
+    backgroundColor: '#4ADE80',
+  },
+
+  statusLiveText: {
+    color: '#D1D5DB',
+    fontSize: 7,
+    fontWeight: '900',
   },
 
   statusValue: {
-    marginTop: 8,
+    marginTop: 9,
     color: '#FFFFFF',
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
   },
 
   statusCode: {
     marginTop: 4,
     color: '#D1D5DB',
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 9,
+    fontWeight: '800',
   },
 
   sectionLabel: {
-    marginTop: 26,
+    marginTop: 25,
     marginBottom: 10,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.2,
     color: '#929AA4',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1.1,
   },
 
   responderCard: {
     padding: 18,
+    borderWidth: 1,
+    borderColor: '#E7EAEE',
     borderRadius: 22,
     backgroundColor: '#FFFFFF',
   },
@@ -1292,32 +1576,67 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
-  responderEyebrow: {
-    fontSize: 8,
+  responderIdentity: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+
+  responderNameArea: {
+    flex: 1,
+  },
+
+  responderIcon: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 11,
+    borderRadius: 14,
+    backgroundColor: '#111827',
+  },
+
+  responderIconText: {
+    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: '900',
-    letterSpacing: 1,
+  },
+
+  responderEyebrow: {
     color: '#9CA3AF',
+    fontSize: 7,
+    fontWeight: '900',
+    letterSpacing: 0.9,
   },
 
   responderTitle: {
-    marginTop: 5,
-    fontSize: 16,
-    fontWeight: '800',
+    marginTop: 4,
     color: '#111827',
+    fontSize: 14,
+    fontWeight: '900',
   },
 
   responderStatusBadge: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 9,
     paddingVertical: 7,
-    borderRadius: 12,
-    backgroundColor: '#EEF2F6',
+    borderRadius: 11,
+    backgroundColor: '#F3F4F6',
   },
 
   responderStatusText: {
-    color: '#111827',
-    fontSize: 8,
+    color: '#4B5563',
+    fontSize: 7,
     fontWeight: '900',
-    letterSpacing: 0.6,
+    letterSpacing: 0.5,
+  },
+
+  responderEnRouteBadge: {
+    backgroundColor: '#EEF2FF',
+  },
+
+  responderEnRouteText: {
+    color: '#3730A3',
   },
 
   responderArrivedBadge: {
@@ -1328,11 +1647,43 @@ const styles = StyleSheet.create({
     color: '#166534',
   },
 
+  liveTrackingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 18,
+  },
+
+  liveTrackingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  liveTrackingDot: {
+    width: 8,
+    height: 8,
+    marginRight: 7,
+    borderRadius: 4,
+    backgroundColor: '#16A34A',
+  },
+
+  liveTrackingText: {
+    color: '#374151',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+
+  liveUpdatedText: {
+    color: '#9CA3AF',
+    fontSize: 8,
+  },
+
   responderStats: {
     flexDirection: 'row',
-    marginTop: 18,
-    padding: 16,
-    borderRadius: 16,
+    marginTop: 12,
+    paddingVertical: 17,
+    paddingHorizontal: 15,
+    borderRadius: 17,
     backgroundColor: '#F7F8FA',
   },
 
@@ -1341,45 +1692,60 @@ const styles = StyleSheet.create({
   },
 
   responderStatLabel: {
-    fontSize: 8,
-    fontWeight: '900',
-    letterSpacing: 0.8,
     color: '#9CA3AF',
+    fontSize: 7,
+    fontWeight: '900',
+    letterSpacing: 0.7,
   },
 
   responderStatValue: {
     marginTop: 6,
-    fontSize: 19,
-    fontWeight: '900',
     color: '#111827',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+
+  responderStatHint: {
+    marginTop: 3,
+    color: '#9CA3AF',
+    fontSize: 8,
   },
 
   responderStatDivider: {
     width: 1,
-    marginHorizontal: 18,
-    backgroundColor: '#E2E6EA',
+    marginHorizontal: 15,
+    backgroundColor: '#E1E5E9',
   },
 
-  etaDisclaimer: {
+  etaInfo: {
     marginTop: 10,
-    fontSize: 9,
-    lineHeight: 14,
-    color: '#9CA3AF',
+    padding: 11,
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
   },
 
-  locationUpdatedText: {
-    marginTop: 7,
-    fontSize: 9,
-    color: '#7A838D',
+  etaInfoText: {
+    color: '#8A929C',
+    fontSize: 8,
+    lineHeight: 13,
   },
 
   waitingLocationCard: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 18,
-    padding: 14,
-    borderRadius: 15,
+    padding: 15,
+    borderRadius: 16,
     backgroundColor: '#F7F8FA',
+  },
+
+  waitingLocationIcon: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
   },
 
   waitingLocationContent: {
@@ -1388,36 +1754,99 @@ const styles = StyleSheet.create({
   },
 
   waitingLocationTitle: {
-    fontSize: 12,
-    fontWeight: '800',
     color: '#111827',
+    fontSize: 12,
+    fontWeight: '900',
   },
 
   waitingLocationText: {
-    marginTop: 3,
+    marginTop: 4,
+    color: '#7A838D',
     fontSize: 10,
     lineHeight: 15,
-    color: '#7A838D',
   },
 
   arrivedNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 18,
-    padding: 14,
-    borderRadius: 15,
+    padding: 15,
+    borderRadius: 16,
     backgroundColor: '#ECFDF3',
   },
 
+  arrivedIcon: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: '#166534',
+  },
+
+  arrivedIconText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+
+  arrivedNoticeContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+
   arrivedNoticeTitle: {
+    color: '#166534',
     fontSize: 13,
     fontWeight: '900',
-    color: '#166534',
   },
 
   arrivedNoticeText: {
     marginTop: 4,
+    color: '#398056',
     fontSize: 10,
     lineHeight: 15,
+  },
+
+  completeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 18,
+    backgroundColor: '#ECFDF3',
+  },
+
+  completeIcon: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    backgroundColor: '#166534',
+  },
+
+  completeIconText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '900',
+  },
+
+  completeContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+
+  completeTitle: {
+    color: '#166534',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+
+  completeText: {
+    marginTop: 4,
     color: '#398056',
+    fontSize: 10,
+    lineHeight: 15,
   },
 
   progressCard: {
@@ -1428,7 +1857,7 @@ const styles = StyleSheet.create({
 
   progressStep: {
     flexDirection: 'row',
-    marginBottom: 18,
+    marginBottom: 17,
   },
 
   progressCircle: {
@@ -1447,8 +1876,8 @@ const styles = StyleSheet.create({
 
   progressNumber: {
     color: '#929AA4',
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: 10,
+    fontWeight: '900',
   },
 
   progressNumberCompleted: {
@@ -1461,8 +1890,8 @@ const styles = StyleSheet.create({
 
   progressTitle: {
     color: '#9AA2AA',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
   },
 
   progressTitleCompleted: {
@@ -1472,8 +1901,8 @@ const styles = StyleSheet.create({
   progressDescription: {
     marginTop: 3,
     color: '#929AA4',
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 10,
+    lineHeight: 15,
   },
 
   mapContainer: {
@@ -1497,7 +1926,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 13,
-    backgroundColor: 'rgba(255,255,255,0.94)',
+    backgroundColor:
+      'rgba(255,255,255,0.94)',
   },
 
   mapLegendItem: {
@@ -1521,16 +1951,36 @@ const styles = StyleSheet.create({
   },
 
   mapLegendText: {
+    color: '#4B5563',
     fontSize: 9,
     fontWeight: '700',
-    color: '#4B5563',
   },
 
-  coordinates: {
-    marginTop: 8,
-    textAlign: 'right',
-    color: '#929AA4',
-    fontSize: 10,
+  mapInfoCard: {
+    marginTop: 9,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+  },
+
+  mapInfoLabel: {
+    color: '#9CA3AF',
+    fontSize: 7,
+    fontWeight: '900',
+    letterSpacing: 0.7,
+  },
+
+  mapInfoValue: {
+    marginTop: 4,
+    color: '#6B7280',
+    fontSize: 9,
+    fontWeight: '700',
+  },
+
+  mapInfoDivider: {
+    height: 1,
+    marginVertical: 10,
+    backgroundColor: '#ECEFF2',
   },
 
   detailsCard: {
@@ -1540,20 +1990,20 @@ const styles = StyleSheet.create({
   },
 
   detailLabel: {
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 1,
     color: '#929AA4',
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 0.9,
   },
 
   detailValue: {
     marginTop: 5,
-    fontSize: 13,
-    lineHeight: 19,
     color: '#303A44',
+    fontSize: 12,
+    lineHeight: 18,
   },
 
-  divider: {
+  dividerLight: {
     height: 1,
     marginVertical: 15,
     backgroundColor: '#ECEFF2',
@@ -1566,16 +2016,16 @@ const styles = StyleSheet.create({
   },
 
   emptyContactsTitle: {
-    fontSize: 14,
-    fontWeight: '800',
     color: '#303A44',
+    fontSize: 14,
+    fontWeight: '900',
   },
 
   emptyContactsText: {
     marginTop: 4,
-    fontSize: 11,
-    lineHeight: 16,
     color: '#929AA4',
+    fontSize: 10,
+    lineHeight: 15,
   },
 
   contactsList: {
@@ -1605,23 +2055,27 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
 
+  contactContent: {
+    flex: 1,
+  },
+
   contactName: {
-    fontSize: 13,
-    fontWeight: '800',
     color: '#29333D',
+    fontSize: 13,
+    fontWeight: '900',
   },
 
   contactPhone: {
     marginTop: 3,
     color: '#8C959E',
-    fontSize: 11,
+    fontSize: 10,
   },
 
   primaryButton: {
-    height: 55,
+    minHeight: 55,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 28,
+    marginTop: 27,
     borderRadius: 16,
     backgroundColor: '#111827',
   },
@@ -1629,6 +2083,16 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '900',
+  },
+
+  buttonPressed: {
+    opacity: 0.86,
+
+    transform: [
+      {
+        scale: 0.99,
+      },
+    ],
   },
 })

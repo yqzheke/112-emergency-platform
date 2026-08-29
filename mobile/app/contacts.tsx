@@ -2,8 +2,10 @@ import {
   useCallback,
   useState,
 } from 'react'
+
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -14,6 +16,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
+
 import {
   useFocusEffect,
   useRouter,
@@ -33,11 +36,17 @@ export default function ContactsScreen() {
   const [contacts, setContacts] =
     useState<Contact[]>([])
 
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
+  const [name, setName] =
+    useState('')
 
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [phone, setPhone] =
+    useState('')
+
+  const [loading, setLoading] =
+    useState(true)
+
+  const [saving, setSaving] =
+    useState(false)
 
   const [deletingId, setDeletingId] =
     useState<number | null>(null)
@@ -51,26 +60,31 @@ export default function ContactsScreen() {
   const [serverError, setServerError] =
     useState('')
 
-  const loadContacts = useCallback(async () => {
-    try {
-      setLoading(true)
+  const loadContacts =
+    useCallback(async () => {
+      try {
+        setLoading(true)
 
-      const result = await getContacts()
+        const result =
+          await getContacts()
 
-      setContacts(result)
-      setServerError('')
-    } catch (error) {
-      console.error(error)
+        setContacts(result)
+        setServerError('')
+      } catch (error) {
+        console.error(
+          'Contact loading error:',
+          error,
+        )
 
-      setServerError(
-        error instanceof Error
-          ? error.message
-          : 'Could not load contacts',
-      )
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+        setServerError(
+          error instanceof Error
+            ? error.message
+            : 'Could not load contacts',
+        )
+      } finally {
+        setLoading(false)
+      }
+    }, [])
 
   useFocusEffect(
     useCallback(() => {
@@ -83,8 +97,11 @@ export default function ContactsScreen() {
     setPhoneError('')
     setServerError('')
 
-    const trimmedName = name.trim()
-    const trimmedPhone = phone.trim()
+    const trimmedName =
+      name.trim()
+
+    const trimmedPhone =
+      phone.trim()
 
     let hasError = false
 
@@ -92,6 +109,7 @@ export default function ContactsScreen() {
       setNameError(
         'Contact name is required',
       )
+
       hasError = true
     }
 
@@ -99,6 +117,7 @@ export default function ContactsScreen() {
       setPhoneError(
         'Phone number is required',
       )
+
       hasError = true
     }
 
@@ -119,7 +138,10 @@ export default function ContactsScreen() {
 
       await loadContacts()
     } catch (error) {
-      console.error(error)
+      console.error(
+        'Contact creation error:',
+        error,
+      )
 
       setServerError(
         error instanceof Error
@@ -129,6 +151,30 @@ export default function ContactsScreen() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const confirmDelete = (
+    contact: Contact,
+  ) => {
+    Alert.alert(
+      'Delete contact?',
+      `Remove ${contact.name} from your emergency contacts?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+
+        {
+          text: 'Delete',
+          style: 'destructive',
+
+          onPress: () => {
+            handleDelete(contact.id)
+          },
+        },
+      ],
+    )
   }
 
   const handleDelete = async (
@@ -147,7 +193,10 @@ export default function ContactsScreen() {
         ),
       )
     } catch (error) {
-      console.error(error)
+      console.error(
+        'Contact deletion error:',
+        error,
+      )
 
       setServerError(
         error instanceof Error
@@ -170,12 +219,16 @@ export default function ContactsScreen() {
         }
       >
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={
+            styles.content
+          }
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={
+            false
+          }
         >
           <View style={styles.header}>
-            <View>
+            <View style={styles.headerText}>
               <Text style={styles.logo}>
                 112
               </Text>
@@ -187,22 +240,64 @@ export default function ContactsScreen() {
               <Text style={styles.title}>
                 Emergency contacts
               </Text>
+
+              <Text style={styles.subtitle}>
+                Add trusted people who may
+                need to be contacted during
+                an emergency.
+              </Text>
             </View>
 
             <Pressable
-              style={styles.backButton}
-              onPress={() => router.back()}
+              style={({ pressed }) => [
+                styles.backButton,
+                pressed &&
+                  styles.buttonPressed,
+              ]}
+              onPress={() =>
+                router.back()
+              }
             >
-              <Text style={styles.backText}>
+              <Text
+                style={styles.backText}
+              >
                 ←
               </Text>
             </Pressable>
           </View>
 
-          <Text style={styles.subtitle}>
-            Add people who may need to be
-            contacted during an emergency.
-          </Text>
+          <View style={styles.summaryCard}>
+            <View
+              style={styles.summaryIcon}
+            >
+              <Text
+                style={styles.summaryIconText}
+              >
+                +
+              </Text>
+            </View>
+
+            <View
+              style={styles.summaryContent}
+            >
+              <Text
+                style={styles.summaryTitle}
+              >
+                {contacts.length}{' '}
+                {contacts.length === 1
+                  ? 'saved contact'
+                  : 'saved contacts'}
+              </Text>
+
+              <Text
+                style={styles.summaryText}
+              >
+                These contacts can be
+                associated with your
+                emergency requests.
+              </Text>
+            </View>
+          </View>
 
           <Text style={styles.sectionLabel}>
             ADD CONTACT
@@ -221,7 +316,11 @@ export default function ContactsScreen() {
                   : null,
               ]}
               value={name}
-              onChangeText={setName}
+              onChangeText={(value) => {
+                setName(value)
+                setNameError('')
+                setServerError('')
+              }}
               placeholder="Example: Mom"
               placeholderTextColor="#9CA3AF"
               autoCapitalize="words"
@@ -233,7 +332,9 @@ export default function ContactsScreen() {
               </Text>
             ) : null}
 
-            <Text style={styles.label}>
+            <Text
+              style={styles.labelSpacing}
+            >
               Phone number
             </Text>
 
@@ -245,7 +346,11 @@ export default function ContactsScreen() {
                   : null,
               ]}
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={(value) => {
+                setPhone(value)
+                setPhoneError('')
+                setServerError('')
+              }}
               placeholder="+7 700 000 00 00"
               placeholderTextColor="#9CA3AF"
               keyboardType="phone-pad"
@@ -258,24 +363,47 @@ export default function ContactsScreen() {
             ) : null}
 
             {serverError ? (
-              <Text style={styles.serverError}>
-                {serverError}
-              </Text>
+              <View
+                style={styles.serverErrorCard}
+              >
+                <Text
+                  style={styles.serverErrorTitle}
+                >
+                  Action failed
+                </Text>
+
+                <Text
+                  style={styles.serverError}
+                >
+                  {serverError}
+                </Text>
+              </View>
             ) : null}
 
             <Pressable
-              style={[
+              style={({ pressed }) => [
                 styles.primaryButton,
                 saving &&
                   styles.disabledButton,
+                pressed &&
+                  !saving &&
+                  styles.buttonPressed,
               ]}
               onPress={handleAdd}
               disabled={saving}
             >
               {saving ? (
-                <ActivityIndicator
-                  color="#FFFFFF"
-                />
+                <>
+                  <ActivityIndicator
+                    color="#FFFFFF"
+                  />
+
+                  <Text
+                    style={styles.savingText}
+                  >
+                    Adding contact...
+                  </Text>
+                </>
               ) : (
                 <Text
                   style={
@@ -288,25 +416,55 @@ export default function ContactsScreen() {
             </Pressable>
           </View>
 
-          <Text style={styles.sectionLabel}>
-            SAVED CONTACTS
-          </Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>
+              SAVED CONTACTS
+            </Text>
+
+            {!loading ? (
+              <Text
+                style={styles.sectionCount}
+              >
+                {contacts.length}
+              </Text>
+            ) : null}
+          </View>
 
           {loading ? (
             <View style={styles.loadingBox}>
               <ActivityIndicator
                 color="#111827"
               />
+
+              <Text
+                style={styles.loadingText}
+              >
+                Loading contacts...
+              </Text>
             </View>
           ) : contacts.length === 0 ? (
             <View style={styles.emptyCard}>
-              <Text style={styles.emptyTitle}>
+              <View
+                style={styles.emptyIcon}
+              >
+                <Text
+                  style={styles.emptyIconText}
+                >
+                  +
+                </Text>
+              </View>
+
+              <Text
+                style={styles.emptyTitle}
+              >
                 No contacts yet
               </Text>
 
-              <Text style={styles.emptyText}>
-                Add someone you trust using the
-                form above.
+              <Text
+                style={styles.emptyText}
+              >
+                Add someone you trust using
+                the form above.
               </Text>
             </View>
           ) : (
@@ -349,12 +507,17 @@ export default function ContactsScreen() {
                   </View>
 
                   <Pressable
-                    style={styles.deleteButton}
+                    style={({ pressed }) => [
+                      styles.deleteButton,
+                      pressed &&
+                        styles.deleteButtonPressed,
+                    ]}
                     onPress={() =>
-                      handleDelete(contact.id)
+                      confirmDelete(contact)
                     }
                     disabled={
-                      deletingId === contact.id
+                      deletingId ===
+                      contact.id
                     }
                   >
                     {deletingId ===
@@ -365,7 +528,9 @@ export default function ContactsScreen() {
                       />
                     ) : (
                       <Text
-                        style={styles.deleteText}
+                        style={
+                          styles.deleteText
+                        }
                       >
                         Delete
                       </Text>
@@ -375,6 +540,16 @@ export default function ContactsScreen() {
               ))}
             </View>
           )}
+
+          <View style={styles.infoCard}>
+            <View style={styles.infoDot} />
+
+            <Text style={styles.infoText}>
+              Only add people you trust and
+              keep their phone numbers up to
+              date.
+            </Text>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -399,25 +574,38 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
+  headerText: {
+    flex: 1,
+    paddingRight: 15,
+  },
+
   logo: {
+    color: '#111827',
     fontSize: 23,
     fontWeight: '900',
-    color: '#111827',
   },
 
   eyebrow: {
-    marginTop: 24,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.2,
+    marginTop: 22,
     color: '#929AA4',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1.1,
   },
 
   title: {
-    marginTop: 7,
-    fontSize: 30,
-    fontWeight: '800',
+    marginTop: 6,
     color: '#18212B',
+    fontSize: 29,
+    fontWeight: '900',
+  },
+
+  subtitle: {
+    marginTop: 7,
+    maxWidth: 300,
+    color: '#7A838D',
+    fontSize: 12,
+    lineHeight: 18,
   },
 
   backButton: {
@@ -425,48 +613,110 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     borderRadius: 15,
     backgroundColor: '#FFFFFF',
   },
 
   backText: {
+    marginTop: -2,
     color: '#111827',
-    fontSize: 25,
+    fontSize: 24,
+    fontWeight: '700',
   },
 
-  subtitle: {
-    marginTop: 10,
-    maxWidth: 310,
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#7A838D',
+  summaryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+    padding: 15,
+    borderRadius: 18,
+    backgroundColor: '#111827',
+  },
+
+  summaryIcon: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    borderRadius: 14,
+    backgroundColor: '#25303E',
+  },
+
+  summaryIconText: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '500',
+  },
+
+  summaryContent: {
+    flex: 1,
+  },
+
+  summaryTitle: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+
+  summaryText: {
+    marginTop: 4,
+    color: '#AEB6C1',
+    fontSize: 9,
+    lineHeight: 14,
+  },
+
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 27,
+    marginBottom: 10,
   },
 
   sectionLabel: {
     marginTop: 27,
     marginBottom: 10,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.2,
     color: '#929AA4',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1.1,
+  },
+
+  sectionCount: {
+    marginTop: 27,
+    color: '#9CA3AF',
+    fontSize: 9,
+    fontWeight: '900',
   },
 
   formCard: {
     padding: 18,
+    borderWidth: 1,
+    borderColor: '#E7EAEE',
     borderRadius: 22,
     backgroundColor: '#FFFFFF',
   },
 
   label: {
     marginBottom: 7,
-    fontSize: 12,
-    fontWeight: '700',
     color: '#39444F',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+
+  labelSpacing: {
+    marginTop: 10,
+    marginBottom: 7,
+    color: '#39444F',
+    fontSize: 12,
+    fontWeight: '800',
   },
 
   input: {
     height: 52,
-    marginBottom: 7,
     paddingHorizontal: 15,
     borderWidth: 1,
     borderColor: '#E2E6EA',
@@ -478,25 +728,42 @@ const styles = StyleSheet.create({
 
   inputError: {
     borderColor: '#F0A7A2',
+    backgroundColor: '#FFF8F8',
   },
 
   error: {
-    marginBottom: 13,
+    marginTop: 5,
     color: '#B42318',
-    fontSize: 11,
+    fontSize: 10,
+  },
+
+  serverErrorCard: {
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
+  },
+
+  serverErrorTitle: {
+    color: '#991B1B',
+    fontSize: 10,
+    fontWeight: '900',
   },
 
   serverError: {
-    marginTop: 10,
+    marginTop: 3,
     color: '#B42318',
-    fontSize: 11,
+    fontSize: 9,
+    lineHeight: 14,
   },
 
   primaryButton: {
-    height: 54,
+    minHeight: 54,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 16,
+    paddingHorizontal: 15,
     borderRadius: 15,
     backgroundColor: '#111827',
   },
@@ -507,34 +774,65 @@ const styles = StyleSheet.create({
 
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+
+  savingText: {
+    marginLeft: 9,
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '800',
   },
 
   loadingBox: {
-    padding: 30,
     alignItems: 'center',
+    padding: 28,
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
+  },
+
+  loadingText: {
+    marginTop: 9,
+    color: '#929AA4',
+    fontSize: 10,
   },
 
   emptyCard: {
-    padding: 20,
+    alignItems: 'center',
+    padding: 24,
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
   },
 
+  emptyIcon: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    backgroundColor: '#EEF2F6',
+  },
+
+  emptyIconText: {
+    color: '#111827',
+    fontSize: 21,
+    fontWeight: '500',
+  },
+
   emptyTitle: {
-    fontSize: 15,
-    fontWeight: '800',
+    marginTop: 13,
     color: '#29333D',
+    fontSize: 15,
+    fontWeight: '900',
   },
 
   emptyText: {
     marginTop: 5,
     color: '#929AA4',
-    fontSize: 11,
-    lineHeight: 17,
+    fontSize: 10,
+    lineHeight: 16,
+    textAlign: 'center',
   },
 
   contactList: {
@@ -545,6 +843,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 13,
+    borderWidth: 1,
+    borderColor: '#E7EAEE',
     borderRadius: 18,
     backgroundColor: '#FFFFFF',
   },
@@ -572,24 +872,61 @@ const styles = StyleSheet.create({
   contactName: {
     color: '#29333D',
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '900',
   },
 
   contactPhone: {
     marginTop: 3,
     color: '#8B949E',
-    fontSize: 11,
+    fontSize: 10,
   },
 
   deleteButton: {
-    minWidth: 55,
+    minWidth: 56,
     alignItems: 'flex-end',
     paddingVertical: 8,
   },
 
+  deleteButtonPressed: {
+    opacity: 0.55,
+  },
+
   deleteText: {
     color: '#B42318',
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+
+  infoCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 14,
+    paddingHorizontal: 4,
+  },
+
+  infoDot: {
+    width: 6,
+    height: 6,
+    marginTop: 4,
+    marginRight: 7,
+    borderRadius: 3,
+    backgroundColor: '#9CA3AF',
+  },
+
+  infoText: {
+    flex: 1,
+    color: '#929AA4',
+    fontSize: 9,
+    lineHeight: 14,
+  },
+
+  buttonPressed: {
+    opacity: 0.86,
+
+    transform: [
+      {
+        scale: 0.99,
+      },
+    ],
   },
 })

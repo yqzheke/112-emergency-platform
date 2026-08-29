@@ -4,6 +4,7 @@ import {
   Text,
   View,
 } from 'react-native'
+
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 
@@ -17,6 +18,83 @@ interface BottomNavProps {
   active: NavItem
 }
 
+interface NavButtonProps {
+  item: NavItem
+  label: string
+  active: NavItem
+  icon:
+    | 'home'
+    | 'notifications'
+    | 'time'
+    | 'person'
+  outlineIcon:
+    | 'home-outline'
+    | 'notifications-outline'
+    | 'time-outline'
+    | 'person-outline'
+  onPress: () => void
+}
+
+function NavButton({
+  item,
+  label,
+  active,
+  icon,
+  outlineIcon,
+  onPress,
+}: NavButtonProps) {
+  const isActive =
+    active === item
+
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.item,
+        pressed &&
+          !isActive &&
+          styles.itemPressed,
+      ]}
+      onPress={onPress}
+    >
+      <View
+        style={[
+          styles.iconContainer,
+
+          isActive
+            ? styles.activeIconContainer
+            : null,
+        ]}
+      >
+        <Ionicons
+          name={
+            isActive
+              ? icon
+              : outlineIcon
+          }
+          size={20}
+          color={
+            isActive
+              ? '#FFFFFF'
+              : '#98A0AA'
+          }
+        />
+      </View>
+
+      <Text
+        style={[
+          styles.label,
+
+          isActive
+            ? styles.activeLabel
+            : null,
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  )
+}
+
 export default function BottomNav({
   active,
 }: BottomNavProps) {
@@ -25,7 +103,9 @@ export default function BottomNav({
   const navigate = (
     item: NavItem,
   ) => {
-    if (item === active) return
+    if (item === active) {
+      return
+    }
 
     switch (item) {
       case 'home':
@@ -49,129 +129,49 @@ export default function BottomNav({
   return (
     <View style={styles.wrapper}>
       <View style={styles.bar}>
-        <Pressable
-          style={styles.item}
+        <NavButton
+          item="home"
+          label="Home"
+          active={active}
+          icon="home"
+          outlineIcon="home-outline"
           onPress={() =>
             navigate('home')
           }
-        >
-          <Ionicons
-            name={
-              active === 'home'
-                ? 'home'
-                : 'home-outline'
-            }
-            size={21}
-            color={
-              active === 'home'
-                ? '#111827'
-                : '#98A0AA'
-            }
-          />
+        />
 
-          <Text
-            style={[
-              styles.label,
-              active === 'home' &&
-                styles.activeLabel,
-            ]}
-          >
-            Home
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.item}
+        <NavButton
+          item="alerts"
+          label="Alerts"
+          active={active}
+          icon="notifications"
+          outlineIcon="notifications-outline"
           onPress={() =>
             navigate('alerts')
           }
-        >
-          <Ionicons
-            name={
-              active === 'alerts'
-                ? 'notifications'
-                : 'notifications-outline'
-            }
-            size={21}
-            color={
-              active === 'alerts'
-                ? '#111827'
-                : '#98A0AA'
-            }
-          />
+        />
 
-          <Text
-            style={[
-              styles.label,
-              active === 'alerts' &&
-                styles.activeLabel,
-            ]}
-          >
-            Alerts
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.item}
+        <NavButton
+          item="history"
+          label="History"
+          active={active}
+          icon="time"
+          outlineIcon="time-outline"
           onPress={() =>
             navigate('history')
           }
-        >
-          <Ionicons
-            name={
-              active === 'history'
-                ? 'time'
-                : 'time-outline'
-            }
-            size={21}
-            color={
-              active === 'history'
-                ? '#111827'
-                : '#98A0AA'
-            }
-          />
+        />
 
-          <Text
-            style={[
-              styles.label,
-              active === 'history' &&
-                styles.activeLabel,
-            ]}
-          >
-            History
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.item}
+        <NavButton
+          item="profile"
+          label="Profile"
+          active={active}
+          icon="person"
+          outlineIcon="person-outline"
           onPress={() =>
             navigate('profile')
           }
-        >
-          <Ionicons
-            name={
-              active === 'profile'
-                ? 'person'
-                : 'person-outline'
-            }
-            size={21}
-            color={
-              active === 'profile'
-                ? '#111827'
-                : '#98A0AA'
-            }
-          />
-
-          <Text
-            style={[
-              styles.label,
-              active === 'profile' &&
-                styles.activeLabel,
-            ]}
-          >
-            Profile
-          </Text>
-        </Pressable>
+        />
       </View>
     </View>
   )
@@ -181,30 +181,50 @@ const styles = StyleSheet.create({
   wrapper: {
     paddingHorizontal: 14,
     paddingTop: 8,
+    paddingBottom: 8,
     backgroundColor: '#F5F6F8',
   },
 
   bar: {
-    height: 64,
+    minHeight: 68,
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 5,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: 22,
+    borderRadius: 23,
     backgroundColor: '#FFFFFF',
   },
 
   item: {
     flex: 1,
-    height: '100%',
+    minHeight: 55,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 17,
+  },
+
+  itemPressed: {
+    opacity: 0.55,
+  },
+
+  iconContainer: {
+    width: 34,
+    height: 31,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 11,
+  },
+
+  activeIconContainer: {
+    backgroundColor: '#111827',
   },
 
   label: {
-    marginTop: 4,
+    marginTop: 3,
     color: '#98A0AA',
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '700',
   },
 
