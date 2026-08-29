@@ -62,6 +62,25 @@ export async function getResponderEmergencies(): Promise<
   return data.emergencies ?? []
 }
 
+export async function getResponderHistory(): Promise<
+  ResponderEmergency[]
+> {
+  const response = await apiFetch(
+    '/responder/history',
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await readError(response),
+    )
+  }
+
+  const data =
+    (await response.json()) as EmergencyListResponse
+
+  return data.emergencies ?? []
+}
+
 export async function getResponderEmergency(
   emergencyId: number,
 ): Promise<ResponderEmergency> {

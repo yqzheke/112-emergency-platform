@@ -36,6 +36,64 @@ router.use(requireResponder)
   Returns emergencies assigned to the
   logged-in responder.
 */
+
+/*
+  GET /api/responder/history
+
+  Returns completed emergencies assigned
+  to the logged-in responder.
+*/
+router.get(
+  '/history',
+  async (req: AuthRequest, res) => {
+    try {
+      if (!req.userId) {
+        return res.status(401).json({
+          message: 'Authentication required',
+        })
+      }
+
+      const emergencies =
+        await prisma.emergencyRequest.findMany({
+          where: {
+            assignedResponderId: req.userId,
+            status: 'COMPLETED',
+          },
+
+          orderBy: {
+            updatedAt: 'desc',
+          },
+
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+              },
+            },
+
+            notifiedContacts: true,
+          },
+        })
+
+      return res.json({
+        emergencies,
+      })
+    } catch (error) {
+      console.error(
+        'Responder history loading error:',
+        error,
+      )
+
+      return res.status(500).json({
+        message:
+          'Could not load responder history',
+      })
+    }
+  },
+)
+
 router.get(
   '/emergencies',
   async (req: AuthRequest, res) => {

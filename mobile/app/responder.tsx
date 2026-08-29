@@ -1,13 +1,12 @@
 import {
   useCallback,
   useEffect,
-  useRef,
+  useMemo,
   useState,
 } from 'react'
 
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   RefreshControl,
   SafeAreaView,
@@ -17,59 +16,64 @@ import {
   View,
 } from 'react-native'
 
-import { useRouter } from 'expo-router'
-import * as Location from 'expo-location'
-
-import { clearAuth } from '../lib/auth'
+import {
+  Ionicons,
+} from '@expo/vector-icons'
 
 import {
-  acceptResponderEmergency,
-  completeResponderEmergency,
+  useRouter,
+} from 'expo-router'
+
+import {
   getResponderEmergencies,
-  markResponderArrived,
-  updateResponderLocation,
   type ResponderEmergency,
 } from '../services/responderService'
 
-const emergencyNames = {
-  MEDICAL: 'Medical emergency',
-  POLICE: 'Police emergency',
-  FIRE: 'Fire emergency',
-} as const
+const emergencyMeta = {
+  MEDICAL: {
+    title: 'Medical emergency',
+    icon: 'medical' as const,
+    color: '#DC2626',
+    background: '#FEF2F2',
+  },
 
-export default function ResponderScreen() {
+  POLICE: {
+    title: 'Police emergency',
+    icon: 'shield-checkmark' as const,
+    color: '#2563EB',
+    background: '#EFF6FF',
+  },
+
+  FIRE: {
+    title: 'Fire emergency',
+    icon: 'flame' as const,
+    color: '#EA580C',
+    background: '#FFF7ED',
+  },
+}
+
+export default function ResponderDashboard() {
   const router = useRouter()
 
-  const [emergencies, setEmergencies] =
-    useState<ResponderEmergency[]>([])
-
-  const [loading, setLoading] =
-    useState(true)
-
-  const [refreshing, setRefreshing] =
-    useState(false)
-
-  const [error, setError] =
-    useState('')
-
-  const [actionId, setActionId] =
-    useState<number | null>(null)
+  const [
+    emergencies,
+    setEmergencies,
+  ] = useState<ResponderEmergency[]>([])
 
   const [
-    sharingEmergencyId,
-    setSharingEmergencyId,
-  ] = useState<number | null>(null)
+    loading,
+    setLoading,
+  ] = useState(true)
 
-  const [lastLocation, setLastLocation] =
-    useState<{
-      latitude: number
-      longitude: number
-    } | null>(null)
+  const [
+    refreshing,
+    setRefreshing,
+  ] = useState(false)
 
-  const locationSubscription =
-    useRef<Location.LocationSubscription | null>(
-      null,
-    )
+  const [
+    error,
+    setError,
+  ] = useState('')
 
   const loadEmergencies =
     useCallback(async () => {
@@ -78,17 +82,18 @@ export default function ResponderScreen() {
           await getResponderEmergencies()
 
         setEmergencies(data)
+
         setError('')
       } catch (error) {
         console.error(
-          'Responder emergency loading error:',
+          'Responder dashboard error:',
           error,
         )
 
         setError(
           error instanceof Error
             ? error.message
-            : 'Could not load assigned emergencies',
+            : 'Could not load responder data',
         )
       } finally {
         setLoading(false)
@@ -99,314 +104,80 @@ export default function ResponderScreen() {
   useEffect(() => {
     loadEmergencies()
 
-    const interval = setInterval(
-      loadEmergencies,
-      5000,
+    const interval =
+      setInterval(
+        loadEmergencies,
+        5000,
+      )
+
+    return () =>
+      clearInterval(interval)
+  }, [loadEmergencies])
+
+  const activeEmergency =
+    useMemo(
+      () =>
+        emergencies.find(
+          (emergency) =>
+            emergency.status ===
+              'RESPONDING' ||
+            emergency.status ===
+              'DISPATCHED',
+        ) ?? emergencies[0],
+      [emergencies],
     )
 
-    return () => {
-      clearInterval(interval)
+  const acceptedEmergency =
+    emergencies.find(
+      (emergency) =>
+        Boolean(
+          emergency.responderAcceptedAt,
+        ),
+    )
 
-      locationSubscription.current?.remove()
-      locationSubscription.current = null
-    }
-  }, [loadEmergencies])
+  const isResponding =
+    Boolean(acceptedEmergency)
 
   const handleRefresh = () => {
     setRefreshing(true)
+
     loadEmergencies()
-  }
-
-  const stopLocationSharing = () => {
-    locationSubscription.current?.remove()
-
-    locationSubscription.current = null
-
-    setSharingEmergencyId(null)
-    setLastLocation(null)
-  }
-
-  const startLocationSharing = async (
-    emergencyId: number,
-  ) => {
-    try {
-      setError('')
-
-      const permission =
-        await Location.requestForegroundPermissionsAsync()
-
-      if (
-        permission.status !== 'granted'
-      ) {
-        setError(
-          'Location permission is required to share responder position.',
-        )
-
-        return false
-      }
-
-      stopLocationSharing()
-
-      const current =
-        await Location.getCurrentPositionAsync({
-          accuracy:
-            Location.Accuracy.High,
-        })
-
-      const {
-        latitude,
-        longitude,
-      } = current.coords
-
-      setLastLocation({
-        latitude,
-        longitude,
-      })
-
-      await updateResponderLocation(
-        emergencyId,
-        latitude,
-        longitude,
-      )
-
-      const subscription =
-        await Location.watchPositionAsync(
-          {
-            accuracy:
-              Location.Accuracy.High,
-
-            timeInterval: 5000,
-
-            distanceInterval: 10,
-          },
-
-          async (location) => {
-            const nextLatitude =
-              location.coords.latitude
-
-            const nextLongitude =
-              location.coords.longitude
-
-            setLastLocation({
-              latitude:
-                nextLatitude,
-
-              longitude:
-                nextLongitude,
-            })
-
-            try {
-              await updateResponderLocation(
-                emergencyId,
-                nextLatitude,
-                nextLongitude,
-              )
-            } catch (error) {
-              console.error(
-                'Responder live location update failed:',
-                error,
-              )
-            }
-          },
-        )
-
-      locationSubscription.current =
-        subscription
-
-      setSharingEmergencyId(
-        emergencyId,
-      )
-
-      return true
-    } catch (error) {
-      console.error(
-        'Location sharing error:',
-        error,
-      )
-
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'Could not start location sharing',
-      )
-
-      return false
-    }
-  }
-
-  const handleAccept = async (
-    emergencyId: number,
-  ) => {
-    try {
-      setActionId(emergencyId)
-      setError('')
-
-      await acceptResponderEmergency(
-        emergencyId,
-      )
-
-      await loadEmergencies()
-
-      await startLocationSharing(
-        emergencyId,
-      )
-    } catch (error) {
-      console.error(
-        'Responder accept error:',
-        error,
-      )
-
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'Could not accept assignment',
-      )
-    } finally {
-      setActionId(null)
-    }
-  }
-
-  const handleStartTracking = async (
-    emergencyId: number,
-  ) => {
-    try {
-      setActionId(emergencyId)
-
-      await startLocationSharing(
-        emergencyId,
-      )
-    } finally {
-      setActionId(null)
-    }
-  }
-
-  const handleArrived = async (
-    emergencyId: number,
-  ) => {
-    Alert.alert(
-      'Confirm arrival',
-      'Confirm that you have reached the emergency location.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'I have arrived',
-          onPress: async () => {
-            try {
-              setActionId(
-                emergencyId,
-              )
-
-              setError('')
-
-              await markResponderArrived(
-                emergencyId,
-              )
-
-              stopLocationSharing()
-
-              await loadEmergencies()
-            } catch (error) {
-              console.error(
-                'Responder arrival error:',
-                error,
-              )
-
-              setError(
-                error instanceof Error
-                  ? error.message
-                  : 'Could not mark arrival',
-              )
-            } finally {
-              setActionId(null)
-            }
-          },
-        },
-      ],
-    )
-  }
-
-  const handleComplete = async (
-    emergencyId: number,
-  ) => {
-    Alert.alert(
-      'Complete emergency?',
-      'Only complete the emergency when response at the scene is finished.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-
-        {
-          text: 'Complete',
-          style: 'default',
-
-          onPress: async () => {
-            try {
-              setActionId(
-                emergencyId,
-              )
-
-              setError('')
-
-              await completeResponderEmergency(
-                emergencyId,
-              )
-
-              stopLocationSharing()
-
-              await loadEmergencies()
-            } catch (error) {
-              console.error(
-                'Responder completion error:',
-                error,
-              )
-
-              setError(
-                error instanceof Error
-                  ? error.message
-                  : 'Could not complete emergency',
-              )
-            } finally {
-              setActionId(null)
-            }
-          },
-        },
-      ],
-    )
-  }
-
-  const handleLogout = async () => {
-    stopLocationSharing()
-
-    await clearAuth()
-
-    router.replace('/login')
   }
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.screen}>
+      <SafeAreaView
+        style={styles.screen}
+      >
         <View
-          style={styles.loadingContainer}
+          style={
+            styles.loadingContainer
+          }
         >
-          <Text style={styles.loadingLogo}>
-            112
-          </Text>
+          <View
+            style={styles.loadingLogo}
+          >
+            <Text
+              style={
+                styles.loadingLogoText
+              }
+            >
+              112
+            </Text>
+          </View>
 
           <ActivityIndicator
             size="large"
             color="#111827"
-            style={styles.loadingIndicator}
+            style={{
+              marginTop: 20,
+            }}
           />
 
           <Text
             style={styles.loadingText}
           >
-            Loading assignments...
+            Loading responder system...
           </Text>
         </View>
       </SafeAreaView>
@@ -414,7 +185,9 @@ export default function ResponderScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView
+      style={styles.screen}
+    >
       <ScrollView
         contentContainerStyle={
           styles.content
@@ -425,83 +198,132 @@ export default function ResponderScreen() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={handleRefresh}
+            onRefresh={
+              handleRefresh
+            }
             tintColor="#111827"
           />
         }
       >
+        {/* HEADER */}
+
         <View style={styles.header}>
-          <View>
-            <Text style={styles.logo}>
-              112
-            </Text>
-
-            <Text
-              style={styles.systemLabel}
-            >
-              RESPONDER SYSTEM
-            </Text>
-          </View>
-
-          <Pressable
-            style={styles.logoutButton}
-            onPress={handleLogout}
+          <View
+            style={styles.brandRow}
           >
-            <Text
+            <View
               style={
-                styles.logoutButtonText
+                styles.logoBadge
               }
             >
-              Logout
+              <Text
+                style={
+                  styles.logoText
+                }
+              >
+                112
+              </Text>
+            </View>
+
+            <View>
+              <Text
+                style={
+                  styles.brandTitle
+                }
+              >
+                Responder
+              </Text>
+
+              <Text
+                style={
+                  styles.brandSubtitle
+                }
+              >
+                Field operations
+              </Text>
+            </View>
+          </View>
+
+          <View
+            style={[
+              styles.statusBadge,
+
+              isResponding
+                ? styles.busyBadge
+                : styles.readyBadge,
+            ]}
+          >
+            <View
+              style={[
+                styles.statusDot,
+
+                isResponding
+                  ? styles.busyDot
+                  : styles.readyDot,
+              ]}
+            />
+
+            <Text
+              style={
+                styles.statusText
+              }
+            >
+              {isResponding
+                ? 'BUSY'
+                : 'AVAILABLE'}
             </Text>
-          </Pressable>
+          </View>
         </View>
 
+        {/* HERO */}
+
         <View style={styles.hero}>
-          <View style={styles.heroBadgeRow}>
-  <View
-    style={[
-      styles.dutyBadge,
-      sharingEmergencyId !== null
-        ? styles.dutyBadgeActive
-        : styles.dutyBadgeWaiting,
-    ]}
-  >
-    <View
-      style={[
-        styles.dutyDot,
-        sharingEmergencyId !== null
-          ? styles.dutyDotActive
-          : styles.dutyDotWaiting,
-      ]}
-    />
+          <View
+            style={styles.heroTop}
+          >
+            <View>
+              <Text
+                style={
+                  styles.heroEyebrow
+                }
+              >
+                ACTIVE DUTY
+              </Text>
 
-    <Text style={styles.dutyBadgeText}>
-      {sharingEmergencyId !== null
-        ? 'TRACKING'
-        : 'READY'}
-    </Text>
-  </View>
-</View>
+              <Text
+                style={
+                  styles.heroTitle
+                }
+              >
+                Field dashboard
+              </Text>
+            </View>
 
-<Text style={styles.heroEyebrow}>
-  ACTIVE DUTY
-</Text>
-
-<Text style={styles.heroTitle}>
-  Responder dashboard
-</Text>
+            <View
+              style={
+                styles.heroIcon
+              }
+            >
+              <Ionicons
+                name="radio"
+                size={23}
+                color="#FFFFFF"
+              />
+            </View>
+          </View>
 
           <Text
-            style={styles.heroSubtitle}
+            style={
+              styles.heroSubtitle
+            }
           >
-            Receive assignments, share
-            live GPS, and update incident
-            status from the field.
+            Monitor your dispatch status
+            and manage active emergency
+            assignments.
           </Text>
 
           <View
-            style={styles.heroStatRow}
+            style={styles.statsRow}
           >
             <View
               style={styles.heroStat}
@@ -519,28 +341,31 @@ export default function ResponderScreen() {
                   styles.heroStatLabel
                 }
               >
-                Active assignments
+                Assignments
               </Text>
             </View>
 
             <View
-              style={styles.heroDivider}
+              style={
+                styles.heroDivider
+              }
             />
 
             <View
               style={styles.heroStat}
             >
               <Text
-  style={[
-    styles.heroStatValue,
-    sharingEmergencyId !== null
-      ? styles.heroGpsActive
-      : null,
-  ]}
->
-                {sharingEmergencyId
-                  ? 'ON'
-                  : 'OFF'}
+                style={[
+                  styles.heroStatValue,
+
+                  isResponding
+                    ? styles.activeValue
+                    : null,
+                ]}
+              >
+                {isResponding
+                  ? 'ACTIVE'
+                  : 'READY'}
               </Text>
 
               <Text
@@ -548,7 +373,7 @@ export default function ResponderScreen() {
                   styles.heroStatLabel
                 }
               >
-                Live GPS
+                Duty status
               </Text>
             </View>
           </View>
@@ -558,11 +383,11 @@ export default function ResponderScreen() {
           <View
             style={styles.errorCard}
           >
-            <Text
-              style={styles.errorTitle}
-            >
-              Action required
-            </Text>
+            <Ionicons
+              name="warning-outline"
+              size={18}
+              color="#B42318"
+            />
 
             <Text
               style={styles.errorText}
@@ -572,1330 +397,1002 @@ export default function ResponderScreen() {
           </View>
         ) : null}
 
+        {/* ACTIVE ASSIGNMENT */}
+
         <View
-          style={styles.sectionHeader}
+          style={
+            styles.sectionHeader
+          }
         >
-          <Text
-            style={
-              styles.sectionEyebrow
-            }
-          >
-            DISPATCH QUEUE
-          </Text>
+          <View>
+            <Text
+              style={
+                styles.sectionLabel
+              }
+            >
+              CURRENT RESPONSE
+            </Text>
 
-          <Text
-            style={
-              styles.sectionTitle
-            }
-          >
-            Assigned emergencies
-          </Text>
+            <Text
+              style={
+                styles.sectionTitle
+              }
+            >
+              Active assignment
+            </Text>
+          </View>
 
-          <Text
-            style={
-              styles.sectionDescription
+          <Pressable
+            onPress={() =>
+              router.push(
+                '/responder-assignments'
+              )
             }
           >
-            Pull down to refresh. New
-            assignments also appear
-            automatically.
-          </Text>
+            <Text
+              style={
+                styles.viewAllText
+              }
+            >
+              View all
+            </Text>
+          </Pressable>
         </View>
 
-        {emergencies.length === 0 ? (
+        {activeEmergency ? (
+          <Pressable
+            style={({
+              pressed,
+            }) => [
+              styles.assignmentCard,
+
+              pressed
+                ? styles.pressed
+                : null,
+            ]}
+            onPress={() =>
+              router.push(
+                '/responder-assignments'
+              )
+            }
+          >
+            <View
+              style={
+                styles.assignmentHeader
+              }
+            >
+              <View
+                style={[
+                  styles.emergencyIcon,
+
+                  {
+                    backgroundColor:
+                      emergencyMeta[
+                        activeEmergency
+                          .type
+                      ].background,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name={
+                    emergencyMeta[
+                      activeEmergency
+                        .type
+                    ].icon
+                  }
+                  size={22}
+                  color={
+                    emergencyMeta[
+                      activeEmergency
+                        .type
+                    ].color
+                  }
+                />
+              </View>
+
+              <View
+                style={
+                  styles.assignmentTitleArea
+                }
+              >
+                <Text
+                  style={
+                    styles.incidentNumber
+                  }
+                >
+                  INCIDENT #
+                  {activeEmergency.id}
+                </Text>
+
+                <Text
+                  style={
+                    styles.assignmentTitle
+                  }
+                >
+                  {
+                    emergencyMeta[
+                      activeEmergency
+                        .type
+                    ].title
+                  }
+                </Text>
+              </View>
+
+              <View
+                style={
+                  styles.assignmentBadge
+                }
+              >
+                <Text
+                  style={
+                    styles.assignmentBadgeText
+                  }
+                >
+                  {activeEmergency
+                    .responderArrivedAt
+                    ? 'ON SCENE'
+                    : activeEmergency
+                          .responderAcceptedAt
+                      ? 'EN ROUTE'
+                      : 'DISPATCHED'}
+                </Text>
+              </View>
+            </View>
+
+            <Text
+              style={
+                styles.assignmentDescription
+              }
+              numberOfLines={2}
+            >
+              {
+                activeEmergency.description
+              }
+            </Text>
+
+            <View
+              style={
+                styles.assignmentDivider
+              }
+            />
+
+            <View
+              style={
+                styles.assignmentMetaRow
+              }
+            >
+              <View
+                style={
+                  styles.assignmentMeta
+                }
+              >
+                <Ionicons
+                  name="person-outline"
+                  size={15}
+                  color="#6B7280"
+                />
+
+                <Text
+                  style={
+                    styles.assignmentMetaText
+                  }
+                  numberOfLines={1}
+                >
+                  {
+                    activeEmergency.user
+                      .fullName
+                  }
+                </Text>
+              </View>
+
+              <View
+                style={
+                  styles.assignmentMeta
+                }
+              >
+                <Ionicons
+                  name="location-outline"
+                  size={15}
+                  color="#6B7280"
+                />
+
+                <Text
+                  style={
+                    styles.assignmentMetaText
+                  }
+                >
+                  GPS available
+                </Text>
+              </View>
+            </View>
+
+            <View
+              style={
+                styles.openAssignment
+              }
+            >
+              <Text
+                style={
+                  styles.openAssignmentText
+                }
+              >
+                Open assignment
+              </Text>
+
+              <Ionicons
+                name="arrow-forward"
+                size={17}
+                color="#FFFFFF"
+              />
+            </View>
+          </Pressable>
+        ) : (
           <View
             style={styles.emptyCard}
           >
             <View
               style={styles.emptyIcon}
             >
-              <Text
-                style={
-                  styles.emptyIconText
-                }
-              >
-                ✓
-              </Text>
+              <Ionicons
+                name="checkmark"
+                size={24}
+                color="#166534"
+              />
             </View>
 
             <Text
-              style={styles.emptyTitle}
+              style={
+                styles.emptyTitle
+              }
             >
-              No active assignments
+              Ready for dispatch
             </Text>
 
             <Text
-              style={styles.emptyText}
+              style={
+                styles.emptyText
+              }
             >
-              You are ready for dispatch.
-              New emergencies assigned by
-              the control center will
-              appear here automatically.
+              You currently have no active
+              assignments. New incidents
+              assigned by the control
+              center will appear
+              automatically.
             </Text>
           </View>
-        ) : (
-          emergencies.map(
-            (emergency) => {
-              const accepted =
-                Boolean(
-                  emergency.responderAcceptedAt,
-                ) ||
-                emergency.status ===
-                  'RESPONDING'
-
-              const arrived =
-                Boolean(
-                  emergency.responderArrivedAt,
-                )
-
-              const isSharing =
-                sharingEmergencyId ===
-                emergency.id
-
-              const busy =
-                actionId ===
-                emergency.id
-
-              const responderState =
-                arrived
-                  ? 'ON SCENE'
-                  : accepted
-                    ? 'EN ROUTE'
-                    : 'DISPATCHED'
-
-              return (
-                <View
-                  key={emergency.id}
-                  style={
-                    styles.emergencyCard
-                  }
-                >
-                  <View
-                    style={
-                      styles.emergencyHeader
-                    }
-                  >
-                    <View
-                      style={
-                        styles.emergencyTitleArea
-                      }
-                    >
-                      <Text
-                        style={
-                          styles.emergencyNumber
-                        }
-                      >
-                        INCIDENT #
-                        {emergency.id}
-                      </Text>
-
-                      <Text
-                        style={
-                          styles.emergencyType
-                        }
-                      >
-                        {
-                          emergencyNames[
-                            emergency.type
-                          ]
-                        }
-                      </Text>
-                    </View>
-
-                    <View
-                      style={[
-                        styles.statusBadge,
-
-                        accepted &&
-                          !arrived &&
-                          styles.statusBadgeActive,
-
-                        arrived &&
-                          styles.statusBadgeArrived,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.statusBadgeText,
-
-                          accepted &&
-                            !arrived &&
-                            styles.statusBadgeTextActive,
-
-                          arrived &&
-                            styles.statusBadgeTextArrived,
-                        ]}
-                      >
-                        {responderState}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View
-                    style={
-                      styles.descriptionCard
-                    }
-                  >
-                    <Text
-                      style={
-                        styles.detailLabel
-                      }
-                    >
-                      INCIDENT DESCRIPTION
-                    </Text>
-
-                    <Text
-                      style={
-                        styles.description
-                      }
-                    >
-                      {
-                        emergency.description
-                      }
-                    </Text>
-                  </View>
-
-                  <View
-                    style={
-                      styles.detailGrid
-                    }
-                  >
-                    <View
-                      style={
-                        styles.detailBox
-                      }
-                    >
-                      <Text
-                        style={
-                          styles.detailLabel
-                        }
-                      >
-                        CALLER
-                      </Text>
-
-                      <Text
-                        style={
-                          styles.detailValue
-                        }
-                        numberOfLines={2}
-                      >
-                        {
-                          emergency.user
-                            .fullName
-                        }
-                      </Text>
-                    </View>
-
-                    <View
-                      style={
-                        styles.detailBox
-                      }
-                    >
-                      <Text
-                        style={
-                          styles.detailLabel
-                        }
-                      >
-                        RESPONSE STATE
-                      </Text>
-
-                      <Text
-                        style={
-                          styles.detailValue
-                        }
-                      >
-                        {responderState}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View
-                    style={
-                      styles.locationCard
-                    }
-                  >
-                    <View
-                      style={
-                        styles.locationHeader
-                      }
-                    >
-                      <View>
-                        <Text
-                          style={
-                            styles.detailLabel
-                          }
-                        >
-                          EMERGENCY LOCATION
-                        </Text>
-
-                        <Text
-                          style={
-                            styles.locationValue
-                          }
-                        >
-                          {emergency.latitude.toFixed(
-                            5,
-                          )}
-                          ,{' '}
-                          {emergency.longitude.toFixed(
-                            5,
-                          )}
-                        </Text>
-                      </View>
-
-                      <View
-                        style={
-                          styles.locationBadge
-                        }
-                      >
-                        <Text
-                          style={
-                            styles.locationBadgeText
-                          }
-                        >
-                          GPS
-                        </Text>
-                      </View>
-                    </View>
-
-                    <Text
-                      style={
-                        styles.locationHint
-                      }
-                    >
-                      Exact coordinates
-                      provided by the
-                      emergency request.
-                    </Text>
-                  </View>
-
-                  {!accepted ? (
-                    <View
-                      style={
-                        styles.instructionCard
-                      }
-                    >
-                      <Text
-                        style={
-                          styles.instructionNumber
-                        }
-                      >
-                        1
-                      </Text>
-
-                      <View
-                        style={
-                          styles.instructionContent
-                        }
-                      >
-                        <Text
-                          style={
-                            styles.instructionTitle
-                          }
-                        >
-                          Accept dispatch
-                        </Text>
-
-                        <Text
-                          style={
-                            styles.instructionText
-                          }
-                        >
-                          Accepting starts
-                          the response and
-                          automatically
-                          attempts to enable
-                          live GPS sharing.
-                        </Text>
-                      </View>
-                    </View>
-                  ) : null}
-
-                  {accepted &&
-                    !arrived && (
-                      <View
-                        style={[
-                          styles.trackingCard,
-                          isSharing &&
-                            styles.trackingCardActive,
-                        ]}
-                      >
-                        <View
-                          style={
-                            styles.trackingStatusRow
-                          }
-                        >
-                          <View
-                            style={[
-                              styles.liveDot,
-                              isSharing
-                                ? styles.liveDotActive
-                                : styles.liveDotInactive,
-                            ]}
-                          />
-
-                          <Text
-                            style={
-                              styles.trackingStatusText
-                            }
-                          >
-                            {isSharing
-                              ? 'LIVE GPS ACTIVE'
-                              : 'GPS NOT SHARING'}
-                          </Text>
-                        </View>
-
-                        <Text
-                          style={
-                            styles.trackingTitle
-                          }
-                        >
-                          {isSharing
-                            ? 'Location sharing active'
-                            : 'Start location sharing'}
-                        </Text>
-
-                        <Text
-                          style={
-                            styles.trackingText
-                          }
-                        >
-                          {isSharing
-                            ? 'Your position is being shared with the 112 operator and the citizen in real time.'
-                            : 'Live GPS must be active while responding so the operator and citizen can track your position.'}
-                        </Text>
-                      </View>
-                    )}
-
-                  {isSharing &&
-                    lastLocation && (
-                      <View
-                        style={
-                          styles.currentGpsCard
-                        }
-                      >
-                        <View
-                          style={
-                            styles.currentGpsHeader
-                          }
-                        >
-                          <Text
-                            style={
-                              styles.currentGpsLabel
-                            }
-                          >
-                            CURRENT RESPONDER
-                            POSITION
-                          </Text>
-
-                          <View
-                            style={
-                              styles.currentGpsLiveBadge
-                            }
-                          >
-                            <View
-                              style={
-                                styles.currentGpsLiveDot
-                              }
-                            />
-
-                            <Text
-                              style={
-                                styles.currentGpsLiveText
-                              }
-                            >
-                              LIVE
-                            </Text>
-                          </View>
-                        </View>
-
-                        <Text
-                          style={
-                            styles.currentGpsValue
-                          }
-                        >
-                          {lastLocation.latitude.toFixed(
-                            5,
-                          )}
-                          ,{' '}
-                          {lastLocation.longitude.toFixed(
-                            5,
-                          )}
-                        </Text>
-                      </View>
-                    )}
-
-                  {!accepted ? (
-                    <Pressable
-                      style={[
-                        styles.primaryButton,
-                        busy &&
-                          styles.disabledButton,
-                      ]}
-                      disabled={busy}
-                      onPress={() =>
-                        handleAccept(
-                          emergency.id,
-                        )
-                      }
-                    >
-                      {busy ? (
-                        <ActivityIndicator
-                          color="#FFFFFF"
-                        />
-                      ) : (
-                        <Text
-                          style={
-                            styles.primaryButtonText
-                          }
-                        >
-                          Accept assignment
-                        </Text>
-                      )}
-                    </Pressable>
-                  ) : null}
-
-                  {accepted &&
-                    !arrived &&
-                    !isSharing ? (
-                    <Pressable
-                      style={[
-                        styles.secondaryButton,
-                        busy &&
-                          styles.disabledButton,
-                      ]}
-                      disabled={busy}
-                      onPress={() =>
-                        handleStartTracking(
-                          emergency.id,
-                        )
-                      }
-                    >
-                      {busy ? (
-                        <ActivityIndicator
-                          color="#111827"
-                        />
-                      ) : (
-                        <Text
-                          style={
-                            styles.secondaryButtonText
-                          }
-                        >
-                          Start GPS sharing
-                        </Text>
-                      )}
-                    </Pressable>
-                  ) : null}
-
-                  {accepted &&
-                    !arrived ? (
-                    <Pressable
-                      style={[
-                        styles.primaryButton,
-                        styles.buttonSpacing,
-
-                        (!isSharing ||
-                          busy) &&
-                          styles.disabledButton,
-                      ]}
-                      disabled={
-                        !isSharing ||
-                        busy
-                      }
-                      onPress={() =>
-                        handleArrived(
-                          emergency.id,
-                        )
-                      }
-                    >
-                      {busy ? (
-                        <ActivityIndicator
-                          color="#FFFFFF"
-                        />
-                      ) : (
-                        <Text
-                          style={
-                            styles.primaryButtonText
-                          }
-                        >
-                          {isSharing
-                            ? 'Mark as arrived'
-                            : 'Start GPS before arrival'}
-                        </Text>
-                      )}
-                    </Pressable>
-                  ) : null}
-
-                  {accepted &&
-                    !arrived &&
-                    !isSharing ? (
-                    <Text
-                      style={
-                        styles.arrivalRequirement
-                      }
-                    >
-                      Arrival becomes
-                      available after live
-                      GPS sharing starts.
-                    </Text>
-                  ) : null}
-
-                  {arrived ? (
-                    <>
-                      <View
-                        style={
-                          styles.arrivedCard
-                        }
-                      >
-                        <View
-                          style={
-                            styles.arrivedIcon
-                          }
-                        >
-                          <Text
-                            style={
-                              styles.arrivedIconText
-                            }
-                          >
-                            ✓
-                          </Text>
-                        </View>
-
-                        <View
-                          style={
-                            styles.arrivedContent
-                          }
-                        >
-                          <Text
-                            style={
-                              styles.arrivedTitle
-                            }
-                          >
-                            You are on scene
-                          </Text>
-
-                          <Text
-                            style={
-                              styles.arrivedText
-                            }
-                          >
-                            Live GPS sharing
-                            has stopped. Handle
-                            the incident and
-                            complete the
-                            emergency when
-                            response is
-                            finished.
-                          </Text>
-                        </View>
-                      </View>
-
-                      <Pressable
-                        style={[
-                          styles.completeButton,
-
-                          busy &&
-                            styles.disabledButton,
-                        ]}
-                        disabled={busy}
-                        onPress={() =>
-                          handleComplete(
-                            emergency.id,
-                          )
-                        }
-                      >
-                        {busy ? (
-                          <ActivityIndicator
-                            color="#FFFFFF"
-                          />
-                        ) : (
-                          <Text
-                            style={
-                              styles.primaryButtonText
-                            }
-                          >
-                            Complete emergency
-                          </Text>
-                        )}
-                      </Pressable>
-                    </>
-                  ) : null}
-                </View>
-              )
-            },
-          )
         )}
 
+        {/* OPERATIONS */}
+
         <Text
-          style={styles.footerNote}
+          style={
+            styles.operationsLabel
+          }
         >
-          112 Responder Platform ·
-          Emergency response system
+          OPERATIONS
+        </Text>
+
+        <View
+          style={styles.quickGrid}
+        >
+          <Pressable
+            style={({
+              pressed,
+            }) => [
+              styles.quickCard,
+
+              pressed
+                ? styles.pressed
+                : null,
+            ]}
+            onPress={() =>
+              router.push(
+                '/responder-assignments'
+              )
+            }
+          >
+            <View
+              style={
+                styles.quickIcon
+              }
+            >
+              <Ionicons
+                name="clipboard-outline"
+                size={22}
+                color="#111827"
+              />
+            </View>
+
+            <Text
+              style={
+                styles.quickTitle
+              }
+            >
+              Assignments
+            </Text>
+
+            <Text
+              style={
+                styles.quickSubtitle
+              }
+            >
+              Open dispatch queue
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={({
+              pressed,
+            }) => [
+              styles.quickCard,
+
+              pressed
+                ? styles.pressed
+                : null,
+            ]}
+            onPress={() =>
+              router.push(
+                '/responder-map'
+              )
+            }
+          >
+            <View
+              style={
+                styles.quickIcon
+              }
+            >
+              <Ionicons
+                name="map-outline"
+                size={22}
+                color="#111827"
+              />
+            </View>
+
+            <Text
+              style={
+                styles.quickTitle
+              }
+            >
+              Map
+            </Text>
+
+            <Text
+              style={
+                styles.quickSubtitle
+              }
+            >
+              Incident navigation
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={({
+              pressed,
+            }) => [
+              styles.quickCard,
+
+              pressed
+                ? styles.pressed
+                : null,
+            ]}
+            onPress={() =>
+              router.push(
+                '/responder-history'
+              )
+            }
+          >
+            <View
+              style={
+                styles.quickIcon
+              }
+            >
+              <Ionicons
+                name="time-outline"
+                size={22}
+                color="#111827"
+              />
+            </View>
+
+            <Text
+              style={
+                styles.quickTitle
+              }
+            >
+              History
+            </Text>
+
+            <Text
+              style={
+                styles.quickSubtitle
+              }
+            >
+              Previous incidents
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={({
+              pressed,
+            }) => [
+              styles.quickCard,
+
+              pressed
+                ? styles.pressed
+                : null,
+            ]}
+            onPress={() =>
+              router.push('/responder-profile')
+            }
+          >
+            <View
+              style={
+                styles.quickIcon
+              }
+            >
+              <Ionicons
+                name="person-outline"
+                size={22}
+                color="#111827"
+              />
+            </View>
+
+            <Text
+              style={
+                styles.quickTitle
+              }
+            >
+              Profile
+            </Text>
+
+            <Text
+              style={
+                styles.quickSubtitle
+              }
+            >
+              Account & duty
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* SYSTEM */}
+
+        <View
+          style={styles.systemCard}
+        >
+          <View
+            style={styles.systemIcon}
+          >
+            <Ionicons
+              name="shield-checkmark"
+              size={21}
+              color="#166534"
+            />
+          </View>
+
+          <View
+            style={
+              styles.systemContent
+            }
+          >
+            <Text
+              style={
+                styles.systemTitle
+              }
+            >
+              Responder system online
+            </Text>
+
+            <Text
+              style={
+                styles.systemText
+              }
+            >
+              Dispatch synchronization is
+              active.
+            </Text>
+          </View>
+
+          <View
+            style={styles.onlineDot}
+          />
+        </View>
+
+        <Text style={styles.footer}>
+          112 Responder Platform
         </Text>
       </ScrollView>
     </SafeAreaView>
   )
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#F5F7F9',
-  },
-
-  content: {
-    paddingHorizontal: 18,
-    paddingTop: 10,
-    paddingBottom: 35,
-  },
-
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  loadingLogo: {
-    color: '#111827',
-    fontSize: 34,
-    fontWeight: '900',
-  },
-
-  loadingIndicator: {
-    marginTop: 22,
-  },
-
-  loadingText: {
-    marginTop: 12,
-    color: '#6B7280',
-    fontSize: 14,
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent:
-      'space-between',
-    marginBottom: 18,
-  },
-
-  logo: {
-    fontSize: 34,
-    fontWeight: '900',
-    color: '#111827',
-  },
-
-  systemLabel: {
-    marginTop: 2,
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    color: '#9CA3AF',
-  },
-
-  logoutButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-  },
-
-  logoutButtonText: {
-    color: '#374151',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-
-  hero: {
-    padding: 22,
-    borderRadius: 24,
-    backgroundColor: '#111827',
-  },
-
-  heroBadgeRow: {
-  flexDirection: 'row',
-  justifyContent: 'flex-end',
-  marginBottom: 10,
-},
-
-  heroEyebrow: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.3,
-    color: '#9CA3AF',
-  },
-
-  heroTitle: {
-  marginTop: 7,
-  fontSize: 24,
-  fontWeight: '900',
-  color: '#FFFFFF',
-},
-
-  heroSubtitle: {
-    marginTop: 10,
-    maxWidth: 300,
-    fontSize: 13,
-    lineHeight: 20,
-    color: '#C7CDD6',
-  },
-
-  dutyBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 9,
-    paddingVertical: 7,
-    borderRadius: 12,
-  },
-
-  dutyBadgeActive: {
-    backgroundColor: '#163D2B',
-  },
-
-  dutyBadgeWaiting: {
-    backgroundColor: '#25303E',
-  },
-
-  dutyDot: {
-    width: 7,
-    height: 7,
-    marginRight: 6,
-    borderRadius: 4,
-  },
-
-  dutyDotActive: {
-    backgroundColor: '#4ADE80',
-  },
-
-  dutyDotWaiting: {
-    backgroundColor: '#94A3B8',
-  },
-
-  dutyBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 8,
-    fontWeight: '900',
-    letterSpacing: 0.7,
-  },
-
-  heroStatRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 24,
-  },
-
-  heroStat: {
-    flex: 1,
-  },
-
-  heroStatValue: {
-    fontSize: 21,
-    fontWeight: '900',
-    color: '#FFFFFF',
-  },
-
-  heroGpsActive: {
-    color: '#4ADE80',
-  },
-
-  heroStatLabel: {
-    marginTop: 3,
-    fontSize: 10,
-    color: '#9CA3AF',
-  },
-
-  heroDivider: {
-    width: 1,
-    height: 37,
-    marginHorizontal: 18,
-    backgroundColor: '#374151',
-  },
-
-  errorCard: {
-    marginTop: 14,
-    padding: 14,
-    borderRadius: 14,
-    backgroundColor: '#FEE2E2',
-  },
-
-  errorTitle: {
-    color: '#991B1B',
-    fontSize: 11,
-    fontWeight: '900',
-  },
-
-  errorText: {
-    marginTop: 4,
-    color: '#B91C1C',
-    fontSize: 11,
-    lineHeight: 17,
-  },
-
-  sectionHeader: {
-    marginTop: 24,
-    marginBottom: 12,
-  },
-
-  sectionEyebrow: {
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 1.1,
-    color: '#9CA3AF',
-  },
-
-  sectionTitle: {
-    marginTop: 4,
-    fontSize: 21,
-    fontWeight: '800',
-    color: '#111827',
-  },
-
-  sectionDescription: {
-    marginTop: 4,
-    color: '#8A929C',
-    fontSize: 10,
-    lineHeight: 15,
-  },
-
-  emptyCard: {
-    alignItems: 'center',
-    padding: 28,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-  },
-
-  emptyIcon: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 22,
-    backgroundColor: '#EEF2F6',
-  },
-
-  emptyIconText: {
-    color: '#111827',
-    fontSize: 18,
-    fontWeight: '900',
-  },
-
-  emptyTitle: {
-    marginTop: 14,
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#111827',
-  },
-
-  emptyText: {
-    marginTop: 7,
-    textAlign: 'center',
-    fontSize: 13,
-    lineHeight: 19,
-    color: '#6B7280',
-  },
-
-  emergencyCard: {
-    marginBottom: 16,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#E3E7EC',
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
-  },
-
-  emergencyHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent:
-      'space-between',
-  },
-
-  emergencyTitleArea: {
-    flex: 1,
-    marginRight: 12,
-  },
-
-  emergencyNumber: {
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 1,
-    color: '#9CA3AF',
-  },
-
-  emergencyType: {
-    marginTop: 5,
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#111827',
-  },
-
-  statusBadge: {
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: '#EEF2F6',
-  },
-
-  statusBadgeActive: {
-    backgroundColor: '#EEF2FF',
-  },
-
-  statusBadgeArrived: {
-    backgroundColor: '#DCFCE7',
-  },
-
-  statusBadgeText: {
-    fontSize: 8,
-    fontWeight: '900',
-    letterSpacing: 0.6,
-    color: '#4B5563',
-  },
-
-  statusBadgeTextActive: {
-    color: '#3730A3',
-  },
-
-  statusBadgeTextArrived: {
-    color: '#166534',
-  },
-
-  descriptionCard: {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 15,
-    backgroundColor: '#F7F8FA',
-  },
-
-  detailLabel: {
-    fontSize: 8,
-    fontWeight: '900',
-    letterSpacing: 0.8,
-    color: '#9CA3AF',
-  },
-
-  description: {
-    marginTop: 7,
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#374151',
-  },
-
-  detailGrid: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 10,
-  },
-
-  detailBox: {
-    flex: 1,
-    padding: 13,
-    borderWidth: 1,
-    borderColor: '#ECEEF1',
-    borderRadius: 14,
-  },
-
-  detailValue: {
-    marginTop: 6,
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#111827',
-  },
-
-  locationCard: {
-    marginTop: 10,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E6E9ED',
-    borderRadius: 15,
-  },
-
-  locationHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent:
-      'space-between',
-  },
-
-  locationBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: '#EEF2F6',
-  },
-
-  locationBadgeText: {
-    color: '#6B7280',
-    fontSize: 7,
-    fontWeight: '900',
-    letterSpacing: 0.6,
-  },
-
-  locationValue: {
-    marginTop: 6,
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#111827',
-  },
-
-  locationHint: {
-    marginTop: 4,
-    fontSize: 10,
-    color: '#9CA3AF',
-  },
-
-  instructionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-    padding: 14,
-    borderRadius: 15,
-    backgroundColor: '#F7F8FA',
-  },
-
-  instructionNumber: {
-    width: 30,
-    height: 30,
-    textAlign: 'center',
-    lineHeight: 30,
-    borderRadius: 15,
-    overflow: 'hidden',
-    backgroundColor: '#111827',
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '900',
-  },
-
-  instructionContent: {
-    flex: 1,
-    marginLeft: 11,
-  },
-
-  instructionTitle: {
-    color: '#111827',
-    fontSize: 12,
-    fontWeight: '900',
-  },
-
-  instructionText: {
-    marginTop: 3,
-    color: '#6B7280',
-    fontSize: 10,
-    lineHeight: 15,
-  },
-
-  trackingCard: {
-    marginTop: 12,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 16,
-    backgroundColor: '#F8F9FA',
-  },
-
-  trackingCardActive: {
-    borderColor: '#BBF7D0',
-    backgroundColor: '#F0FDF4',
-  },
-
-  trackingStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  trackingStatusText: {
-    fontSize: 8,
-    fontWeight: '900',
-    letterSpacing: 1,
-    color: '#6B7280',
-  },
-
-  trackingTitle: {
-    marginTop: 9,
-    fontSize: 13,
-    fontWeight: '900',
-    color: '#111827',
-  },
-
-  trackingText: {
-    marginTop: 4,
-    fontSize: 10,
-    lineHeight: 15,
-    color: '#6B7280',
-  },
-
-  liveDot: {
-    width: 8,
-    height: 8,
-    marginRight: 7,
-    borderRadius: 4,
-  },
-
-  liveDotActive: {
-    backgroundColor: '#16A34A',
-  },
-
-  liveDotInactive: {
-    backgroundColor: '#9CA3AF',
-  },
-
-  currentGpsCard: {
-    marginTop: 9,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: '#F7F8FA',
-  },
-
-  currentGpsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent:
-      'space-between',
-  },
-
-  currentGpsLabel: {
-    fontSize: 7,
-    fontWeight: '900',
-    letterSpacing: 0.8,
-    color: '#9CA3AF',
-  },
-
-  currentGpsLiveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  currentGpsLiveDot: {
-    width: 6,
-    height: 6,
-    marginRight: 4,
-    borderRadius: 3,
-    backgroundColor: '#16A34A',
-  },
-
-  currentGpsLiveText: {
-    color: '#16A34A',
-    fontSize: 7,
-    fontWeight: '900',
-  },
-
-  currentGpsValue: {
-    marginTop: 5,
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#4B5563',
-  },
-
-  primaryButton: {
-    minHeight: 51,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 14,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    backgroundColor: '#111827',
-  },
-
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-
-  secondaryButton: {
-    minHeight: 49,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 14,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#DCE0E5',
-    borderRadius: 14,
-    backgroundColor: '#FFFFFF',
-  },
-
-  secondaryButtonText: {
-    color: '#111827',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-
-  buttonSpacing: {
-    marginTop: 10,
-  },
-
-  disabledButton: {
-    opacity: 0.45,
-  },
-
-  arrivalRequirement: {
-    marginTop: 7,
-    textAlign: 'center',
-    color: '#9CA3AF',
-    fontSize: 9,
-    lineHeight: 13,
-  },
-
-  arrivedCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 14,
-    padding: 15,
-    borderRadius: 16,
-    backgroundColor: '#ECFDF3',
-  },
-
-  arrivedIcon: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    backgroundColor: '#166534',
-  },
-
-  arrivedIconText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '900',
-  },
-
-  arrivedContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-
-  arrivedTitle: {
-    color: '#166534',
-    fontSize: 13,
-    fontWeight: '900',
-  },
-
-  arrivedText: {
-    marginTop: 4,
-    color: '#398056',
-    fontSize: 10,
-    lineHeight: 15,
-  },
-
-  completeButton: {
-    minHeight: 51,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    backgroundColor: '#111827',
-  },
-
-  footerNote: {
-    marginTop: 8,
-    textAlign: 'center',
-    color: '#A1A8B0',
-    fontSize: 9,
-  },
-})
+const styles =
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: '#F5F6F8',
+    },
+
+    content: {
+      paddingHorizontal: 20,
+      paddingTop: 18,
+      paddingBottom: 40,
+    },
+
+    loadingContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    loadingLogo: {
+      width: 58,
+      height: 58,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 18,
+      backgroundColor: '#111827',
+    },
+
+    loadingLogoText: {
+      color: '#FFFFFF',
+      fontSize: 18,
+      fontWeight: '900',
+    },
+
+    loadingText: {
+      marginTop: 12,
+      color: '#7A838D',
+      fontSize: 11,
+    },
+
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent:
+        'space-between',
+      marginBottom: 20,
+    },
+
+    brandRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+
+    logoBadge: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 10,
+      borderRadius: 14,
+      backgroundColor: '#111827',
+    },
+
+    logoText: {
+      color: '#FFFFFF',
+      fontSize: 14,
+      fontWeight: '900',
+    },
+
+    brandTitle: {
+      color: '#18212B',
+      fontSize: 14,
+      fontWeight: '900',
+    },
+
+    brandSubtitle: {
+      marginTop: 2,
+      color: '#929AA4',
+      fontSize: 9,
+    },
+
+    statusBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 10,
+      paddingVertical: 7,
+      borderRadius: 999,
+    },
+
+    readyBadge: {
+      backgroundColor: '#E9F8EF',
+    },
+
+    busyBadge: {
+      backgroundColor: '#FFF7ED',
+    },
+
+    statusDot: {
+      width: 7,
+      height: 7,
+      marginRight: 6,
+      borderRadius: 4,
+    },
+
+    readyDot: {
+      backgroundColor: '#16A34A',
+    },
+
+    busyDot: {
+      backgroundColor: '#EA580C',
+    },
+
+    statusText: {
+      color: '#374151',
+      fontSize: 8,
+      fontWeight: '900',
+      letterSpacing: 0.6,
+    },
+
+    hero: {
+      padding: 21,
+      borderRadius: 24,
+      backgroundColor: '#111827',
+    },
+
+    heroTop: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent:
+        'space-between',
+    },
+
+    heroEyebrow: {
+      color: '#9CA3AF',
+      fontSize: 9,
+      fontWeight: '900',
+      letterSpacing: 1.1,
+    },
+
+    heroTitle: {
+      marginTop: 6,
+      color: '#FFFFFF',
+      fontSize: 24,
+      fontWeight: '900',
+    },
+
+    heroIcon: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 15,
+      backgroundColor: '#253043',
+    },
+
+    heroSubtitle: {
+      marginTop: 9,
+      maxWidth: 300,
+      color: '#C7CDD6',
+      fontSize: 11,
+      lineHeight: 17,
+    },
+
+    statsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 23,
+    },
+
+    heroStat: {
+      flex: 1,
+    },
+
+    heroStatValue: {
+      color: '#FFFFFF',
+      fontSize: 19,
+      fontWeight: '900',
+    },
+
+    activeValue: {
+      color: '#4ADE80',
+      fontSize: 13,
+    },
+
+    heroStatLabel: {
+      marginTop: 3,
+      color: '#9CA3AF',
+      fontSize: 9,
+    },
+
+    heroDivider: {
+      width: 1,
+      height: 35,
+      marginHorizontal: 18,
+      backgroundColor: '#374151',
+    },
+
+    errorCard: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginTop: 12,
+      padding: 13,
+      borderRadius: 14,
+      backgroundColor: '#FEF2F2',
+    },
+
+    errorText: {
+      flex: 1,
+      marginLeft: 8,
+      color: '#B42318',
+      fontSize: 10,
+      lineHeight: 15,
+    },
+
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent:
+        'space-between',
+      marginTop: 27,
+      marginBottom: 11,
+    },
+
+    sectionLabel: {
+      color: '#929AA4',
+      fontSize: 8,
+      fontWeight: '900',
+      letterSpacing: 1,
+    },
+
+    sectionTitle: {
+      marginTop: 4,
+      color: '#18212B',
+      fontSize: 20,
+      fontWeight: '900',
+    },
+
+    viewAllText: {
+      color: '#111827',
+      fontSize: 10,
+      fontWeight: '800',
+    },
+
+    assignmentCard: {
+      padding: 17,
+      borderWidth: 1,
+      borderColor: '#E4E7EB',
+      borderRadius: 21,
+      backgroundColor: '#FFFFFF',
+    },
+
+    assignmentHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+
+    emergencyIcon: {
+      width: 46,
+      height: 46,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 11,
+      borderRadius: 15,
+    },
+
+    assignmentTitleArea: {
+      flex: 1,
+      paddingRight: 8,
+    },
+
+    incidentNumber: {
+      color: '#9CA3AF',
+      fontSize: 7,
+      fontWeight: '900',
+      letterSpacing: 0.8,
+    },
+
+    assignmentTitle: {
+      marginTop: 4,
+      color: '#111827',
+      fontSize: 15,
+      fontWeight: '900',
+    },
+
+    assignmentBadge: {
+      paddingHorizontal: 8,
+      paddingVertical: 6,
+      borderRadius: 9,
+      backgroundColor: '#EEF2F6',
+    },
+
+    assignmentBadgeText: {
+      color: '#4B5563',
+      fontSize: 7,
+      fontWeight: '900',
+      letterSpacing: 0.5,
+    },
+
+    assignmentDescription: {
+      marginTop: 15,
+      color: '#59626D',
+      fontSize: 11,
+      lineHeight: 17,
+    },
+
+    assignmentDivider: {
+      height: 1,
+      marginVertical: 14,
+      backgroundColor: '#EEF0F2',
+    },
+
+    assignmentMetaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent:
+        'space-between',
+    },
+
+    assignmentMeta: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+
+    assignmentMetaText: {
+      flex: 1,
+      marginLeft: 5,
+      color: '#6B7280',
+      fontSize: 9,
+    },
+
+    openAssignment: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent:
+        'space-between',
+      marginTop: 15,
+      paddingHorizontal: 14,
+      minHeight: 46,
+      borderRadius: 13,
+      backgroundColor: '#111827',
+    },
+
+    openAssignmentText: {
+      color: '#FFFFFF',
+      fontSize: 11,
+      fontWeight: '900',
+    },
+
+    emptyCard: {
+      alignItems: 'center',
+      padding: 26,
+      borderWidth: 1,
+      borderColor: '#E4E7EB',
+      borderRadius: 21,
+      backgroundColor: '#FFFFFF',
+    },
+
+    emptyIcon: {
+      width: 45,
+      height: 45,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 15,
+      backgroundColor: '#ECFDF3',
+    },
+
+    emptyTitle: {
+      marginTop: 13,
+      color: '#111827',
+      fontSize: 15,
+      fontWeight: '900',
+    },
+
+    emptyText: {
+      marginTop: 6,
+      textAlign: 'center',
+      color: '#7A838D',
+      fontSize: 10,
+      lineHeight: 16,
+    },
+
+    operationsLabel: {
+      marginTop: 27,
+      marginBottom: 10,
+      color: '#929AA4',
+      fontSize: 8,
+      fontWeight: '900',
+      letterSpacing: 1,
+    },
+
+    quickGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent:
+        'space-between',
+      rowGap: 10,
+    },
+
+    quickCard: {
+      width: '48.5%',
+      minHeight: 135,
+      padding: 15,
+      borderWidth: 1,
+      borderColor: '#E4E7EB',
+      borderRadius: 18,
+      backgroundColor: '#FFFFFF',
+    },
+
+    quickIcon: {
+      width: 40,
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 13,
+      backgroundColor: '#EEF2F6',
+    },
+
+    quickTitle: {
+      marginTop: 17,
+      color: '#111827',
+      fontSize: 12,
+      fontWeight: '900',
+    },
+
+    quickSubtitle: {
+      marginTop: 3,
+      color: '#929AA4',
+      fontSize: 8,
+    },
+
+    systemCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 20,
+      padding: 14,
+      borderRadius: 17,
+      backgroundColor: '#ECFDF3',
+    },
+
+    systemIcon: {
+      width: 39,
+      height: 39,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 10,
+      borderRadius: 13,
+      backgroundColor: '#D1FAE5',
+    },
+
+    systemContent: {
+      flex: 1,
+    },
+
+    systemTitle: {
+      color: '#166534',
+      fontSize: 10,
+      fontWeight: '900',
+    },
+
+    systemText: {
+      marginTop: 3,
+      color: '#398056',
+      fontSize: 8,
+    },
+
+    onlineDot: {
+      width: 7,
+      height: 7,
+      borderRadius: 4,
+      backgroundColor: '#16A34A',
+    },
+
+    footer: {
+      marginTop: 20,
+      textAlign: 'center',
+      color: '#A1A8B0',
+      fontSize: 8,
+    },
+
+    pressed: {
+      opacity: 0.82,
+
+      transform: [
+        {
+          scale: 0.99,
+        },
+      ],
+    },
+  })
