@@ -6100,3 +6100,63 @@ button {
   z-index: 1100 !important;
   background: #ffffff;
 }
+
+/* =========================================================
+   RESQ OPERATOR LANGUAGE SWITCHER
+   ========================================================= */
+
+.operator-language-switcher {
+  display: flex;
+  align-items: center;
+
+  padding: 3px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+
+  background: #f8fafc;
+}
+
+.operator-language-switcher button {
+  min-width: 34px;
+  height: 29px;
+
+  padding: 0 8px;
+
+  border: 0;
+  border-radius: 6px;
+
+  background: transparent;
+  color: #64748b;
+
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.operator-language-switcher button:hover {
+  color: #111827;
+}
+
+.operator-language-switcher button.active {
+  background: #111827;
+  color: #ffffff;
+
+  box-shadow:
+    0 1px 3px
+    rgba(15, 23, 42, 0.16);
+}
+
+@media (max-width: 700px) {
+  .operator-language-switcher button {
+    min-width: 31px;
+    padding: 0 6px;
+  }
+}

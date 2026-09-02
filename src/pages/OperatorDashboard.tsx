@@ -18,24 +18,752 @@ import type {
   ResponderUser,
 } from '../types/emergency'
 
-const emergencyNames: Record<
-  OperatorEmergency['type'],
-  string
-> = {
-  MEDICAL: 'Medical',
-  POLICE: 'Police',
-  FIRE: 'Fire & Rescue',
-}
-
-/* =========================================================
-   ICONS
-   Inline SVG so we do not need another package.
-   ========================================================= */
+type OperatorLanguage =
+  | 'en'
+  | 'ru'
+  | 'kk'
 
 type IconProps = {
   size?: number
   className?: string
 }
+
+/* =========================================================
+   TRANSLATIONS
+   ========================================================= */
+
+const translations = {
+  en: {
+    operations: 'OPERATIONS',
+    overview: 'Overview',
+    emergencies: 'Emergencies',
+    responders: 'Responders',
+    safetyAlerts: 'Safety Alerts',
+
+    systemOperational:
+      'System operational',
+    liveSync:
+      'Live sync every 5 seconds',
+    operator: 'Operator',
+    controlCenter: 'Control center',
+
+    emergencyOperations:
+      'EMERGENCY OPERATIONS',
+    controlCenterTitle:
+      'Control Center',
+    live: 'Live',
+    refresh: 'Refresh',
+
+    operationsOverview:
+      'Operations overview',
+    overviewDescription:
+      'Monitor active incidents, responder availability and emergency operations.',
+    autoRefresh:
+      'Auto-refresh enabled',
+
+    activeIncidents:
+      'Active incidents',
+    currentlyOpen:
+      'Currently open',
+
+    awaitingAction:
+      'Awaiting action',
+    pendingReview:
+      'Pending operator review',
+
+    availableResponders:
+      'Available responders',
+    registered:
+      'registered',
+
+    closedIncidents:
+      'Closed incidents',
+    completedCancelled:
+      'Completed or cancelled',
+
+    liveQueue:
+      'LIVE QUEUE',
+    activeEmergencies:
+      'Active emergencies',
+    incomingRequests:
+      'Incoming and ongoing emergency requests.',
+    open: 'open',
+
+    noActive:
+      'No active emergencies',
+    newRequests:
+      'New requests will automatically appear here.',
+
+    medical: 'Medical',
+    police: 'Police',
+    fire: 'Fire & Rescue',
+    emergency: 'Emergency',
+
+    received:
+      'Received',
+    incidentDescription:
+      'INCIDENT DESCRIPTION',
+
+    caller: 'Caller',
+    coordinates:
+      'Coordinates',
+
+    aiAnalysis:
+      'AI INTAKE ANALYSIS',
+    emergencyIntelligence:
+      'Emergency intelligence',
+    suggestedService:
+      'Suggested service',
+    urgency: 'Urgency',
+    summary: 'Summary',
+    importantDetails:
+      'Important details',
+    aiNote:
+      'AI-generated intake assistance. Operator verification is required.',
+
+    liveIncidentMap:
+      'LIVE INCIDENT MAP',
+    locationTracking:
+      'Location & responder tracking',
+
+    responderGpsLive:
+      'Responder GPS live',
+    waitingGps:
+      'Waiting for responder GPS',
+    noResponderAssigned:
+      'No responder assigned',
+    lastUpdated:
+      'Last updated',
+
+    responder:
+      'Responder',
+    responderAssignment:
+      'RESPONDER ASSIGNMENT',
+    responderOnScene:
+      'Responder on scene',
+    responderEnRoute:
+      'Responder en route',
+    responderAssigned:
+      'Responder assigned',
+
+    selectResponder:
+      'Select available responder',
+
+    busyOn:
+      'Busy on',
+    available:
+      'Available',
+
+    assigning:
+      'Assigning...',
+    assignResponder:
+      'Assign responder',
+
+    acceptBeforeAssign:
+      'Accept this emergency before assigning a responder.',
+
+    noResponderAccounts:
+      'No responder accounts are currently available.',
+
+    assigned: 'Assigned',
+    assignmentAccepted:
+      'Assignment accepted',
+    gpsUpdated:
+      'GPS updated',
+    arrived: 'Arrived',
+
+    emergencyContacts:
+      'EMERGENCY CONTACTS',
+    attached:
+      'attached',
+
+    noContacts:
+      'No emergency contacts attached to this request.',
+
+    prepared:
+      'Prepared',
+
+    notificationNote:
+      'Contact notification delivery is simulated in this MVP.',
+
+    nextAction:
+      'NEXT ACTION',
+
+    reviewAccept:
+      'Review and accept this incoming request.',
+
+    accepting:
+      'Accepting...',
+    acceptRequest:
+      'Accept request',
+
+    selectAssign:
+      'Select and assign an available responder above.',
+
+    waitingResponder:
+      'Waiting for the responder to accept the assignment.',
+
+    responderRoute:
+      'Responder is en route. Live status is controlled by the responder application.',
+
+    responderScene:
+      'Responder is on scene. Waiting for incident completion.',
+
+    recentActivity:
+      'RECENT ACTIVITY',
+    noClosed:
+      'No closed incidents yet.',
+
+    incident:
+      'Incident',
+
+    operationsStatus:
+      'Operations status',
+    apiConnection:
+      'API connection',
+    healthy:
+      'Healthy',
+    incidentSync:
+      'Incident sync',
+    seconds:
+      '5 seconds',
+    responderNetwork:
+      'Responder network',
+    units:
+      'units',
+
+    loadingOperations:
+      'Loading Emergency Operations',
+    connecting:
+      'Connecting to control center...',
+
+    onScene:
+      'ON SCENE',
+    pending:
+      'PENDING',
+    accepted:
+      'ACCEPTED',
+    dispatched:
+      'DISPATCHED',
+    responding:
+      'RESPONDING',
+    completed:
+      'COMPLETED',
+    cancelled:
+      'CANCELLED',
+
+    couldNotLoadEmergencies:
+      'Could not load emergencies',
+    couldNotLoadResponders:
+      'Could not load responders',
+    couldNotConnect:
+      'Could not connect to the server',
+    couldNotAccept:
+      'Could not accept emergency',
+    couldNotAssign:
+      'Could not assign responder',
+    selectResponderFirst:
+      'Select a responder first.',
+  },
+
+  ru: {
+    operations: 'ОПЕРАЦИИ',
+    overview: 'Обзор',
+    emergencies: 'Вызовы',
+    responders: 'Спасатели',
+    safetyAlerts: 'Оповещения',
+
+    systemOperational:
+      'Система работает',
+    liveSync:
+      'Синхронизация каждые 5 секунд',
+    operator: 'Оператор',
+    controlCenter:
+      'Центр управления',
+
+    emergencyOperations:
+      'ЭКСТРЕННЫЕ ОПЕРАЦИИ',
+    controlCenterTitle:
+      'Центр управления',
+    live: 'Онлайн',
+    refresh: 'Обновить',
+
+    operationsOverview:
+      'Обзор операций',
+    overviewDescription:
+      'Мониторинг активных вызовов, доступности спасателей и экстренных операций.',
+    autoRefresh:
+      'Автообновление включено',
+
+    activeIncidents:
+      'Активные вызовы',
+    currentlyOpen:
+      'Сейчас открыто',
+
+    awaitingAction:
+      'Ожидают действий',
+    pendingReview:
+      'Ожидают проверки оператора',
+
+    availableResponders:
+      'Доступные спасатели',
+    registered:
+      'зарегистрировано',
+
+    closedIncidents:
+      'Закрытые вызовы',
+    completedCancelled:
+      'Завершены или отменены',
+
+    liveQueue:
+      'АКТИВНАЯ ОЧЕРЕДЬ',
+    activeEmergencies:
+      'Активные вызовы',
+    incomingRequests:
+      'Входящие и текущие экстренные вызовы.',
+    open: 'открыто',
+
+    noActive:
+      'Нет активных вызовов',
+    newRequests:
+      'Новые вызовы появятся здесь автоматически.',
+
+    medical:
+      'Медицинская помощь',
+    police: 'Полиция',
+    fire:
+      'Пожарная служба',
+    emergency:
+      'вызов',
+
+    received:
+      'Получено',
+    incidentDescription:
+      'ОПИСАНИЕ ПРОИСШЕСТВИЯ',
+
+    caller:
+      'Заявитель',
+    coordinates:
+      'Координаты',
+
+    aiAnalysis:
+      'АНАЛИЗ RESQ AI',
+    emergencyIntelligence:
+      'Анализ происшествия',
+    suggestedService:
+      'Рекомендуемая служба',
+    urgency:
+      'Срочность',
+    summary:
+      'Сводка',
+    importantDetails:
+      'Важные детали',
+    aiNote:
+      'Анализ создан ИИ. Требуется проверка оператором.',
+
+    liveIncidentMap:
+      'КАРТА ПРОИСШЕСТВИЯ',
+    locationTracking:
+      'Отслеживание вызова и спасателя',
+
+    responderGpsLive:
+      'GPS спасателя активен',
+    waitingGps:
+      'Ожидание GPS спасателя',
+    noResponderAssigned:
+      'Спасатель не назначен',
+    lastUpdated:
+      'Обновлено',
+
+    responder:
+      'Спасатель',
+    responderAssignment:
+      'НАЗНАЧЕНИЕ СПАСАТЕЛЯ',
+    responderOnScene:
+      'Спасатель на месте',
+    responderEnRoute:
+      'Спасатель в пути',
+    responderAssigned:
+      'Спасатель назначен',
+
+    selectResponder:
+      'Выберите доступного спасателя',
+
+    busyOn:
+      'Занят на вызове',
+    available:
+      'Доступен',
+
+    assigning:
+      'Назначение...',
+    assignResponder:
+      'Назначить спасателя',
+
+    acceptBeforeAssign:
+      'Сначала примите вызов, затем назначьте спасателя.',
+
+    noResponderAccounts:
+      'Нет доступных аккаунтов спасателей.',
+
+    assigned:
+      'Назначен',
+    assignmentAccepted:
+      'Назначение принято',
+    gpsUpdated:
+      'GPS обновлён',
+    arrived:
+      'Прибыл',
+
+    emergencyContacts:
+      'ЭКСТРЕННЫЕ КОНТАКТЫ',
+    attached:
+      'добавлено',
+
+    noContacts:
+      'К этому вызову не прикреплены экстренные контакты.',
+
+    prepared:
+      'Готово',
+
+    notificationNote:
+      'Отправка уведомлений контактам симулируется в этом MVP.',
+
+    nextAction:
+      'СЛЕДУЮЩЕЕ ДЕЙСТВИЕ',
+
+    reviewAccept:
+      'Проверьте и примите входящий вызов.',
+
+    accepting:
+      'Принятие...',
+    acceptRequest:
+      'Принять вызов',
+
+    selectAssign:
+      'Выберите и назначьте доступного спасателя выше.',
+
+    waitingResponder:
+      'Ожидание подтверждения назначения спасателем.',
+
+    responderRoute:
+      'Спасатель в пути. Текущий статус передаётся из приложения спасателя.',
+
+    responderScene:
+      'Спасатель на месте. Ожидание завершения происшествия.',
+
+    recentActivity:
+      'ПОСЛЕДНЯЯ АКТИВНОСТЬ',
+    noClosed:
+      'Закрытых вызовов пока нет.',
+
+    incident:
+      'Вызов',
+
+    operationsStatus:
+      'Статус операций',
+    apiConnection:
+      'Подключение API',
+    healthy:
+      'Работает',
+    incidentSync:
+      'Синхронизация',
+    seconds:
+      '5 секунд',
+    responderNetwork:
+      'Сеть спасателей',
+    units:
+      'ед.',
+
+    loadingOperations:
+      'Загрузка экстренных операций',
+    connecting:
+      'Подключение к центру управления...',
+
+    onScene:
+      'НА МЕСТЕ',
+    pending:
+      'ОЖИДАЕТ',
+    accepted:
+      'ПРИНЯТ',
+    dispatched:
+      'НАПРАВЛЕН',
+    responding:
+      'В ПУТИ',
+    completed:
+      'ЗАВЕРШЁН',
+    cancelled:
+      'ОТМЕНЁН',
+
+    couldNotLoadEmergencies:
+      'Не удалось загрузить вызовы',
+    couldNotLoadResponders:
+      'Не удалось загрузить спасателей',
+    couldNotConnect:
+      'Не удалось подключиться к серверу',
+    couldNotAccept:
+      'Не удалось принять вызов',
+    couldNotAssign:
+      'Не удалось назначить спасателя',
+    selectResponderFirst:
+      'Сначала выберите спасателя.',
+  },
+
+  kk: {
+    operations:
+      'ОПЕРАЦИЯЛАР',
+    overview:
+      'Шолу',
+    emergencies:
+      'Шақыртулар',
+    responders:
+      'Құтқарушылар',
+    safetyAlerts:
+      'Хабарламалар',
+
+    systemOperational:
+      'Жүйе жұмыс істеп тұр',
+    liveSync:
+      'Әр 5 секунд сайын синхрондау',
+    operator:
+      'Оператор',
+    controlCenter:
+      'Басқару орталығы',
+
+    emergencyOperations:
+      'ТӨТЕНШЕ ОПЕРАЦИЯЛАР',
+    controlCenterTitle:
+      'Басқару орталығы',
+    live:
+      'Онлайн',
+    refresh:
+      'Жаңарту',
+
+    operationsOverview:
+      'Операциялар шолуы',
+    overviewDescription:
+      'Белсенді шақыртуларды, құтқарушылардың қолжетімділігін және төтенше операцияларды бақылау.',
+    autoRefresh:
+      'Автожаңарту қосулы',
+
+    activeIncidents:
+      'Белсенді шақыртулар',
+    currentlyOpen:
+      'Қазір ашық',
+
+    awaitingAction:
+      'Әрекет күтуде',
+    pendingReview:
+      'Оператор тексеруін күтуде',
+
+    availableResponders:
+      'Қолжетімді құтқарушылар',
+    registered:
+      'тіркелген',
+
+    closedIncidents:
+      'Жабылған шақыртулар',
+    completedCancelled:
+      'Аяқталған немесе жойылған',
+
+    liveQueue:
+      'ТІКЕЛЕЙ КЕЗЕК',
+    activeEmergencies:
+      'Белсенді шақыртулар',
+    incomingRequests:
+      'Кіріс және ағымдағы төтенше шақыртулар.',
+    open:
+      'ашық',
+
+    noActive:
+      'Белсенді шақыртулар жоқ',
+    newRequests:
+      'Жаңа шақыртулар автоматты түрде осында шығады.',
+
+    medical:
+      'Медициналық көмек',
+    police:
+      'Полиция',
+    fire:
+      'Өрт сөндіру қызметі',
+    emergency:
+      'шақырту',
+
+    received:
+      'Қабылданды',
+    incidentDescription:
+      'ОҚИҒА СИПАТТАМАСЫ',
+
+    caller:
+      'Өтініш беруші',
+    coordinates:
+      'Координаттар',
+
+    aiAnalysis:
+      'RESQ AI ТАЛДАУЫ',
+    emergencyIntelligence:
+      'Оқиғаны талдау',
+    suggestedService:
+      'Ұсынылған қызмет',
+    urgency:
+      'Шұғылдық',
+    summary:
+      'Қорытынды',
+    importantDetails:
+      'Маңызды мәліметтер',
+    aiNote:
+      'ЖИ көмегімен жасалған талдау. Оператор тексеруі қажет.',
+
+    liveIncidentMap:
+      'ОҚИҒА КАРТАСЫ',
+    locationTracking:
+      'Оқиға мен құтқарушыны бақылау',
+
+    responderGpsLive:
+      'Құтқарушы GPS белсенді',
+    waitingGps:
+      'Құтқарушы GPS күтілуде',
+    noResponderAssigned:
+      'Құтқарушы тағайындалмаған',
+    lastUpdated:
+      'Жаңартылды',
+
+    responder:
+      'Құтқарушы',
+    responderAssignment:
+      'ҚҰТҚАРУШЫНЫ ТАҒАЙЫНДАУ',
+    responderOnScene:
+      'Құтқарушы оқиға орнында',
+    responderEnRoute:
+      'Құтқарушы жолда',
+    responderAssigned:
+      'Құтқарушы тағайындалды',
+
+    selectResponder:
+      'Қолжетімді құтқарушыны таңдаңыз',
+
+    busyOn:
+      'Шақыртуда',
+    available:
+      'Қолжетімді',
+
+    assigning:
+      'Тағайындалуда...',
+    assignResponder:
+      'Құтқарушыны тағайындау',
+
+    acceptBeforeAssign:
+      'Құтқарушыны тағайындау алдында шақыртуды қабылдаңыз.',
+
+    noResponderAccounts:
+      'Қолжетімді құтқарушы аккаунттары жоқ.',
+
+    assigned:
+      'Тағайындалды',
+    assignmentAccepted:
+      'Тапсырма қабылданды',
+    gpsUpdated:
+      'GPS жаңартылды',
+    arrived:
+      'Келді',
+
+    emergencyContacts:
+      'ТӨТЕНШЕ БАЙЛАНЫСТАР',
+    attached:
+      'қосылған',
+
+    noContacts:
+      'Бұл шақыртуға төтенше байланыстар қосылмаған.',
+
+    prepared:
+      'Дайын',
+
+    notificationNote:
+      'Байланыстарға хабарлама жіберу осы MVP-де симуляцияланады.',
+
+    nextAction:
+      'КЕЛЕСІ ӘРЕКЕТ',
+
+    reviewAccept:
+      'Кіріс шақыртуды тексеріп, қабылдаңыз.',
+
+    accepting:
+      'Қабылдануда...',
+    acceptRequest:
+      'Шақыртуды қабылдау',
+
+    selectAssign:
+      'Жоғарыдан қолжетімді құтқарушыны таңдап, тағайындаңыз.',
+
+    waitingResponder:
+      'Құтқарушының тапсырманы қабылдауын күту.',
+
+    responderRoute:
+      'Құтқарушы жолда. Тікелей мәртебе құтқарушы қолданбасынан басқарылады.',
+
+    responderScene:
+      'Құтқарушы оқиға орнында. Оқиғаның аяқталуы күтілуде.',
+
+    recentActivity:
+      'СОҢҒЫ БЕЛСЕНДІЛІК',
+    noClosed:
+      'Жабылған шақыртулар жоқ.',
+
+    incident:
+      'Шақырту',
+
+    operationsStatus:
+      'Операциялар күйі',
+    apiConnection:
+      'API байланысы',
+    healthy:
+      'Қалыпты',
+    incidentSync:
+      'Синхрондау',
+    seconds:
+      '5 секунд',
+    responderNetwork:
+      'Құтқарушылар желісі',
+    units:
+      'бірлік',
+
+    loadingOperations:
+      'Төтенше операциялар жүктелуде',
+    connecting:
+      'Басқару орталығына қосылуда...',
+
+    onScene:
+      'ОҚИҒА ОРНЫНДА',
+    pending:
+      'КҮТУДЕ',
+    accepted:
+      'ҚАБЫЛДАНДЫ',
+    dispatched:
+      'ЖІБЕРІЛДІ',
+    responding:
+      'ЖОЛДА',
+    completed:
+      'АЯҚТАЛДЫ',
+    cancelled:
+      'ЖОЙЫЛДЫ',
+
+    couldNotLoadEmergencies:
+      'Шақыртуларды жүктеу мүмкін болмады',
+    couldNotLoadResponders:
+      'Құтқарушыларды жүктеу мүмкін болмады',
+    couldNotConnect:
+      'Серверге қосылу мүмкін болмады',
+    couldNotAccept:
+      'Шақыртуды қабылдау мүмкін болмады',
+    couldNotAssign:
+      'Құтқарушыны тағайындау мүмкін болмады',
+    selectResponderFirst:
+      'Алдымен құтқарушыны таңдаңыз.',
+  },
+} as const
+
+/* =========================================================
+   ICONS
+   ========================================================= */
 
 function DashboardIcon({
   size = 18,
@@ -351,14 +1079,51 @@ function scrollToSection(
     })
 }
 
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+
 function OperatorDashboard() {
   const navigate = useNavigate()
 
-  const [emergencies, setEmergencies] =
-    useState<OperatorEmergency[]>([])
+  const [
+    language,
+    setLanguage,
+  ] =
+    useState<OperatorLanguage>(() => {
+      const saved =
+        localStorage.getItem(
+          'resq-operator-language',
+        )
 
-  const [responders, setResponders] =
-    useState<ResponderUser[]>([])
+      if (
+        saved === 'ru' ||
+        saved === 'kk'
+      ) {
+        return saved
+      }
+
+      return 'en'
+    })
+
+  const t =
+    translations[language]
+
+  const [
+    emergencies,
+    setEmergencies,
+  ] =
+    useState<
+      OperatorEmergency[]
+    >([])
+
+  const [
+    responders,
+    setResponders,
+  ] =
+    useState<
+      ResponderUser[]
+    >([])
 
   const [
     selectedResponders,
@@ -373,11 +1138,37 @@ function OperatorDashboard() {
   const [error, setError] =
     useState('')
 
-  const [updatingId, setUpdatingId] =
+  const [
+    updatingId,
+    setUpdatingId,
+  ] =
     useState<number | null>(null)
 
-  const [assigningId, setAssigningId] =
+  const [
+    assigningId,
+    setAssigningId,
+  ] =
     useState<number | null>(null)
+
+  const changeLanguage = (
+    nextLanguage:
+      OperatorLanguage,
+  ) => {
+    setLanguage(nextLanguage)
+
+    localStorage.setItem(
+      'resq-operator-language',
+      nextLanguage,
+    )
+
+    document.documentElement.lang =
+      nextLanguage
+  }
+
+  useEffect(() => {
+    document.documentElement.lang =
+      language
+  }, [language])
 
   const getToken = () =>
     localStorage.getItem('token')
@@ -398,15 +1189,16 @@ function OperatorDashboard() {
       }
 
       try {
-        const response = await fetch(
-          `${API_URL}/operator/emergencies`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
+        const response =
+          await fetch(
+            `${API_URL}/operator/emergencies`,
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
             },
-          },
-        )
+          )
 
         const data =
           (await response.json()) as {
@@ -415,7 +1207,9 @@ function OperatorDashboard() {
             message?: string
           }
 
-        if (response.status === 401) {
+        if (
+          response.status === 401
+        ) {
           handleUnauthorized()
           return
         }
@@ -423,8 +1217,9 @@ function OperatorDashboard() {
         if (!response.ok) {
           setError(
             data.message ||
-              'Could not load emergencies',
+              t.couldNotLoadEmergencies,
           )
+
           return
         }
 
@@ -460,12 +1255,15 @@ function OperatorDashboard() {
         console.error(error)
 
         setError(
-          'Could not connect to the server',
+          t.couldNotConnect,
         )
       } finally {
         setLoading(false)
       }
-    }, [handleUnauthorized])
+    }, [
+      handleUnauthorized,
+      t,
+    ])
 
   const loadResponders =
     useCallback(async () => {
@@ -477,23 +1275,27 @@ function OperatorDashboard() {
       }
 
       try {
-        const response = await fetch(
-          `${API_URL}/operator/responders`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
+        const response =
+          await fetch(
+            `${API_URL}/operator/responders`,
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
             },
-          },
-        )
+          )
 
         const data =
           (await response.json()) as {
-            responders?: ResponderUser[]
+            responders?:
+              ResponderUser[]
             message?: string
           }
 
-        if (response.status === 401) {
+        if (
+          response.status === 401
+        ) {
           handleUnauthorized()
           return
         }
@@ -501,8 +1303,9 @@ function OperatorDashboard() {
         if (!response.ok) {
           setError(
             data.message ||
-              'Could not load responders',
+              t.couldNotLoadResponders,
           )
+
           return
         }
 
@@ -513,167 +1316,197 @@ function OperatorDashboard() {
         console.error(error)
 
         setError(
-          'Could not load responders',
+          t.couldNotLoadResponders,
         )
       }
-    }, [handleUnauthorized])
+    }, [
+      handleUnauthorized,
+      t,
+    ])
 
   useEffect(() => {
     loadEmergencies()
     loadResponders()
 
-    const interval = window.setInterval(
-      () => {
-        loadEmergencies()
-      },
-      5000,
-    )
+    const interval =
+      window.setInterval(
+        () => {
+          loadEmergencies()
+        },
+        5000,
+      )
 
     return () => {
-      window.clearInterval(interval)
+      window.clearInterval(
+        interval,
+      )
     }
   }, [
     loadEmergencies,
     loadResponders,
   ])
 
-  const acceptEmergency = async (
-    emergencyId: number,
-  ) => {
-    const token = getToken()
+  const acceptEmergency =
+    async (
+      emergencyId: number,
+    ) => {
+      const token =
+        getToken()
 
-    if (!token) {
-      handleUnauthorized()
-      return
-    }
-
-    try {
-      setUpdatingId(emergencyId)
-      setError('')
-
-      const response = await fetch(
-        `${API_URL}/operator/emergencies/${emergencyId}/status`,
-        {
-          method: 'PATCH',
-
-          headers: {
-            'Content-Type':
-              'application/json',
-
-            Authorization:
-              `Bearer ${token}`,
-          },
-
-          body: JSON.stringify({
-            status: 'ACCEPTED',
-          }),
-        },
-      )
-
-      const data =
-        (await response.json()) as {
-          message?: string
-        }
-
-      if (response.status === 401) {
+      if (!token) {
         handleUnauthorized()
         return
       }
 
-      if (!response.ok) {
-        setError(
-          data.message ||
-            'Could not accept emergency',
+      try {
+        setUpdatingId(
+          emergencyId,
         )
+
+        setError('')
+
+        const response =
+          await fetch(
+            `${API_URL}/operator/emergencies/${emergencyId}/status`,
+            {
+              method:
+                'PATCH',
+
+              headers: {
+                'Content-Type':
+                  'application/json',
+
+                Authorization:
+                  `Bearer ${token}`,
+              },
+
+              body:
+                JSON.stringify({
+                  status:
+                    'ACCEPTED',
+                }),
+            },
+          )
+
+        const data =
+          (await response.json()) as {
+            message?: string
+          }
+
+        if (
+          response.status === 401
+        ) {
+          handleUnauthorized()
+          return
+        }
+
+        if (!response.ok) {
+          setError(
+            data.message ||
+              t.couldNotAccept,
+          )
+
+          return
+        }
+
+        await loadEmergencies()
+      } catch (error) {
+        console.error(error)
+
+        setError(
+          t.couldNotConnect,
+        )
+      } finally {
+        setUpdatingId(null)
+      }
+    }
+
+  const assignResponder =
+    async (
+      emergencyId: number,
+    ) => {
+      const responderId =
+        selectedResponders[
+          emergencyId
+        ]
+
+      if (!responderId) {
+        setError(
+          t.selectResponderFirst,
+        )
+
         return
       }
 
-      await loadEmergencies()
-    } catch (error) {
-      console.error(error)
+      const token =
+        getToken()
 
-      setError(
-        'Could not connect to the server',
-      )
-    } finally {
-      setUpdatingId(null)
-    }
-  }
-
-  const assignResponder = async (
-    emergencyId: number,
-  ) => {
-    const responderId =
-      selectedResponders[
-        emergencyId
-      ]
-
-    if (!responderId) {
-      setError(
-        'Select a responder first.',
-      )
-      return
-    }
-
-    const token = getToken()
-
-    if (!token) {
-      handleUnauthorized()
-      return
-    }
-
-    try {
-      setAssigningId(emergencyId)
-      setError('')
-
-      const response = await fetch(
-        `${API_URL}/operator/emergencies/${emergencyId}/assign`,
-        {
-          method: 'PATCH',
-
-          headers: {
-            'Content-Type':
-              'application/json',
-
-            Authorization:
-              `Bearer ${token}`,
-          },
-
-          body: JSON.stringify({
-            responderId,
-          }),
-        },
-      )
-
-      const data =
-        (await response.json()) as {
-          message?: string
-        }
-
-      if (response.status === 401) {
+      if (!token) {
         handleUnauthorized()
         return
       }
 
-      if (!response.ok) {
-        setError(
-          data.message ||
-            'Could not assign responder',
+      try {
+        setAssigningId(
+          emergencyId,
         )
-        return
+
+        setError('')
+
+        const response =
+          await fetch(
+            `${API_URL}/operator/emergencies/${emergencyId}/assign`,
+            {
+              method:
+                'PATCH',
+
+              headers: {
+                'Content-Type':
+                  'application/json',
+
+                Authorization:
+                  `Bearer ${token}`,
+              },
+
+              body:
+                JSON.stringify({
+                  responderId,
+                }),
+            },
+          )
+
+        const data =
+          (await response.json()) as {
+            message?: string
+          }
+
+        if (
+          response.status === 401
+        ) {
+          handleUnauthorized()
+          return
+        }
+
+        if (!response.ok) {
+          setError(
+            data.message ||
+              t.couldNotAssign,
+          )
+
+          return
+        }
+
+        await loadEmergencies()
+      } catch (error) {
+        console.error(error)
+
+        setError(
+          t.couldNotAssign,
+        )
+      } finally {
+        setAssigningId(null)
       }
-
-      await loadEmergencies()
-    } catch (error) {
-      console.error(error)
-
-      setError(
-        'Could not assign responder',
-      )
-    } finally {
-      setAssigningId(null)
     }
-  }
 
   const activeEmergencies =
     useMemo(
@@ -719,6 +1552,48 @@ function OperatorDashboard() {
     navigate('/login')
   }
 
+  const getEmergencyName = (
+    type:
+      OperatorEmergency['type'],
+  ) => {
+    if (type === 'MEDICAL') {
+      return t.medical
+    }
+
+    if (type === 'POLICE') {
+      return t.police
+    }
+
+    return t.fire
+  }
+
+  const getStatusText = (
+    status: string,
+  ) => {
+    switch (status) {
+      case 'PENDING':
+        return t.pending
+
+      case 'ACCEPTED':
+        return t.accepted
+
+      case 'DISPATCHED':
+        return t.dispatched
+
+      case 'RESPONDING':
+        return t.responding
+
+      case 'COMPLETED':
+        return t.completed
+
+      case 'CANCELLED':
+        return t.cancelled
+
+      default:
+        return status
+    }
+  }
+
   if (loading) {
     return (
       <div className="operator-enterprise-loading">
@@ -727,11 +1602,11 @@ function OperatorDashboard() {
         </div>
 
         <strong>
-          Loading Emergency Operations
+          {t.loadingOperations}
         </strong>
 
         <span>
-          Connecting to control center...
+          {t.connecting}
         </span>
       </div>
     )
@@ -739,9 +1614,7 @@ function OperatorDashboard() {
 
   return (
     <div className="operator-shell">
-      {/* ==============================================
-          SIDEBAR
-          ============================================== */}
+      {/* SIDEBAR */}
 
       <aside className="operator-sidebar">
         <div className="operator-sidebar-brand">
@@ -750,9 +1623,12 @@ function OperatorDashboard() {
           </div>
 
           <div>
-            <strong>ResQ Control</strong>
+            <strong>
+              ResQ Control
+            </strong>
+
             <span>
-              Emergency Operations
+              {t.emergencyOperations}
             </span>
           </div>
         </div>
@@ -761,7 +1637,7 @@ function OperatorDashboard() {
 
         <nav className="operator-nav">
           <span className="operator-nav-label">
-            OPERATIONS
+            {t.operations}
           </span>
 
           <button
@@ -775,7 +1651,9 @@ function OperatorDashboard() {
           >
             <DashboardIcon />
 
-            <span>Overview</span>
+            <span>
+              {t.overview}
+            </span>
           </button>
 
           <button
@@ -789,7 +1667,9 @@ function OperatorDashboard() {
           >
             <EmergencyIcon />
 
-            <span>Emergencies</span>
+            <span>
+              {t.emergencies}
+            </span>
 
             {activeEmergencies.length >
               0 && (
@@ -812,7 +1692,9 @@ function OperatorDashboard() {
           >
             <ResponderIcon />
 
-            <span>Responders</span>
+            <span>
+              {t.responders}
+            </span>
 
             <span className="operator-nav-count neutral">
               {availableResponders}
@@ -830,7 +1712,9 @@ function OperatorDashboard() {
           >
             <AlertIcon />
 
-            <span>Safety Alerts</span>
+            <span>
+              {t.safetyAlerts}
+            </span>
           </button>
         </nav>
 
@@ -842,11 +1726,11 @@ function OperatorDashboard() {
 
             <div>
               <strong>
-                System operational
+                {t.systemOperational}
               </strong>
 
               <span>
-                Live sync every 5 seconds
+                {t.liveSync}
               </span>
             </div>
           </div>
@@ -858,9 +1742,12 @@ function OperatorDashboard() {
           </div>
 
           <div className="operator-profile-copy">
-            <strong>Operator</strong>
+            <strong>
+              {t.operator}
+            </strong>
+
             <span>
-              Control center
+              {t.controlCenter}
             </span>
           </div>
 
@@ -876,29 +1763,75 @@ function OperatorDashboard() {
         </div>
       </aside>
 
-      {/* ==============================================
-          WORKSPACE
-          ============================================== */}
+      {/* WORKSPACE */}
 
       <div className="operator-workspace">
-        {/* TOP BAR */}
-
         <header className="operator-topbar">
           <div>
             <p className="operator-topbar-eyebrow">
-              EMERGENCY OPERATIONS
+              {t.emergencyOperations}
             </p>
 
             <h1>
-              Control Center
+              {t.controlCenterTitle}
             </h1>
           </div>
 
           <div className="operator-topbar-actions">
+            <div className="operator-language-switcher">
+              <button
+                type="button"
+                className={
+                  language === 'en'
+                    ? 'active'
+                    : ''
+                }
+                onClick={() =>
+                  changeLanguage(
+                    'en',
+                  )
+                }
+              >
+                EN
+              </button>
+
+              <button
+                type="button"
+                className={
+                  language === 'ru'
+                    ? 'active'
+                    : ''
+                }
+                onClick={() =>
+                  changeLanguage(
+                    'ru',
+                  )
+                }
+              >
+                RU
+              </button>
+
+              <button
+                type="button"
+                className={
+                  language === 'kk'
+                    ? 'active'
+                    : ''
+                }
+                onClick={() =>
+                  changeLanguage(
+                    'kk',
+                  )
+                }
+              >
+                KZ
+              </button>
+            </div>
+
             <div className="operator-live-pill">
               <span />
 
-              Live
+              {t.live}
             </div>
 
             <button
@@ -911,15 +1844,15 @@ function OperatorDashboard() {
             >
               <RefreshIcon />
 
-              <span>Refresh</span>
+              <span>
+                {t.refresh}
+              </span>
             </button>
           </div>
         </header>
 
         <main className="operator-content">
-          {/* ============================================
-              OVERVIEW
-              ============================================ */}
+          {/* OVERVIEW */}
 
           <section
             id="operator-overview"
@@ -928,21 +1861,21 @@ function OperatorDashboard() {
             <div className="operator-page-heading">
               <div>
                 <h2>
-                  Operations overview
+                  {t.operationsOverview}
                 </h2>
 
                 <p>
-                  Monitor active incidents,
-                  responder availability and
-                  emergency operations.
+                  {t.overviewDescription}
                 </p>
               </div>
 
               <div className="operator-last-sync">
-                <ActivityIcon size={16} />
+                <ActivityIcon
+                  size={16}
+                />
 
                 <span>
-                  Auto-refresh enabled
+                  {t.autoRefresh}
                 </span>
               </div>
             </div>
@@ -955,7 +1888,7 @@ function OperatorDashboard() {
 
                 <div className="operator-kpi-content">
                   <span>
-                    Active incidents
+                    {t.activeIncidents}
                   </span>
 
                   <strong>
@@ -965,7 +1898,7 @@ function OperatorDashboard() {
                   </strong>
 
                   <small>
-                    Currently open
+                    {t.currentlyOpen}
                   </small>
                 </div>
               </div>
@@ -977,7 +1910,7 @@ function OperatorDashboard() {
 
                 <div className="operator-kpi-content">
                   <span>
-                    Awaiting action
+                    {t.awaitingAction}
                   </span>
 
                   <strong>
@@ -985,7 +1918,7 @@ function OperatorDashboard() {
                   </strong>
 
                   <small>
-                    Pending operator review
+                    {t.pendingReview}
                   </small>
                 </div>
               </div>
@@ -997,16 +1930,20 @@ function OperatorDashboard() {
 
                 <div className="operator-kpi-content">
                   <span>
-                    Available responders
+                    {
+                      t.availableResponders
+                    }
                   </span>
 
                   <strong>
-                    {availableResponders}
+                    {
+                      availableResponders
+                    }
                   </strong>
 
                   <small>
                     {responders.length}{' '}
-                    registered
+                    {t.registered}
                   </small>
                 </div>
               </div>
@@ -1018,7 +1955,7 @@ function OperatorDashboard() {
 
                 <div className="operator-kpi-content">
                   <span>
-                    Closed incidents
+                    {t.closedIncidents}
                   </span>
 
                   <strong>
@@ -1028,7 +1965,9 @@ function OperatorDashboard() {
                   </strong>
 
                   <small>
-                    Completed or cancelled
+                    {
+                      t.completedCancelled
+                    }
                   </small>
                 </div>
               </div>
@@ -1041,12 +1980,8 @@ function OperatorDashboard() {
             </div>
           )}
 
-          {/* ============================================
-              OPERATIONS GRID
-              ============================================ */}
-
           <div className="operator-operations-grid">
-            {/* LIVE INCIDENTS */}
+            {/* ACTIVE INCIDENTS */}
 
             <section
               id="operator-incidents"
@@ -1055,16 +1990,17 @@ function OperatorDashboard() {
               <div className="operator-panel-header">
                 <div>
                   <span className="operator-panel-eyebrow">
-                    LIVE QUEUE
+                    {t.liveQueue}
                   </span>
 
                   <h2>
-                    Active emergencies
+                    {t.activeEmergencies}
                   </h2>
 
                   <p>
-                    Incoming and ongoing
-                    emergency requests.
+                    {
+                      t.incomingRequests
+                    }
                   </p>
                 </div>
 
@@ -1074,22 +2010,23 @@ function OperatorDashboard() {
                   {
                     activeEmergencies.length
                   }{' '}
-                  open
+                  {t.open}
                 </div>
               </div>
 
               {activeEmergencies.length ===
               0 ? (
                 <div className="control-empty">
-                  <CheckIcon size={24} />
+                  <CheckIcon
+                    size={24}
+                  />
 
                   <strong>
-                    No active emergencies
+                    {t.noActive}
                   </strong>
 
                   <span>
-                    New requests will
-                    automatically appear here.
+                    {t.newRequests}
                   </span>
                 </div>
               ) : (
@@ -1107,13 +2044,18 @@ function OperatorDashboard() {
                           'RESPONDING' &&
                         !responderArrived
 
+                      const emergencyName =
+                        getEmergencyName(
+                          emergency.type,
+                        )
+
                       return (
                         <article
-                          key={emergency.id}
+                          key={
+                            emergency.id
+                          }
                           className="request-card"
                         >
-                          {/* INCIDENT HEADER */}
-
                           <div className="request-card-header">
                             <div className="request-heading">
                               <div className="operator-incident-id">
@@ -1127,31 +2069,35 @@ function OperatorDashboard() {
                                 <div className="operator-incident-title-row">
                                   <strong className="operator-incident-name">
                                     {
-                                      emergencyNames[
-                                        emergency
-                                          .type
-                                      ]
+                                      emergencyName
                                     }{' '}
-                                    Emergency
+                                    {
+                                      t.emergency
+                                    }
                                   </strong>
 
                                   <span
                                     className={`request-type type-${emergency.type.toLowerCase()}`}
                                   >
                                     {
-                                      emergencyNames[
-                                        emergency
-                                          .type
-                                      ]
+                                      emergencyName
                                     }
                                   </span>
                                 </div>
 
                                 <span className="operator-incident-time">
-                                  Received{' '}
+                                  {t.received}{' '}
                                   {new Date(
                                     emergency.createdAt,
-                                  ).toLocaleString()}
+                                  ).toLocaleString(
+                                    language ===
+                                      'ru'
+                                      ? 'ru-RU'
+                                      : language ===
+                                          'kk'
+                                        ? 'kk-KZ'
+                                        : 'en-US',
+                                  )}
                                 </span>
                               </div>
                             </div>
@@ -1160,16 +2106,18 @@ function OperatorDashboard() {
                               className={`request-status status-${emergency.status.toLowerCase()}`}
                             >
                               {responderArrived
-                                ? 'ON SCENE'
-                                : emergency.status}
+                                ? t.onScene
+                                : getStatusText(
+                                    emergency.status,
+                                  )}
                             </span>
                           </div>
 
-                          {/* DESCRIPTION */}
-
                           <div className="operator-incident-section">
                             <span className="operator-field-label">
-                              INCIDENT DESCRIPTION
+                              {
+                                t.incidentDescription
+                              }
                             </span>
 
                             <p className="request-description">
@@ -1179,12 +2127,10 @@ function OperatorDashboard() {
                             </p>
                           </div>
 
-                          {/* META */}
-
                           <div className="request-meta-grid">
                             <div>
                               <span>
-                                Caller
+                                {t.caller}
                               </span>
 
                               <strong>
@@ -1198,14 +2144,20 @@ function OperatorDashboard() {
 
                             <div>
                               <span>
-                                Received
+                                {t.received}
                               </span>
 
                               <strong>
                                 {new Date(
                                   emergency.createdAt,
                                 ).toLocaleTimeString(
-                                  [],
+                                  language ===
+                                    'ru'
+                                    ? 'ru-RU'
+                                    : language ===
+                                        'kk'
+                                      ? 'kk-KZ'
+                                      : 'en-US',
                                   {
                                     hour:
                                       '2-digit',
@@ -1218,7 +2170,9 @@ function OperatorDashboard() {
 
                             <div>
                               <span>
-                                Coordinates
+                                {
+                                  t.coordinates
+                                }
                               </span>
 
                               <strong>
@@ -1233,20 +2187,22 @@ function OperatorDashboard() {
                             </div>
                           </div>
 
-                          {/* AI ANALYSIS */}
+                          {/* AI */}
 
                           {emergency.aiSummary && (
                             <div className="operator-ai-card">
                               <div className="operator-ai-header">
                                 <div>
                                   <span className="operator-ai-label">
-                                    AI INTAKE
-                                    ANALYSIS
+                                    {
+                                      t.aiAnalysis
+                                    }
                                   </span>
 
                                   <strong>
-                                    Emergency
-                                    intelligence
+                                    {
+                                      t.emergencyIntelligence
+                                    }
                                   </strong>
                                 </div>
 
@@ -1258,8 +2214,9 @@ function OperatorDashboard() {
                               <div className="operator-ai-grid">
                                 <div>
                                   <span>
-                                    Suggested
-                                    service
+                                    {
+                                      t.suggestedService
+                                    }
                                   </span>
 
                                   <strong>
@@ -1270,7 +2227,9 @@ function OperatorDashboard() {
 
                                 <div>
                                   <span>
-                                    Urgency
+                                    {
+                                      t.urgency
+                                    }
                                   </span>
 
                                   <strong>
@@ -1282,7 +2241,7 @@ function OperatorDashboard() {
 
                               <div className="operator-ai-summary">
                                 <span>
-                                  Summary
+                                  {t.summary}
                                 </span>
 
                                 <p>
@@ -1295,8 +2254,9 @@ function OperatorDashboard() {
                               {emergency.aiImportantDetails && (
                                 <div className="operator-ai-details">
                                   <span>
-                                    Important
-                                    details
+                                    {
+                                      t.importantDetails
+                                    }
                                   </span>
 
                                   {(() => {
@@ -1332,11 +2292,7 @@ function OperatorDashboard() {
                               )}
 
                               <p className="operator-ai-note">
-                                AI-generated
-                                intake assistance.
-                                Operator
-                                verification is
-                                required.
+                                {t.aiNote}
                               </p>
                             </div>
                           )}
@@ -1346,20 +2302,22 @@ function OperatorDashboard() {
                           <div className="operator-map-section-header">
                             <div>
                               <span className="operator-field-label">
-                                LIVE INCIDENT
-                                MAP
+                                {
+                                  t.liveIncidentMap
+                                }
                               </span>
 
                               <strong>
-                                Location &
-                                responder
-                                tracking
+                                {
+                                  t.locationTracking
+                                }
                               </strong>
                             </div>
 
                             <span className="operator-map-live-badge">
                               <span />
-                              LIVE
+
+                              {t.live}
                             </span>
                           </div>
 
@@ -1398,44 +2356,42 @@ function OperatorDashboard() {
                                   null &&
                                 emergency.responderLongitude !=
                                   null
-                                  ? 'Responder GPS live'
+                                  ? t.responderGpsLive
                                   : emergency.assignedResponder
-                                    ? 'Waiting for responder GPS'
-                                    : 'No responder assigned'}
+                                    ? t.waitingGps
+                                    : t.noResponderAssigned}
                               </strong>
                             </div>
 
                             {emergency.responderLocationUpdatedAt && (
                               <span className="operator-tracking-time">
-                                Last updated{' '}
+                                {
+                                  t.lastUpdated
+                                }{' '}
                                 {new Date(
                                   emergency.responderLocationUpdatedAt,
-                                ).toLocaleTimeString(
-                                  [],
-                                  {
-                                    hour:
-                                      '2-digit',
-                                    minute:
-                                      '2-digit',
-                                    second:
-                                      '2-digit',
-                                  },
-                                )}
+                                ).toLocaleTimeString()}
                               </span>
                             )}
 
                             <div className="operator-map-legend">
                               <div>
                                 <span className="legend-marker emergency" />
+
                                 <span>
-                                  Emergency
+                                  {
+                                    t.emergency
+                                  }
                                 </span>
                               </div>
 
                               <div>
                                 <span className="legend-marker responder" />
+
                                 <span>
-                                  Responder
+                                  {
+                                    t.responder
+                                  }
                                 </span>
                               </div>
                             </div>
@@ -1447,18 +2403,19 @@ function OperatorDashboard() {
                             <div className="operator-responder-header">
                               <div>
                                 <span>
-                                  RESPONDER
-                                  ASSIGNMENT
+                                  {
+                                    t.responderAssignment
+                                  }
                                 </span>
 
                                 <strong>
                                   {emergency.assignedResponder
                                     ? responderArrived
-                                      ? 'Responder on scene'
+                                      ? t.responderOnScene
                                       : responderEnRoute
-                                        ? 'Responder en route'
-                                        : 'Responder assigned'
-                                    : 'No responder assigned'}
+                                        ? t.responderEnRoute
+                                        : t.responderAssigned
+                                    : t.noResponderAssigned}
                                 </strong>
                               </div>
 
@@ -1499,10 +2456,10 @@ function OperatorDashboard() {
 
                                 <span className="responder-assigned-badge">
                                   {responderArrived
-                                    ? 'ON SCENE'
+                                    ? t.onScene
                                     : responderEnRoute
-                                      ? 'EN ROUTE'
-                                      : 'ASSIGNED'}
+                                      ? t.responding
+                                      : t.assigned}
                                 </span>
                               </div>
                             ) : emergency.status ===
@@ -1540,9 +2497,9 @@ function OperatorDashboard() {
                                   }}
                                 >
                                   <option value="">
-                                    Select
-                                    available
-                                    responder
+                                    {
+                                      t.selectResponder
+                                    }
                                   </option>
 
                                   {responders.map(
@@ -1561,8 +2518,8 @@ function OperatorDashboard() {
                                         }
                                       >
                                         {responder.isBusy
-                                          ? `${responder.fullName} — Busy on #${responder.activeEmergencyId}`
-                                          : `${responder.fullName} — Available`}
+                                          ? `${responder.fullName} — ${t.busyOn} #${responder.activeEmergencyId}`
+                                          : `${responder.fullName} — ${t.available}`}
                                       </option>
                                     ),
                                   )}
@@ -1586,26 +2543,24 @@ function OperatorDashboard() {
                                 >
                                   {assigningId ===
                                   emergency.id
-                                    ? 'Assigning...'
-                                    : 'Assign responder'}
+                                    ? t.assigning
+                                    : t.assignResponder}
                                 </button>
                               </div>
                             ) : (
                               <p className="responder-empty-note">
-                                Accept this
-                                emergency before
-                                assigning a
-                                responder.
+                                {
+                                  t.acceptBeforeAssign
+                                }
                               </p>
                             )}
 
                             {responders.length ===
                               0 && (
                               <p className="responder-empty-note">
-                                No responder
-                                accounts are
-                                currently
-                                available.
+                                {
+                                  t.noResponderAccounts
+                                }
                               </p>
                             )}
 
@@ -1613,7 +2568,10 @@ function OperatorDashboard() {
                               {emergency.responderAssignedAt && (
                                 <p className="responder-time">
                                   <span />
-                                  Assigned{' '}
+
+                                  {
+                                    t.assigned
+                                  }{' '}
                                   {new Date(
                                     emergency.responderAssignedAt,
                                   ).toLocaleString()}
@@ -1623,8 +2581,10 @@ function OperatorDashboard() {
                               {emergency.responderAcceptedAt && (
                                 <p className="responder-time">
                                   <span />
-                                  Assignment
-                                  accepted{' '}
+
+                                  {
+                                    t.assignmentAccepted
+                                  }{' '}
                                   {new Date(
                                     emergency.responderAcceptedAt,
                                   ).toLocaleString()}
@@ -1635,7 +2595,10 @@ function OperatorDashboard() {
                                 !responderArrived && (
                                   <p className="responder-time">
                                     <span />
-                                    GPS updated{' '}
+
+                                    {
+                                      t.gpsUpdated
+                                    }{' '}
                                     {new Date(
                                       emergency.responderLocationUpdatedAt,
                                     ).toLocaleTimeString()}
@@ -1648,6 +2611,7 @@ function OperatorDashboard() {
                                   null && (
                                   <p className="responder-time">
                                     <span />
+
                                     GPS{' '}
                                     {emergency.responderLatitude.toFixed(
                                       5,
@@ -1662,7 +2626,10 @@ function OperatorDashboard() {
                               {emergency.responderArrivedAt && (
                                 <p className="responder-time">
                                   <span />
-                                  Arrived{' '}
+
+                                  {
+                                    t.arrived
+                                  }{' '}
                                   {new Date(
                                     emergency.responderArrivedAt,
                                   ).toLocaleString()}
@@ -1677,8 +2644,9 @@ function OperatorDashboard() {
                             <div className="operator-contact-header">
                               <div>
                                 <span>
-                                  EMERGENCY
-                                  CONTACTS
+                                  {
+                                    t.emergencyContacts
+                                  }
                                 </span>
 
                                 <strong>
@@ -1687,7 +2655,9 @@ function OperatorDashboard() {
                                       .notifiedContacts
                                       .length
                                   }{' '}
-                                  attached
+                                  {
+                                    t.attached
+                                  }
                                 </strong>
                               </div>
                             </div>
@@ -1697,9 +2667,9 @@ function OperatorDashboard() {
                               .length ===
                             0 ? (
                               <p className="operator-no-contacts">
-                                No emergency
-                                contacts attached
-                                to this request.
+                                {
+                                  t.noContacts
+                                }
                               </p>
                             ) : (
                               <div className="operator-contact-list">
@@ -1728,7 +2698,9 @@ function OperatorDashboard() {
                                       </div>
 
                                       <span className="notification-simulation">
-                                        Prepared
+                                        {
+                                          t.prepared
+                                        }
                                       </span>
                                     </div>
                                   ),
@@ -1741,11 +2713,9 @@ function OperatorDashboard() {
                               .length >
                               0 && (
                               <p className="notification-note">
-                                Contact
-                                notification
-                                delivery is
-                                simulated in this
-                                MVP.
+                                {
+                                  t.notificationNote
+                                }
                               </p>
                             )}
                           </div>
@@ -1757,13 +2727,15 @@ function OperatorDashboard() {
                             <div className="request-footer">
                               <div>
                                 <span className="operator-field-label">
-                                  NEXT ACTION
+                                  {
+                                    t.nextAction
+                                  }
                                 </span>
 
                                 <div className="request-next">
-                                  Review and
-                                  accept this
-                                  incoming request.
+                                  {
+                                    t.reviewAccept
+                                  }
                                 </div>
                               </div>
 
@@ -1781,8 +2753,8 @@ function OperatorDashboard() {
                               >
                                 {updatingId ===
                                 emergency.id
-                                  ? 'Accepting...'
-                                  : 'Accept request'}
+                                  ? t.accepting
+                                  : t.acceptRequest}
                               </button>
                             </div>
                           )}
@@ -1792,37 +2764,32 @@ function OperatorDashboard() {
                             !emergency.assignedResponder && (
                               <div className="request-footer">
                                 <div className="request-next">
-                                  Select and
-                                  assign an
-                                  available
-                                  responder above.
+                                  {
+                                    t.selectAssign
+                                  }
                                 </div>
                               </div>
                             )}
 
                           {emergency.status ===
                             'DISPATCHED' && (
-                            <div className="request-footer">
-                              <div className="request-next">
-                                Waiting for the
-                                responder to
-                                accept the
-                                assignment.
+                              <div className="request-footer">
+                                <div className="request-next">
+                                  {
+                                    t.waitingResponder
+                                  }
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
 
                           {emergency.status ===
                             'RESPONDING' &&
                             !responderArrived && (
                               <div className="request-footer">
                                 <div className="request-next">
-                                  Responder is en
-                                  route. Live
-                                  status is
-                                  controlled by
-                                  the responder
-                                  application.
+                                  {
+                                    t.responderRoute
+                                  }
                                 </div>
                               </div>
                             )}
@@ -1832,10 +2799,9 @@ function OperatorDashboard() {
                             responderArrived && (
                               <div className="request-footer">
                                 <div className="request-next">
-                                  Responder is on
-                                  scene. Waiting
-                                  for incident
-                                  completion.
+                                  {
+                                    t.responderScene
+                                  }
                                 </div>
                               </div>
                             )}
@@ -1854,11 +2820,15 @@ function OperatorDashboard() {
                 <div className="operator-side-card-header">
                   <div>
                     <p className="control-side-label">
-                      RECENT ACTIVITY
+                      {
+                        t.recentActivity
+                      }
                     </p>
 
                     <h3>
-                      Closed incidents
+                      {
+                        t.closedIncidents
+                      }
                     </h3>
                   </div>
 
@@ -1870,14 +2840,16 @@ function OperatorDashboard() {
                 {completedEmergencies.length ===
                 0 ? (
                   <div className="control-side-empty">
-                    No closed incidents yet.
+                    {t.noClosed}
                   </div>
                 ) : (
                   <div className="closed-list">
                     {completedEmergencies
                       .slice(0, 7)
                       .map(
-                        (emergency) => (
+                        (
+                          emergency,
+                        ) => (
                           <div
                             key={
                               emergency.id
@@ -1887,33 +2859,35 @@ function OperatorDashboard() {
                             <div className="closed-item-left">
                               <div className="closed-incident-icon">
                                 <CheckIcon
-                                  size={13}
+                                  size={
+                                    13
+                                  }
                                 />
                               </div>
 
                               <div>
                                 <strong>
-                                  Incident #
+                                  {
+                                    t.incident
+                                  }{' '}
+                                  #
                                   {
                                     emergency.id
                                   }
                                 </strong>
 
                                 <span>
-                                  {
-                                    emergencyNames[
-                                      emergency
-                                        .type
-                                    ]
-                                  }
+                                  {getEmergencyName(
+                                    emergency.type,
+                                  )}
                                 </span>
                               </div>
                             </div>
 
                             <span>
-                              {
-                                emergency.status
-                              }
+                              {getStatusText(
+                                emergency.status,
+                              )}
                             </span>
                           </div>
                         ),
@@ -1927,47 +2901,53 @@ function OperatorDashboard() {
                   <span className="operator-online-dot" />
 
                   <strong>
-                    Operations status
+                    {
+                      t.operationsStatus
+                    }
                   </strong>
                 </div>
 
                 <div className="operator-status-metric">
                   <span>
-                    API connection
+                    {
+                      t.apiConnection
+                    }
                   </span>
 
                   <strong className="healthy">
-                    Healthy
+                    {t.healthy}
                   </strong>
                 </div>
 
                 <div className="operator-status-metric">
                   <span>
-                    Incident sync
+                    {t.incidentSync}
                   </span>
 
                   <strong>
-                    5 seconds
+                    {t.seconds}
                   </strong>
                 </div>
 
                 <div className="operator-status-metric">
                   <span>
-                    Responder network
+                    {
+                      t.responderNetwork
+                    }
                   </span>
 
                   <strong>
-                    {responders.length}{' '}
-                    units
+                    {
+                      responders.length
+                    }{' '}
+                    {t.units}
                   </strong>
                 </div>
               </div>
             </aside>
           </div>
 
-          {/* ============================================
-              SAFETY ALERTS
-              ============================================ */}
+          {/* SAFETY ALERTS */}
 
           <section
             id="operator-alerts"
