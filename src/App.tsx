@@ -4,7 +4,8 @@ import {
   Route,
   Routes,
 } from 'react-router-dom'
-
+// src/App.tsx
+import './App.css'
 import OperatorRoute from './components/OperatorRoute'
 import PublicRoute from './components/PublicRoute'
 
