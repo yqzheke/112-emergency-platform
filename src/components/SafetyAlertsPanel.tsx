@@ -11,7 +11,287 @@ import type {
   SafetyAlert,
 } from '../types/alert'
 
+type OperatorLanguage =
+  | 'en'
+  | 'ru'
+  | 'kk'
+
+const alertTranslations = {
+  en: {
+    publicSafety:
+      'PUBLIC SAFETY',
+
+    title:
+      'ResQ Alerts',
+
+    description:
+      'Publish official safety information for users of the ResQ application.',
+
+    alertTitle:
+      'Alert title',
+
+    alertTitlePlaceholder:
+      'Severe Weather Warning',
+
+    region:
+      'Region',
+
+    regionPlaceholder:
+      'Astana',
+
+    severity:
+      'Severity',
+
+    information:
+      'Information',
+
+    warning:
+      'Warning',
+
+    critical:
+      'Critical',
+
+    publicMessage:
+      'Public message',
+
+    messagePlaceholder:
+      'Enter the safety information users should receive...',
+
+    publishing:
+      'Publishing...',
+
+    publish:
+      'Publish safety alert',
+
+    publishedAlerts:
+      'Published alerts',
+
+    loading:
+      'Loading alerts...',
+
+    noAlerts:
+      'No safety alerts have been published.',
+
+    active:
+      'ACTIVE',
+
+    inactive:
+      'INACTIVE',
+
+    updating:
+      'Updating...',
+
+    deactivate:
+      'Deactivate',
+
+    activate:
+      'Activate',
+
+    authenticationRequired:
+      'Authentication required',
+
+    requiredFields:
+      'Title, message and region are required.',
+
+    couldNotLoad:
+      'Could not load alerts',
+
+    couldNotPublish:
+      'Could not publish alert',
+
+    couldNotUpdate:
+      'Could not update alert',
+  },
+
+  ru: {
+    publicSafety:
+      'ОБЩЕСТВЕННАЯ БЕЗОПАСНОСТЬ',
+
+    title:
+      'Оповещения ResQ',
+
+    description:
+      'Публикуйте официальную информацию о безопасности для пользователей приложения ResQ.',
+
+    alertTitle:
+      'Название оповещения',
+
+    alertTitlePlaceholder:
+      'Предупреждение о сильной погоде',
+
+    region:
+      'Регион',
+
+    regionPlaceholder:
+      'Астана',
+
+    severity:
+      'Уровень опасности',
+
+    information:
+      'Информация',
+
+    warning:
+      'Предупреждение',
+
+    critical:
+      'Критический',
+
+    publicMessage:
+      'Сообщение для населения',
+
+    messagePlaceholder:
+      'Введите информацию о безопасности для пользователей...',
+
+    publishing:
+      'Публикация...',
+
+    publish:
+      'Опубликовать оповещение',
+
+    publishedAlerts:
+      'Опубликованные оповещения',
+
+    loading:
+      'Загрузка оповещений...',
+
+    noAlerts:
+      'Оповещения о безопасности пока не опубликованы.',
+
+    active:
+      'АКТИВНО',
+
+    inactive:
+      'НЕАКТИВНО',
+
+    updating:
+      'Обновление...',
+
+    deactivate:
+      'Деактивировать',
+
+    activate:
+      'Активировать',
+
+    authenticationRequired:
+      'Требуется авторизация',
+
+    requiredFields:
+      'Название, сообщение и регион обязательны.',
+
+    couldNotLoad:
+      'Не удалось загрузить оповещения',
+
+    couldNotPublish:
+      'Не удалось опубликовать оповещение',
+
+    couldNotUpdate:
+      'Не удалось обновить оповещение',
+  },
+
+  kk: {
+    publicSafety:
+      'ҚОҒАМДЫҚ ҚАУІПСІЗДІК',
+
+    title:
+      'ResQ хабарламалары',
+
+    description:
+      'ResQ қолданбасының пайдаланушылары үшін ресми қауіпсіздік ақпаратын жариялаңыз.',
+
+    alertTitle:
+      'Хабарлама атауы',
+
+    alertTitlePlaceholder:
+      'Қатты ауа райы туралы ескерту',
+
+    region:
+      'Өңір',
+
+    regionPlaceholder:
+      'Астана',
+
+    severity:
+      'Қауіп деңгейі',
+
+    information:
+      'Ақпарат',
+
+    warning:
+      'Ескерту',
+
+    critical:
+      'Сындарлы',
+
+    publicMessage:
+      'Қоғамдық хабарлама',
+
+    messagePlaceholder:
+      'Пайдаланушыларға арналған қауіпсіздік ақпаратын енгізіңіз...',
+
+    publishing:
+      'Жариялануда...',
+
+    publish:
+      'Қауіпсіздік хабарламасын жариялау',
+
+    publishedAlerts:
+      'Жарияланған хабарламалар',
+
+    loading:
+      'Хабарламалар жүктелуде...',
+
+    noAlerts:
+      'Қауіпсіздік хабарламалары әлі жарияланбаған.',
+
+    active:
+      'БЕЛСЕНДІ',
+
+    inactive:
+      'БЕЛСЕНДІ ЕМЕС',
+
+    updating:
+      'Жаңартылуда...',
+
+    deactivate:
+      'Өшіру',
+
+    activate:
+      'Белсендіру',
+
+    authenticationRequired:
+      'Авторизация қажет',
+
+    requiredFields:
+      'Атауы, хабарлама және өңір міндетті.',
+
+    couldNotLoad:
+      'Хабарламаларды жүктеу мүмкін болмады',
+
+    couldNotPublish:
+      'Хабарламаны жариялау мүмкін болмады',
+
+    couldNotUpdate:
+      'Хабарламаны жаңарту мүмкін болмады',
+  },
+} as const
+
 function SafetyAlertsPanel() {
+  const savedLanguage =
+    localStorage.getItem(
+      'resq-operator-language',
+    )
+
+  const language:
+    OperatorLanguage =
+    savedLanguage === 'ru' ||
+    savedLanguage === 'kk'
+      ? savedLanguage
+      : 'en'
+
+  const t =
+    alertTranslations[language]
+
   const [alerts, setAlerts] =
     useState<SafetyAlert[]>([])
 
@@ -25,78 +305,95 @@ function SafetyAlertsPanel() {
     useState('')
 
   const [severity, setSeverity] =
-    useState<AlertSeverity>('INFO')
+    useState<AlertSeverity>(
+      'INFO',
+    )
 
   const [loading, setLoading] =
     useState(true)
 
-  const [publishing, setPublishing] =
-    useState(false)
+  const [
+    publishing,
+    setPublishing,
+  ] = useState(false)
 
-  const [updatingId, setUpdatingId] =
-    useState<number | null>(null)
+  const [
+    updatingId,
+    setUpdatingId,
+  ] =
+    useState<number | null>(
+      null,
+    )
 
   const [error, setError] =
     useState('')
 
   const getToken = () =>
-    localStorage.getItem('token')
+    localStorage.getItem(
+      'token',
+    )
 
   const loadAlerts =
-    useCallback(async () => {
-      const token = getToken()
+    useCallback(
+      async () => {
+        const token =
+          getToken()
 
-      if (!token) {
-        setError(
-          'Authentication required',
-        )
-
-        setLoading(false)
-
-        return
-      }
-
-      try {
-        const response = await fetch(
-          `${API_URL}/alerts/manage`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-          },
-        )
-
-        const data =
-          (await response.json()) as {
-            alerts?: SafetyAlert[]
-            message?: string
-          }
-
-        if (!response.ok) {
-          throw new Error(
-            data.message ||
-              'Could not load alerts',
+        if (!token) {
+          setError(
+            t.authenticationRequired,
           )
+
+          setLoading(false)
+
+          return
         }
 
-        setAlerts(
-          data.alerts ?? [],
-        )
+        try {
+          const response =
+            await fetch(
+              `${API_URL}/alerts/manage`,
+              {
+                headers: {
+                  Authorization:
+                    `Bearer ${token}`,
+                },
+              },
+            )
 
-        setError('')
-      } catch (error) {
-        console.error(error)
+          const data =
+            (await response.json()) as {
+              alerts?:
+                SafetyAlert[]
+              message?: string
+            }
 
-        setError(
-          error instanceof Error
-            ? error.message
-            : 'Could not load alerts',
-        )
-      } finally {
-        setLoading(false)
-      }
-    }, [])
+          if (!response.ok) {
+            throw new Error(
+              data.message ||
+                t.couldNotLoad,
+            )
+          }
+
+          setAlerts(
+            data.alerts ?? [],
+          )
+
+          setError('')
+        } catch (error) {
+          console.error(error)
+
+          setError(
+            error instanceof Error
+              ? error.message
+              : t.couldNotLoad,
+          )
+        } finally {
+          setLoading(false)
+        }
+      },
+      [t],
+    )
 
   useEffect(() => {
     loadAlerts()
@@ -121,17 +418,18 @@ function SafetyAlertsPanel() {
         !cleanRegion
       ) {
         setError(
-          'Title, message and region are required.',
+          t.requiredFields,
         )
 
         return
       }
 
-      const token = getToken()
+      const token =
+        getToken()
 
       if (!token) {
         setError(
-          'Authentication required',
+          t.authenticationRequired,
         )
 
         return
@@ -140,27 +438,35 @@ function SafetyAlertsPanel() {
       try {
         setPublishing(true)
 
-        const response = await fetch(
-          `${API_URL}/alerts`,
-          {
-            method: 'POST',
+        const response =
+          await fetch(
+            `${API_URL}/alerts`,
+            {
+              method: 'POST',
 
-            headers: {
-              'Content-Type':
-                'application/json',
+              headers: {
+                'Content-Type':
+                  'application/json',
 
-              Authorization:
-                `Bearer ${token}`,
+                Authorization:
+                  `Bearer ${token}`,
+              },
+
+              body:
+                JSON.stringify({
+                  title:
+                    cleanTitle,
+
+                  message:
+                    cleanMessage,
+
+                  region:
+                    cleanRegion,
+
+                  severity,
+                }),
             },
-
-            body: JSON.stringify({
-              title: cleanTitle,
-              message: cleanMessage,
-              region: cleanRegion,
-              severity,
-            }),
-          },
-        )
+          )
 
         const data =
           (await response.json()) as {
@@ -171,14 +477,17 @@ function SafetyAlertsPanel() {
         if (!response.ok) {
           throw new Error(
             data.message ||
-              'Could not publish alert',
+              t.couldNotPublish,
           )
         }
 
         setTitle('')
         setMessage('')
         setRegion('')
-        setSeverity('INFO')
+
+        setSeverity(
+          'INFO',
+        )
 
         await loadAlerts()
       } catch (error) {
@@ -187,75 +496,110 @@ function SafetyAlertsPanel() {
         setError(
           error instanceof Error
             ? error.message
-            : 'Could not publish alert',
+            : t.couldNotPublish,
         )
       } finally {
         setPublishing(false)
       }
     }
 
-  const handleToggle = async (
-    alert: SafetyAlert,
-  ) => {
-    const token = getToken()
+  const handleToggle =
+    async (
+      alert: SafetyAlert,
+    ) => {
+      const token =
+        getToken()
 
-    if (!token) {
-      setError(
-        'Authentication required',
-      )
-
-      return
-    }
-
-    try {
-      setUpdatingId(alert.id)
-      setError('')
-
-      const response = await fetch(
-        `${API_URL}/alerts/${alert.id}`,
-        {
-          method: 'PATCH',
-
-          headers: {
-            'Content-Type':
-              'application/json',
-
-            Authorization:
-              `Bearer ${token}`,
-          },
-
-          body: JSON.stringify({
-            isActive:
-              !alert.isActive,
-          }),
-        },
-      )
-
-      const data =
-        (await response.json()) as {
-          alert?: SafetyAlert
-          message?: string
-        }
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            'Could not update alert',
+      if (!token) {
+        setError(
+          t.authenticationRequired,
         )
+
+        return
       }
 
-      await loadAlerts()
-    } catch (error) {
-      console.error(error)
+      try {
+        setUpdatingId(
+          alert.id,
+        )
 
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'Could not update alert',
-      )
-    } finally {
-      setUpdatingId(null)
+        setError('')
+
+        const response =
+          await fetch(
+            `${API_URL}/alerts/${alert.id}`,
+            {
+              method:
+                'PATCH',
+
+              headers: {
+                'Content-Type':
+                  'application/json',
+
+                Authorization:
+                  `Bearer ${token}`,
+              },
+
+              body:
+                JSON.stringify({
+                  isActive:
+                    !alert.isActive,
+                }),
+            },
+          )
+
+        const data =
+          (await response.json()) as {
+            alert?: SafetyAlert
+            message?: string
+          }
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              t.couldNotUpdate,
+          )
+        }
+
+        await loadAlerts()
+      } catch (error) {
+        console.error(error)
+
+        setError(
+          error instanceof Error
+            ? error.message
+            : t.couldNotUpdate,
+        )
+      } finally {
+        setUpdatingId(null)
+      }
     }
+
+  const locale =
+    language === 'ru'
+      ? 'ru-RU'
+      : language === 'kk'
+        ? 'kk-KZ'
+        : 'en-US'
+
+  const getSeverityText = (
+    alertSeverity:
+      AlertSeverity,
+  ) => {
+    if (
+      alertSeverity === 'INFO'
+    ) {
+      return t.information
+    }
+
+    if (
+      alertSeverity ===
+      'WARNING'
+    ) {
+      return t.warning
+    }
+
+    return t.critical
   }
 
   return (
@@ -263,17 +607,15 @@ function SafetyAlertsPanel() {
       <div className="alerts-heading">
         <div>
           <p className="alerts-eyebrow">
-            PUBLIC SAFETY
+            {t.publicSafety}
           </p>
 
           <h2>
-            ResQ Alerts
+            {t.title}
           </h2>
 
           <p className="alerts-description">
-            Publish official safety
-            information for users of the
-            ResQ application.
+            {t.description}
           </p>
         </div>
       </div>
@@ -282,47 +624,59 @@ function SafetyAlertsPanel() {
         <div className="alert-form-grid">
           <div className="alert-field">
             <label htmlFor="alert-title">
-              Alert title
+              {t.alertTitle}
             </label>
 
             <input
               id="alert-title"
               value={title}
-              onChange={(event) =>
+              onChange={(
+                event,
+              ) =>
                 setTitle(
-                  event.target.value,
+                  event.target
+                    .value,
                 )
               }
-              placeholder="Severe Weather Warning"
+              placeholder={
+                t.alertTitlePlaceholder
+              }
             />
           </div>
 
           <div className="alert-field">
             <label htmlFor="alert-region">
-              Region
+              {t.region}
             </label>
 
             <input
               id="alert-region"
               value={region}
-              onChange={(event) =>
+              onChange={(
+                event,
+              ) =>
                 setRegion(
-                  event.target.value,
+                  event.target
+                    .value,
                 )
               }
-              placeholder="Astana"
+              placeholder={
+                t.regionPlaceholder
+              }
             />
           </div>
 
           <div className="alert-field">
             <label htmlFor="alert-severity">
-              Severity
+              {t.severity}
             </label>
 
             <select
               id="alert-severity"
               value={severity}
-              onChange={(event) =>
+              onChange={(
+                event,
+              ) =>
                 setSeverity(
                   event.target
                     .value as AlertSeverity,
@@ -330,15 +684,15 @@ function SafetyAlertsPanel() {
               }
             >
               <option value="INFO">
-                Information
+                {t.information}
               </option>
 
               <option value="WARNING">
-                Warning
+                {t.warning}
               </option>
 
               <option value="CRITICAL">
-                Critical
+                {t.critical}
               </option>
             </select>
           </div>
@@ -346,24 +700,30 @@ function SafetyAlertsPanel() {
 
         <div className="alert-field">
           <label htmlFor="alert-message">
-            Public message
+            {t.publicMessage}
           </label>
 
           <textarea
             id="alert-message"
             value={message}
-            onChange={(event) =>
+            onChange={(
+              event,
+            ) =>
               setMessage(
-                event.target.value,
+                event.target
+                  .value,
               )
             }
-            placeholder="Enter the safety information users should receive..."
+            placeholder={
+              t.messagePlaceholder
+            }
             rows={4}
             maxLength={800}
           />
 
           <span className="alert-counter">
-            {message.length}/800
+            {message.length}
+            /800
           </span>
         </div>
 
@@ -377,17 +737,19 @@ function SafetyAlertsPanel() {
           className="alert-publish-button"
           type="button"
           disabled={publishing}
-          onClick={handlePublish}
+          onClick={
+            handlePublish
+          }
         >
           {publishing
-            ? 'Publishing...'
-            : 'Publish safety alert'}
+            ? t.publishing
+            : t.publish}
         </button>
       </div>
 
       <div className="alerts-list-heading">
         <h3>
-          Published alerts
+          {t.publishedAlerts}
         </h3>
 
         <span>
@@ -397,84 +759,92 @@ function SafetyAlertsPanel() {
 
       {loading ? (
         <div className="alert-empty">
-          Loading alerts...
+          {t.loading}
         </div>
-      ) : alerts.length === 0 ? (
+      ) : alerts.length ===
+        0 ? (
         <div className="alert-empty">
-          No safety alerts have been
-          published.
+          {t.noAlerts}
         </div>
       ) : (
         <div className="alerts-list">
-          {alerts.map((alert) => (
-            <article
-              key={alert.id}
-              className={`operator-alert-card severity-${alert.severity.toLowerCase()}`}
-            >
-              <div className="operator-alert-top">
-                <div>
-                  <div className="operator-alert-badges">
-                    <span
-                      className={`severity-badge severity-badge-${alert.severity.toLowerCase()}`}
-                    >
-                      {alert.severity}
-                    </span>
+          {alerts.map(
+            (alert) => (
+              <article
+                key={alert.id}
+                className={`operator-alert-card severity-${alert.severity.toLowerCase()}`}
+              >
+                <div className="operator-alert-top">
+                  <div>
+                    <div className="operator-alert-badges">
+                      <span
+                        className={`severity-badge severity-badge-${alert.severity.toLowerCase()}`}
+                      >
+                        {getSeverityText(
+                          alert.severity,
+                        )}
+                      </span>
 
-                    <span
-                      className={
-                        alert.isActive
-                          ? 'active-badge'
-                          : 'inactive-badge'
-                      }
-                    >
-                      {alert.isActive
-                        ? 'ACTIVE'
-                        : 'INACTIVE'}
-                    </span>
+                      <span
+                        className={
+                          alert.isActive
+                            ? 'active-badge'
+                            : 'inactive-badge'
+                        }
+                      >
+                        {alert.isActive
+                          ? t.active
+                          : t.inactive}
+                      </span>
+                    </div>
+
+                    <h4>
+                      {alert.title}
+                    </h4>
                   </div>
 
-                  <h4>
-                    {alert.title}
-                  </h4>
+                  <button
+                    type="button"
+                    className="alert-toggle-button"
+                    disabled={
+                      updatingId ===
+                      alert.id
+                    }
+                    onClick={() =>
+                      handleToggle(
+                        alert,
+                      )
+                    }
+                  >
+                    {updatingId ===
+                    alert.id
+                      ? t.updating
+                      : alert.isActive
+                        ? t.deactivate
+                        : t.activate}
+                  </button>
                 </div>
 
-                <button
-                  type="button"
-                  className="alert-toggle-button"
-                  disabled={
-                    updatingId ===
-                    alert.id
-                  }
-                  onClick={() =>
-                    handleToggle(alert)
-                  }
-                >
-                  {updatingId ===
-                  alert.id
-                    ? 'Updating...'
-                    : alert.isActive
-                      ? 'Deactivate'
-                      : 'Activate'}
-                </button>
-              </div>
+                <p className="operator-alert-message">
+                  {alert.message}
+                </p>
 
-              <p className="operator-alert-message">
-                {alert.message}
-              </p>
+                <div className="operator-alert-footer">
+                  <span>
+                    {alert.region}
+                  </span>
 
-              <div className="operator-alert-footer">
-                <span>
-                  {alert.region}
-                </span>
-
-                <span>
-                  {new Date(
-                    alert.createdAt,
-                  ).toLocaleString()}
-                </span>
-              </div>
-            </article>
-          ))}
+                  <span>
+                    {new Date(
+                      alert.createdAt,
+                    ).toLocaleString(
+                      locale,
+                    )}
+                  </span>
+                </div>
+              </article>
+            ),
+          )}
         </div>
       )}
     </section>

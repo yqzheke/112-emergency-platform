@@ -1,6 +1,8 @@
 import {
+  useEffect,
   useState,
 } from 'react'
+
 import {
   useNavigate,
 } from 'react-router-dom'
@@ -11,9 +13,310 @@ import type {
   AuthResponse,
 } from '../types/auth'
 
+type OperatorLanguage =
+  | 'en'
+  | 'ru'
+  | 'kk'
+
 type IconProps = {
   size?: number
 }
+
+const translations = {
+  en: {
+    operationsPlatform:
+      'Emergency Operations Platform',
+
+    emergencyOperations:
+      'EMERGENCY OPERATIONS',
+
+    headlineOne:
+      'One command center.',
+
+    headlineTwo:
+      'Every active response.',
+
+    intro:
+      'Secure operational access for emergency dispatch, coordination and live responder management.',
+
+    incidentMonitoring:
+      'Live incident monitoring',
+
+    incidentMonitoringDescription:
+      'Track active emergency requests and operational status in real time.',
+
+    responderCoordination:
+      'Responder coordination',
+
+    responderCoordinationDescription:
+      'Assign available responders and monitor live GPS updates.',
+
+    secureOperations:
+      'Secure operations',
+
+    secureOperationsDescription:
+      'Restricted access for authorized emergency personnel only.',
+
+    systemOperational:
+      'System operational',
+
+    networkAvailable:
+      'Emergency services network available',
+
+    operatorPortal:
+      'Operator Portal',
+
+    secureAccess:
+      'SECURE OPERATOR ACCESS',
+
+    signInTitle:
+      'Sign in to Control Center',
+
+    signInDescription:
+      'Use your authorized operator credentials to continue.',
+
+    email:
+      'Email address',
+
+    emailPlaceholder:
+      'operator@resq.kz',
+
+    password:
+      'Password',
+
+    passwordPlaceholder:
+      'Enter your password',
+
+    hidePassword:
+      'Hide password',
+
+    showPassword:
+      'Show password',
+
+    emailRequired:
+      'Email is required',
+
+    passwordRequired:
+      'Password is required',
+
+    signInFailed:
+      'Sign in failed',
+
+    restricted:
+      'This portal is restricted to authorized emergency operators.',
+
+    connectionError:
+      'Could not connect to the control center.',
+
+    authenticating:
+      'Authenticating...',
+
+    signIn:
+      'Sign in to Control Center',
+
+    security:
+      'Authorized personnel only. Access may be monitored and logged for operational security.',
+
+    footer:
+      'ResQ Emergency Operations Platform',
+  },
+
+  ru: {
+    operationsPlatform:
+      'Платформа экстренных операций',
+
+    emergencyOperations:
+      'ЭКСТРЕННЫЕ ОПЕРАЦИИ',
+
+    headlineOne:
+      'Единый центр управления.',
+
+    headlineTwo:
+      'Каждый активный вызов.',
+
+    intro:
+      'Безопасный доступ для диспетчеризации, координации и управления спасателями в реальном времени.',
+
+    incidentMonitoring:
+      'Мониторинг вызовов',
+
+    incidentMonitoringDescription:
+      'Отслеживайте активные экстренные вызовы и их статус в реальном времени.',
+
+    responderCoordination:
+      'Координация спасателей',
+
+    responderCoordinationDescription:
+      'Назначайте доступных спасателей и отслеживайте их GPS.',
+
+    secureOperations:
+      'Безопасная работа',
+
+    secureOperationsDescription:
+      'Доступ разрешён только авторизованному персоналу экстренных служб.',
+
+    systemOperational:
+      'Система работает',
+
+    networkAvailable:
+      'Сеть экстренных служб доступна',
+
+    operatorPortal:
+      'Портал оператора',
+
+    secureAccess:
+      'БЕЗОПАСНЫЙ ДОСТУП',
+
+    signInTitle:
+      'Вход в центр управления',
+
+    signInDescription:
+      'Используйте данные авторизованного оператора для продолжения.',
+
+    email:
+      'Электронная почта',
+
+    emailPlaceholder:
+      'operator@resq.kz',
+
+    password:
+      'Пароль',
+
+    passwordPlaceholder:
+      'Введите пароль',
+
+    hidePassword:
+      'Скрыть пароль',
+
+    showPassword:
+      'Показать пароль',
+
+    emailRequired:
+      'Введите электронную почту',
+
+    passwordRequired:
+      'Введите пароль',
+
+    signInFailed:
+      'Не удалось войти',
+
+    restricted:
+      'Доступ к этому порталу разрешён только авторизованным операторам экстренных служб.',
+
+    connectionError:
+      'Не удалось подключиться к центру управления.',
+
+    authenticating:
+      'Авторизация...',
+
+    signIn:
+      'Войти в центр управления',
+
+    security:
+      'Только для авторизованного персонала. Доступ может контролироваться и регистрироваться в целях безопасности.',
+
+    footer:
+      'Платформа экстренных операций ResQ',
+  },
+
+  kk: {
+    operationsPlatform:
+      'Төтенше операциялар платформасы',
+
+    emergencyOperations:
+      'ТӨТЕНШЕ ОПЕРАЦИЯЛАР',
+
+    headlineOne:
+      'Бірыңғай басқару орталығы.',
+
+    headlineTwo:
+      'Әрбір белсенді шақырту.',
+
+    intro:
+      'Диспетчерлеу, үйлестіру және құтқарушыларды тікелей басқару үшін қауіпсіз қолжетімділік.',
+
+    incidentMonitoring:
+      'Шақыртуларды бақылау',
+
+    incidentMonitoringDescription:
+      'Белсенді төтенше шақыртулар мен олардың күйін нақты уақытта бақылаңыз.',
+
+    responderCoordination:
+      'Құтқарушыларды үйлестіру',
+
+    responderCoordinationDescription:
+      'Қолжетімді құтқарушыларды тағайындап, олардың GPS орналасуын бақылаңыз.',
+
+    secureOperations:
+      'Қауіпсіз операциялар',
+
+    secureOperationsDescription:
+      'Қолжетімділік тек уәкілетті төтенше қызмет қызметкерлеріне беріледі.',
+
+    systemOperational:
+      'Жүйе жұмыс істеп тұр',
+
+    networkAvailable:
+      'Төтенше қызметтер желісі қолжетімді',
+
+    operatorPortal:
+      'Оператор порталы',
+
+    secureAccess:
+      'ҚАУІПСІЗ ОПЕРАТОР ҚОЛЖЕТІМДІЛІГІ',
+
+    signInTitle:
+      'Басқару орталығына кіру',
+
+    signInDescription:
+      'Жалғастыру үшін оператордың рұқсат етілген деректерін пайдаланыңыз.',
+
+    email:
+      'Электрондық пошта',
+
+    emailPlaceholder:
+      'operator@resq.kz',
+
+    password:
+      'Құпия сөз',
+
+    passwordPlaceholder:
+      'Құпия сөзді енгізіңіз',
+
+    hidePassword:
+      'Құпия сөзді жасыру',
+
+    showPassword:
+      'Құпия сөзді көрсету',
+
+    emailRequired:
+      'Электрондық поштаны енгізіңіз',
+
+    passwordRequired:
+      'Құпия сөзді енгізіңіз',
+
+    signInFailed:
+      'Кіру мүмкін болмады',
+
+    restricted:
+      'Бұл портал тек уәкілетті төтенше қызмет операторларына арналған.',
+
+    connectionError:
+      'Басқару орталығына қосылу мүмкін болмады.',
+
+    authenticating:
+      'Авторизация...',
+
+    signIn:
+      'Басқару орталығына кіру',
+
+    security:
+      'Тек уәкілетті қызметкерлерге арналған. Қауіпсіздік мақсатында қолжетімділік бақылануы және тіркелуі мүмкін.',
+
+    footer:
+      'ResQ төтенше операциялар платформасы',
+  },
+} as const
 
 function MailIcon({
   size = 18,
@@ -204,6 +507,28 @@ function Login() {
   const navigate =
     useNavigate()
 
+  const [
+    language,
+    setLanguage,
+  ] = useState<OperatorLanguage>(() => {
+    const saved =
+      localStorage.getItem(
+        'resq-operator-language',
+      )
+
+    if (
+      saved === 'ru' ||
+      saved === 'kk'
+    ) {
+      return saved
+    }
+
+    return 'en'
+  })
+
+  const t =
+    translations[language]
+
   const [email, setEmail] =
     useState('')
 
@@ -233,6 +558,23 @@ function Login() {
   const [loading, setLoading] =
     useState(false)
 
+  const changeLanguage = (
+    nextLanguage:
+      OperatorLanguage,
+  ) => {
+    setLanguage(nextLanguage)
+
+    localStorage.setItem(
+      'resq-operator-language',
+      nextLanguage,
+    )
+  }
+
+  useEffect(() => {
+    document.documentElement.lang =
+      language
+  }, [language])
+
   const handleLogin =
     async () => {
       setEmailError('')
@@ -246,7 +588,7 @@ function Login() {
 
       if (!cleanEmail) {
         setEmailError(
-          'Email is required',
+          t.emailRequired,
         )
 
         hasError = true
@@ -254,7 +596,7 @@ function Login() {
 
       if (!password) {
         setPasswordError(
-          'Password is required',
+          t.passwordRequired,
         )
 
         hasError = true
@@ -278,12 +620,13 @@ function Login() {
                   'application/json',
               },
 
-              body: JSON.stringify({
-                email:
-                  cleanEmail,
+              body:
+                JSON.stringify({
+                  email:
+                    cleanEmail,
 
-                password,
-              }),
+                  password,
+                }),
             },
           )
 
@@ -293,7 +636,7 @@ function Login() {
         if (!response.ok) {
           setServerError(
             data.message ||
-              'Sign in failed',
+              t.signInFailed,
           )
 
           return
@@ -302,11 +645,6 @@ function Login() {
         const authData =
           data as AuthResponse
 
-        /*
-          This website is only for
-          OPERATOR / ADMIN accounts.
-        */
-
         if (
           authData.user.role !==
             'OPERATOR' &&
@@ -314,7 +652,7 @@ function Login() {
             'ADMIN'
         ) {
           setServerError(
-            'This portal is restricted to authorized emergency operators.',
+            t.restricted,
           )
 
           return
@@ -337,7 +675,7 @@ function Login() {
         console.error(error)
 
         setServerError(
-          'Could not connect to the control center.',
+          t.connectionError,
         )
       } finally {
         setLoading(false)
@@ -348,7 +686,9 @@ function Login() {
     event:
       React.KeyboardEvent<HTMLInputElement>,
   ) => {
-    if (event.key === 'Enter') {
+    if (
+      event.key === 'Enter'
+    ) {
       handleLogin()
     }
   }
@@ -370,27 +710,26 @@ function Login() {
               </strong>
 
               <span>
-                Emergency Operations Platform
+                {t.operationsPlatform}
               </span>
             </div>
           </div>
 
           <div className="operator-login-intro">
             <p>
-              EMERGENCY OPERATIONS
+              {t.emergencyOperations}
             </p>
 
             <h1>
-              One command center.
+              {t.headlineOne}
+
               <br />
-              Every active response.
+
+              {t.headlineTwo}
             </h1>
 
             <span>
-              Secure operational access for
-              emergency dispatch,
-              coordination and live responder
-              management.
+              {t.intro}
             </span>
           </div>
 
@@ -402,13 +741,13 @@ function Login() {
 
               <section>
                 <strong>
-                  Live incident monitoring
+                  {t.incidentMonitoring}
                 </strong>
 
                 <span>
-                  Track active emergency
-                  requests and operational
-                  status in real time.
+                  {
+                    t.incidentMonitoringDescription
+                  }
                 </span>
               </section>
             </div>
@@ -420,13 +759,15 @@ function Login() {
 
               <section>
                 <strong>
-                  Responder coordination
+                  {
+                    t.responderCoordination
+                  }
                 </strong>
 
                 <span>
-                  Assign available responders
-                  and monitor live GPS
-                  updates.
+                  {
+                    t.responderCoordinationDescription
+                  }
                 </span>
               </section>
             </div>
@@ -438,13 +779,13 @@ function Login() {
 
               <section>
                 <strong>
-                  Secure operations
+                  {t.secureOperations}
                 </strong>
 
                 <span>
-                  Restricted access for
-                  authorized emergency
-                  personnel only.
+                  {
+                    t.secureOperationsDescription
+                  }
                 </span>
               </section>
             </div>
@@ -455,12 +796,11 @@ function Login() {
 
             <div>
               <strong>
-                System operational
+                {t.systemOperational}
               </strong>
 
               <span>
-                Emergency services network
-                available
+                {t.networkAvailable}
               </span>
             </div>
           </div>
@@ -471,6 +811,68 @@ function Login() {
 
       <section className="operator-login-form-side">
         <div className="operator-login-form-wrapper">
+          {/* LANGUAGE */}
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent:
+                'flex-end',
+              marginBottom:
+                '24px',
+            }}
+          >
+            <div className="operator-language-switcher">
+              <button
+                type="button"
+                className={
+                  language === 'en'
+                    ? 'active'
+                    : ''
+                }
+                onClick={() =>
+                  changeLanguage(
+                    'en',
+                  )
+                }
+              >
+                EN
+              </button>
+
+              <button
+                type="button"
+                className={
+                  language === 'ru'
+                    ? 'active'
+                    : ''
+                }
+                onClick={() =>
+                  changeLanguage(
+                    'ru',
+                  )
+                }
+              >
+                RU
+              </button>
+
+              <button
+                type="button"
+                className={
+                  language === 'kk'
+                    ? 'active'
+                    : ''
+                }
+                onClick={() =>
+                  changeLanguage(
+                    'kk',
+                  )
+                }
+              >
+                KZ
+              </button>
+            </div>
+          </div>
+
           <div className="operator-login-mobile-brand">
             <div className="operator-login-logo">
               ResQ
@@ -482,32 +884,29 @@ function Login() {
               </strong>
 
               <span>
-                Operator Portal
+                {t.operatorPortal}
               </span>
             </div>
           </div>
 
           <div className="operator-login-form-heading">
             <p>
-              SECURE OPERATOR ACCESS
+              {t.secureAccess}
             </p>
 
             <h2>
-              Sign in to Control Center
+              {t.signInTitle}
             </h2>
 
             <span>
-              Use your authorized operator
-              credentials to continue.
+              {t.signInDescription}
             </span>
           </div>
 
           <div className="operator-login-form">
-            <label
-              className="operator-login-field"
-            >
+            <label className="operator-login-field">
               <span>
-                Email address
+                {t.email}
               </span>
 
               <div
@@ -522,7 +921,9 @@ function Login() {
                 <input
                   type="email"
                   value={email}
-                  placeholder="operator@ResQ.kz"
+                  placeholder={
+                    t.emailPlaceholder
+                  }
                   autoComplete="email"
                   disabled={loading}
                   onChange={(event) => {
@@ -547,12 +948,10 @@ function Login() {
               )}
             </label>
 
-            <label
-              className="operator-login-field"
-            >
+            <label className="operator-login-field">
               <div className="operator-login-label-row">
                 <span>
-                  Password
+                  {t.password}
                 </span>
               </div>
 
@@ -572,7 +971,9 @@ function Login() {
                       : 'password'
                   }
                   value={password}
-                  placeholder="Enter your password"
+                  placeholder={
+                    t.passwordPlaceholder
+                  }
                   autoComplete="current-password"
                   disabled={loading}
                   onChange={(event) => {
@@ -603,8 +1004,8 @@ function Login() {
                   }
                   aria-label={
                     showPassword
-                      ? 'Hide password'
-                      : 'Show password'
+                      ? t.hidePassword
+                      : t.showPassword
                   }
                 >
                   <EyeIcon />
@@ -640,11 +1041,11 @@ function Login() {
                 <>
                   <span className="operator-login-spinner" />
 
-                  Authenticating...
+                  {t.authenticating}
                 </>
               ) : (
                 <>
-                  Sign in to Control Center
+                  {t.signIn}
 
                   <span>
                     →
@@ -660,15 +1061,13 @@ function Login() {
             />
 
             <span>
-              Authorized personnel only.
-              Access may be monitored and
-              logged for operational security.
+              {t.security}
             </span>
           </div>
         </div>
 
         <footer className="operator-login-footer">
-          ResQ Emergency Operations Platform
+          {t.footer}
         </footer>
       </section>
     </div>
