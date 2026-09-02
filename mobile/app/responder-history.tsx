@@ -177,7 +177,7 @@ export default function ResponderHistoryScreen() {
             <Text
               style={styles.logoText}
             >
-              112
+              ResQ
             </Text>
           </View>
 
@@ -264,7 +264,7 @@ export default function ResponderHistoryScreen() {
             <Text
               style={styles.logoText}
             >
-              112
+              ResQ
             </Text>
           </View>
         </View>

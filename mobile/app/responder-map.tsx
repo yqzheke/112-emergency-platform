@@ -410,7 +410,7 @@ export default function ResponderMapScreen() {
                 styles.loadingLogoText
               }
             >
-              112
+              ResQ
             </Text>
           </View>
 
@@ -496,7 +496,7 @@ export default function ResponderMapScreen() {
             <Text
               style={styles.logoText}
             >
-              112
+              ResQ
             </Text>
           </View>
         </View>

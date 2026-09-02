@@ -19,6 +19,7 @@ import {
 
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useTranslation } from 'react-i18next'
 
 import { sendAIChatMessage } from '../services/aiChatService'
 
@@ -50,6 +51,7 @@ function createMessageId() {
 
 export default function AIChatScreen() {
   const router = useRouter()
+  const { t } = useTranslation()
 
   const scrollRef =
     useRef<ScrollView | null>(null)
@@ -68,8 +70,7 @@ export default function AIChatScreen() {
       {
         id: 'welcome',
         role: 'assistant',
-        text:
-          'Hi. I’m 112 AI. I can help you understand emergency services, prepare a request, and use the 112 platform.',
+        text: t('aiChatWelcome'),
       },
     ])
 
@@ -144,14 +145,14 @@ export default function AIChatScreen() {
       scrollToBottom()
     } catch (error) {
       console.error(
-        '112 AI chat error:',
+        'ResQ AI chat error:',
         error,
       )
 
       setError(
         error instanceof Error
           ? error.message
-          : '112 AI is unavailable',
+          : t('aiUnavailable'),
       )
     } finally {
       setLoading(false)
@@ -190,6 +191,7 @@ export default function AIChatScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.backButton,
+
                 pressed
                   ? styles.buttonPressed
                   : null,
@@ -209,15 +211,19 @@ export default function AIChatScreen() {
               style={styles.headerCenter}
             >
               <Text
-                style={styles.headerEyebrow}
+                style={
+                  styles.headerEyebrow
+                }
               >
-                112 AI
+                ResQ AI
               </Text>
 
               <Text
-                style={styles.headerTitle}
+                style={
+                  styles.headerTitle
+                }
               >
-                Safety assistant
+                {t('safetyAssistant')}
               </Text>
             </View>
 
@@ -232,7 +238,9 @@ export default function AIChatScreen() {
 
           {/* SAFETY BANNER */}
 
-          <View style={styles.safetyBanner}>
+          <View
+            style={styles.safetyBanner}
+          >
             <Ionicons
               name="shield-checkmark-outline"
               size={18}
@@ -244,9 +252,7 @@ export default function AIChatScreen() {
                 styles.safetyBannerText
               }
             >
-              112 AI can guide you, but it
-              cannot dispatch emergency
-              services by itself.
+              {t('aiChatSafetyBanner')}
             </Text>
           </View>
 
@@ -344,7 +350,7 @@ export default function AIChatScreen() {
                               styles.emergencyActionEyebrow
                             }
                           >
-                            EMERGENCY ACTION
+                            {t('emergencyAction')}
                           </Text>
 
                           <Text
@@ -354,7 +360,9 @@ export default function AIChatScreen() {
                           >
                             {message.result
                               .actionLabel ||
-                              'Start emergency request'}
+                              t(
+                                'startEmergencyRequest',
+                              )}
                           </Text>
                         </View>
 
@@ -408,7 +416,7 @@ export default function AIChatScreen() {
                       styles.typingText
                     }
                   >
-                    112 AI is thinking...
+                    {t('aiThinking')}
                   </Text>
                 </View>
               </View>
@@ -437,7 +445,9 @@ export default function AIChatScreen() {
 
           <View style={styles.inputArea}>
             <View
-              style={styles.inputContainer}
+              style={
+                styles.inputContainer
+              }
             >
               <TextInput
                 style={styles.input}
@@ -446,7 +456,9 @@ export default function AIChatScreen() {
                   setInput(value)
                   setError('')
                 }}
-                placeholder="Ask 112 AI..."
+                placeholder={t(
+                  'askResQPlaceholder',
+                )}
                 placeholderTextColor="#9CA3AF"
                 multiline
                 maxLength={1500}
@@ -458,8 +470,9 @@ export default function AIChatScreen() {
                   styles.sendButton,
 
                   (!input.trim() ||
-                    loading) &&
-                    styles.sendButtonDisabled,
+                    loading)
+                    ? styles.sendButtonDisabled
+                    : null,
 
                   pressed &&
                   input.trim() &&
@@ -481,10 +494,10 @@ export default function AIChatScreen() {
               </Pressable>
             </View>
 
-            <Text style={styles.inputHint}>
-              For urgent situations, use the
-              emergency request flow instead
-              of relying only on AI chat.
+            <Text
+              style={styles.inputHint}
+            >
+              {t('aiUrgentHint')}
             </Text>
           </View>
         </View>
@@ -747,6 +760,7 @@ const styles = StyleSheet.create({
 
   sendButtonPressed: {
     opacity: 0.78,
+
     transform: [
       {
         scale: 0.97,
@@ -765,6 +779,7 @@ const styles = StyleSheet.create({
 
   buttonPressed: {
     opacity: 0.86,
+
     transform: [
       {
         scale: 0.99,

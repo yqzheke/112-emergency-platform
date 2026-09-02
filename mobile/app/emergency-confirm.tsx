@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useState,
+} from 'react'
 
 import {
   ActivityIndicator,
@@ -17,6 +20,8 @@ import {
 
 import * as Location from 'expo-location'
 
+import { useTranslation } from 'react-i18next'
+
 import { createEmergency } from '../services/emergencyService'
 
 import type {
@@ -33,24 +38,6 @@ interface Coordinates {
   longitude: number
 }
 
-const emergencyNames: Record<
-  EmergencyRequestType,
-  string
-> = {
-  medical: 'Medical Emergency',
-  police: 'Police Emergency',
-  fire: 'Fire & Rescue Emergency',
-}
-
-const emergencyLabels: Record<
-  EmergencyRequestType,
-  string
-> = {
-  medical: 'MEDICAL',
-  police: 'POLICE',
-  fire: 'FIRE & RESCUE',
-}
-
 function isEmergencyType(
   value: unknown,
 ): value is EmergencyRequestType {
@@ -63,6 +50,7 @@ function isEmergencyType(
 
 export default function EmergencyConfirmScreen() {
   const router = useRouter()
+  const { t } = useTranslation()
 
   const params =
     useLocalSearchParams<{
@@ -74,37 +62,64 @@ export default function EmergencyConfirmScreen() {
       aiImportantDetails?: string
     }>()
 
-  const type = isEmergencyType(params.type)
+  const type = isEmergencyType(
+    params.type,
+  )
     ? params.type
     : null
 
   const description =
-    typeof params.description === 'string'
+    typeof params.description ===
+    'string'
       ? params.description
       : ''
 
   const aiService =
-    typeof params.aiService === 'string'
+    typeof params.aiService ===
+    'string'
       ? params.aiService
       : ''
 
   const aiSummary =
-    typeof params.aiSummary === 'string'
+    typeof params.aiSummary ===
+    'string'
       ? params.aiSummary
       : ''
 
   const aiUrgency =
-    typeof params.aiUrgency === 'string'
+    typeof params.aiUrgency ===
+    'string'
       ? params.aiUrgency
       : ''
 
   const aiImportantDetails =
-    typeof params.aiImportantDetails === 'string'
+    typeof params.aiImportantDetails ===
+    'string'
       ? params.aiImportantDetails
       : ''
 
+  const emergencyNames: Record<
+    EmergencyRequestType,
+    string
+  > = {
+    medical: t('medicalEmergency'),
+    police: t('policeEmergency'),
+    fire: t('fireEmergency'),
+  }
+
+  const emergencyLabels: Record<
+    EmergencyRequestType,
+    string
+  > = {
+    medical: t('medicalLabel'),
+    police: t('policeLabel'),
+    fire: t('fireLabel'),
+  }
+
   const [location, setLocation] =
-    useState<Coordinates | null>(null)
+    useState<Coordinates | null>(
+      null,
+    )
 
   const [
     loadingLocation,
@@ -131,21 +146,27 @@ export default function EmergencyConfirmScreen() {
         await Location.requestForegroundPermissionsAsync()
 
       if (
-        permission.status !== 'granted'
+        permission.status !==
+        'granted'
       ) {
         setLocation(null)
 
         setLocationError(
-          'Location permission is required to send an emergency request.',
+          t(
+            'locationPermissionRequired',
+          ),
         )
 
         return
       }
 
       const position =
-        await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        })
+        await Location.getCurrentPositionAsync(
+          {
+            accuracy:
+              Location.Accuracy.High,
+          },
+        )
 
       setLocation({
         latitude:
@@ -163,7 +184,9 @@ export default function EmergencyConfirmScreen() {
       setLocation(null)
 
       setLocationError(
-        'We could not determine your location. Please try again.',
+        t(
+          'couldNotDetermineLocation',
+        ),
       )
     } finally {
       setLoadingLocation(false)
@@ -174,119 +197,135 @@ export default function EmergencyConfirmScreen() {
     detectLocation()
   }, [])
 
-  const handleConfirm = async () => {
-    setServerError('')
+  const handleConfirm =
+    async () => {
+      setServerError('')
 
-    if (!type) {
-      router.replace('/dashboard')
-      return
-    }
+      if (!type) {
+        router.replace('/dashboard')
+        return
+      }
 
-    if (!description.trim()) {
-      router.replace({
-        pathname: '/emergency',
+      if (!description.trim()) {
+        router.replace({
+          pathname: '/emergency',
 
-        params: {
-          type,
-        },
-      })
-
-      return
-    }
-
-    if (!location) {
-      setLocationError(
-        'Your location is required before the emergency can be sent.',
-      )
-
-      return
-    }
-
-    try {
-      setSending(true)
-
-      const emergency =
-        await createEmergency({
-          type:
-            type.toUpperCase() as EmergencyType,
-
-          description:
-            description.trim(),
-
-          latitude:
-            location.latitude,
-
-          longitude:
-            location.longitude,
-
-          aiService:
-            aiService || undefined,
-
-          aiSummary:
-            aiSummary || undefined,
-
-          aiUrgency:
-            aiUrgency || undefined,
-
-          aiImportantDetails:
-            aiImportantDetails ||
-            undefined,
+          params: {
+            type,
+          },
         })
 
-      router.replace({
-        pathname:
-          '/emergency-status',
+        return
+      }
 
-        params: {
-          id: String(emergency.id),
-        },
-      })
-    } catch (error) {
-      console.error(
-        'Emergency creation error:',
-        error,
-      )
+      if (!location) {
+        setLocationError(
+          t(
+            'locationRequiredBeforeSend',
+          ),
+        )
 
-      setServerError(
-        error instanceof Error
-          ? error.message
-          : 'Could not send emergency request',
-      )
-    } finally {
-      setSending(false)
+        return
+      }
+
+      try {
+        setSending(true)
+
+        const emergency =
+          await createEmergency({
+            type:
+              type.toUpperCase() as EmergencyType,
+
+            description:
+              description.trim(),
+
+            latitude:
+              location.latitude,
+
+            longitude:
+              location.longitude,
+
+            aiService:
+              aiService || undefined,
+
+            aiSummary:
+              aiSummary || undefined,
+
+            aiUrgency:
+              aiUrgency || undefined,
+
+            aiImportantDetails:
+              aiImportantDetails ||
+              undefined,
+          })
+
+        router.replace({
+          pathname:
+            '/emergency-status',
+
+          params: {
+            id: String(
+              emergency.id,
+            ),
+          },
+        })
+      } catch (error) {
+        console.error(
+          'Emergency creation error:',
+          error,
+        )
+
+        setServerError(
+          error instanceof Error
+            ? error.message
+            : t(
+                'couldNotSendEmergency',
+              ),
+        )
+      } finally {
+        setSending(false)
+      }
     }
-  }
 
   if (!type) {
     return (
-      <SafeAreaView style={styles.screen}>
+      <SafeAreaView
+        style={styles.screen}
+      >
         <View
-          style={styles.invalidContainer}
+          style={
+            styles.invalidContainer
+          }
         >
           <Text
             style={styles.invalidLogo}
           >
-            112
+            ResQ
           </Text>
 
           <Text
             style={styles.invalidTitle}
           >
-            Invalid emergency
+            {t('invalidEmergency')}
           </Text>
 
           <Text
             style={styles.invalidText}
           >
-            Return to the dashboard and
-            choose an emergency service.
+            {t(
+              'invalidEmergencyDescription',
+            )}
           </Text>
 
           <Pressable
-            style={({ pressed }) => [
+            style={({
+              pressed,
+            }) => [
               styles.primaryButton,
-              pressed &&
-                styles.buttonPressed,
+
+              pressed
+                ? styles.buttonPressed
+                : null,
             ]}
             onPress={() =>
               router.replace(
@@ -299,7 +338,9 @@ export default function EmergencyConfirmScreen() {
                 styles.primaryButtonText
               }
             >
-              Back to dashboard
+              {t(
+                'backToDashboard',
+              )}
             </Text>
           </Pressable>
         </View>
@@ -308,7 +349,9 @@ export default function EmergencyConfirmScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView
+      style={styles.screen}
+    >
       <ScrollView
         contentContainerStyle={
           styles.container
@@ -321,17 +364,23 @@ export default function EmergencyConfirmScreen() {
 
         <View style={styles.topRow}>
           <Pressable
-            style={({ pressed }) => [
+            style={({
+              pressed,
+            }) => [
               styles.backButton,
-              pressed &&
-                styles.buttonPressed,
+
+              pressed
+                ? styles.buttonPressed
+                : null,
             ]}
             onPress={() =>
               router.back()
             }
           >
             <Text
-              style={styles.backButtonText}
+              style={
+                styles.backButtonText
+              }
             >
               ←
             </Text>
@@ -340,30 +389,40 @@ export default function EmergencyConfirmScreen() {
           <View
             style={styles.logoBadge}
           >
-            <Text style={styles.logo}>
-              112
+            <Text
+              style={styles.logo}
+            >
+              ResQ
             </Text>
           </View>
         </View>
 
         {/* TITLE */}
 
-        <View style={styles.stepBadge}>
-          <View style={styles.stepDot} />
+        <View
+          style={styles.stepBadge}
+        >
+          <View
+            style={styles.stepDot}
+          />
 
-          <Text style={styles.stepText}>
-            FINAL STEP
+          <Text
+            style={styles.stepText}
+          >
+            {t('finalStep')}
           </Text>
         </View>
 
         <Text style={styles.title}>
-          Confirm emergency
+          {t('confirmEmergency')}
         </Text>
 
-        <Text style={styles.subtitle}>
-          Review your emergency details
-          and current location before
-          sending the request.
+        <Text
+          style={styles.subtitle}
+        >
+          {t(
+            'confirmEmergencySubtitle',
+          )}
         </Text>
 
         {/* REQUEST SUMMARY */}
@@ -372,17 +431,25 @@ export default function EmergencyConfirmScreen() {
           style={styles.summaryCard}
         >
           <View
-            style={styles.summaryHeader}
+            style={
+              styles.summaryHeader
+            }
           >
             <View
-              style={styles.serviceBadge}
+              style={
+                styles.serviceBadge
+              }
             >
               <Text
                 style={
                   styles.serviceBadgeText
                 }
               >
-                {emergencyLabels[type]}
+                {
+                  emergencyLabels[
+                    type
+                  ]
+                }
               </Text>
             </View>
 
@@ -391,22 +458,30 @@ export default function EmergencyConfirmScreen() {
                 styles.summaryHeaderText
               }
             >
-              REQUEST SUMMARY
+              {t('requestSummary')}
             </Text>
           </View>
 
-          <Text style={styles.cardLabel}>
-            SERVICE
+          <Text
+            style={styles.cardLabel}
+          >
+            {t('service')}
           </Text>
 
-          <Text style={styles.cardValue}>
+          <Text
+            style={styles.cardValue}
+          >
             {emergencyNames[type]}
           </Text>
 
-          <View style={styles.divider} />
+          <View
+            style={styles.divider}
+          />
 
-          <Text style={styles.cardLabel}>
-            DESCRIPTION
+          <Text
+            style={styles.cardLabel}
+          >
+            {t('description')}
           </Text>
 
           <Text
@@ -427,9 +502,11 @@ export default function EmergencyConfirmScreen() {
                 }
               >
                 <Text
-                  style={styles.cardLabel}
+                  style={
+                    styles.cardLabel
+                  }
                 >
-                  AI ASSIST
+                  {t('aiAssist')}
                 </Text>
 
                 <View
@@ -442,7 +519,7 @@ export default function EmergencyConfirmScreen() {
                       styles.aiReadyText
                     }
                   >
-                    READY
+                    {t('ready')}
                   </Text>
                 </View>
               </View>
@@ -461,9 +538,11 @@ export default function EmergencyConfirmScreen() {
         {/* LOCATION */}
 
         <Text
-          style={styles.sectionLabel}
+          style={
+            styles.sectionLabel
+          }
         >
-          LOCATION
+          {t('location')}
         </Text>
 
         <View
@@ -487,7 +566,9 @@ export default function EmergencyConfirmScreen() {
               }
             >
               <View
-                style={styles.locationIcon}
+                style={
+                  styles.locationIcon
+                }
               >
                 <ActivityIndicator
                   size="small"
@@ -505,7 +586,9 @@ export default function EmergencyConfirmScreen() {
                     styles.locationTitle
                   }
                 >
-                  Detecting location
+                  {t(
+                    'detectingLocation',
+                  )}
                 </Text>
 
                 <Text
@@ -513,8 +596,9 @@ export default function EmergencyConfirmScreen() {
                     styles.locationText
                   }
                 >
-                  Getting your current GPS
-                  coordinates.
+                  {t(
+                    'gettingGpsCoordinates',
+                  )}
                 </Text>
               </View>
             </View>
@@ -549,7 +633,9 @@ export default function EmergencyConfirmScreen() {
                       styles.locationSuccessTitle
                     }
                   >
-                    Location ready
+                    {t(
+                      'locationReady',
+                    )}
                   </Text>
 
                   <Text
@@ -557,9 +643,9 @@ export default function EmergencyConfirmScreen() {
                       styles.locationText
                     }
                   >
-                    Your location will be
-                    attached to the
-                    emergency request.
+                    {t(
+                      'locationAttached',
+                    )}
                   </Text>
                 </View>
               </View>
@@ -574,11 +660,15 @@ export default function EmergencyConfirmScreen() {
                     styles.coordinatesLabel
                   }
                 >
-                  GPS COORDINATES
+                  {t(
+                    'gpsCoordinates',
+                  )}
                 </Text>
 
                 <Text
-                  style={styles.coordinates}
+                  style={
+                    styles.coordinates
+                  }
                 >
                   {location.latitude.toFixed(
                     6,
@@ -597,7 +687,9 @@ export default function EmergencyConfirmScreen() {
                   styles.locationErrorTitle
                 }
               >
-                Location unavailable
+                {t(
+                  'locationUnavailable',
+                )}
               </Text>
 
               <Text
@@ -609,20 +701,27 @@ export default function EmergencyConfirmScreen() {
               </Text>
 
               <Pressable
-                style={({ pressed }) => [
+                style={({
+                  pressed,
+                }) => [
                   styles.retryButton,
 
-                  pressed &&
-                    styles.buttonPressed,
+                  pressed
+                    ? styles.buttonPressed
+                    : null,
                 ]}
-                onPress={detectLocation}
+                onPress={
+                  detectLocation
+                }
               >
                 <Text
                   style={
                     styles.retryButtonText
                   }
                 >
-                  Try location again
+                  {t(
+                    'tryLocationAgain',
+                  )}
                 </Text>
               </Pressable>
             </>
@@ -636,9 +735,11 @@ export default function EmergencyConfirmScreen() {
             style={styles.errorCard}
           >
             <Text
-              style={styles.errorTitle}
+              style={
+                styles.errorTitle
+              }
             >
-              Request not sent
+              {t('requestNotSent')}
             </Text>
 
             <Text
@@ -655,10 +756,13 @@ export default function EmergencyConfirmScreen() {
           style={styles.sendSection}
         >
           <Pressable
-            style={({ pressed }) => [
+            style={({
+              pressed,
+            }) => [
               styles.primaryButton,
 
-              (!location || sending) &&
+              (!location ||
+                sending) &&
                 styles.disabledButton,
 
               pressed &&
@@ -679,9 +783,13 @@ export default function EmergencyConfirmScreen() {
                 />
 
                 <Text
-                  style={styles.sendingText}
+                  style={
+                    styles.sendingText
+                  }
                 >
-                  Sending request...
+                  {t(
+                    'submittingEmergency',
+                  )}
                 </Text>
               </>
             ) : (
@@ -691,7 +799,9 @@ export default function EmergencyConfirmScreen() {
                     styles.primaryButtonText
                   }
                 >
-                  Send emergency request
+                  {t(
+                    'submitEmergency',
+                  )}
                 </Text>
 
                 <Text
@@ -705,13 +815,19 @@ export default function EmergencyConfirmScreen() {
             )}
           </Pressable>
 
-          <View style={styles.safetyRow}>
-            <View style={styles.safetyDot} />
+          <View
+            style={styles.safetyRow}
+          >
+            <View
+              style={styles.safetyDot}
+            />
 
-            <Text style={styles.safetyNote}>
-              Your emergency details and
-              current location will be sent
-              to the 112 response platform.
+            <Text
+              style={
+                styles.safetyNote
+              }
+            >
+              {t('safetySendNote')}
             </Text>
           </View>
         </View>
@@ -761,7 +877,8 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent:
+      'space-between',
     marginBottom: 38,
   },
 
@@ -850,7 +967,8 @@ const styles = StyleSheet.create({
   summaryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent:
+      'space-between',
     marginBottom: 18,
   },
 
@@ -905,7 +1023,8 @@ const styles = StyleSheet.create({
   aiSummaryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent:
+      'space-between',
   },
 
   aiReadyBadge: {

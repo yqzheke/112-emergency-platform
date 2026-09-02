@@ -37,7 +37,7 @@ export async function sendAIChatMessage(
       'message' in data &&
       typeof data.message === 'string'
         ? data.message
-        : '112 AI is unavailable',
+        : 'ResQ AI is unavailable',
     )
   }
 
@@ -46,7 +46,7 @@ export async function sendAIChatMessage(
     !data.result
   ) {
     throw new Error(
-      '112 AI returned an invalid response',
+      'ResQ AI returned an invalid response',
     )
   }
 

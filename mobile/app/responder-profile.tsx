@@ -163,7 +163,7 @@ export default function ResponderProfileScreen() {
             <Text
               style={styles.logoText}
             >
-              112
+              ResQ
             </Text>
           </View>
 
@@ -245,7 +245,7 @@ export default function ResponderProfileScreen() {
             <Text
               style={styles.logoText}
             >
-              112
+              ResQ
             </Text>
           </View>
         </View>
@@ -494,7 +494,7 @@ export default function ResponderProfileScreen() {
                 styles.settingDescription
               }
             >
-              Connected to the 112
+              Connected to the ResQ
               emergency dispatch system.
             </Text>
           </View>

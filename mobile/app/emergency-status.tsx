@@ -25,6 +25,8 @@ import MapView, {
   Marker,
 } from 'react-native-maps'
 
+import { useTranslation } from 'react-i18next'
+
 import { getEmergency } from '../services/emergencyService'
 
 import type {
@@ -32,27 +34,6 @@ import type {
   EmergencyType,
   EmergencyWithContacts,
 } from '../types/emergency'
-
-const emergencyNames: Record<
-  EmergencyType,
-  string
-> = {
-  MEDICAL: 'Medical Emergency',
-  POLICE: 'Police Emergency',
-  FIRE: 'Fire & Rescue Emergency',
-}
-
-const statusNames: Record<
-  EmergencyStatus,
-  string
-> = {
-  PENDING: 'Waiting for operator',
-  ACCEPTED: 'Request accepted',
-  DISPATCHED: 'Responder dispatched',
-  RESPONDING: 'Responder on the way',
-  COMPLETED: 'Emergency completed',
-  CANCELLED: 'Request cancelled',
-}
 
 const progressStatuses: EmergencyStatus[] = [
   'PENDING',
@@ -80,6 +61,7 @@ function ProgressStep({
       <View
         style={[
           styles.progressCircle,
+
           completed
             ? styles.progressCircleCompleted
             : null,
@@ -88,6 +70,7 @@ function ProgressStep({
         <Text
           style={[
             styles.progressNumber,
+
             completed
               ? styles.progressNumberCompleted
               : null,
@@ -101,6 +84,7 @@ function ProgressStep({
         <Text
           style={[
             styles.progressTitle,
+
             completed
               ? styles.progressTitleCompleted
               : null,
@@ -109,7 +93,9 @@ function ProgressStep({
           {title}
         </Text>
 
-        <Text style={styles.progressDescription}>
+        <Text
+          style={styles.progressDescription}
+        >
           {description}
         </Text>
       </View>
@@ -125,14 +111,19 @@ function calculateDistanceKm(
 ) {
   const earthRadiusKm = 6371
 
-  const toRadians = (value: number) =>
-    (value * Math.PI) / 180
+  const toRadians = (
+    value: number,
+  ) => (value * Math.PI) / 180
 
   const latitudeDifference =
-    toRadians(latitude2 - latitude1)
+    toRadians(
+      latitude2 - latitude1,
+    )
 
   const longitudeDifference =
-    toRadians(longitude2 - longitude1)
+    toRadians(
+      longitude2 - longitude1,
+    )
 
   const firstLatitude =
     toRadians(latitude1)
@@ -141,10 +132,16 @@ function calculateDistanceKm(
     toRadians(latitude2)
 
   const a =
-    Math.sin(latitudeDifference / 2) ** 2 +
+    Math.sin(
+      latitudeDifference / 2,
+    ) **
+      2 +
     Math.cos(firstLatitude) *
       Math.cos(secondLatitude) *
-      Math.sin(longitudeDifference / 2) ** 2
+      Math.sin(
+        longitudeDifference / 2,
+      ) **
+        2
 
   const c =
     2 *
@@ -185,6 +182,11 @@ function formatDistance(
 export default function EmergencyStatusScreen() {
   const router = useRouter()
 
+  const {
+    t,
+    i18n,
+  } = useTranslation()
+
   const mapRef =
     useRef<MapView | null>(null)
 
@@ -210,51 +212,97 @@ export default function EmergencyStatusScreen() {
   const [error, setError] =
     useState('')
 
-  const loadEmergency = useCallback(
-    async (showLoading = false) => {
-      if (
-        !Number.isInteger(emergencyId) ||
-        emergencyId <= 0
-      ) {
-        setError(
-          'Invalid emergency ID',
-        )
+  const emergencyNames: Record<
+    EmergencyType,
+    string
+  > = {
+    MEDICAL: t('medicalEmergency'),
+    POLICE: t('policeEmergency'),
+    FIRE: t('fireEmergency'),
+  }
 
-        setLoading(false)
-        return
-      }
+  const statusNames: Record<
+    EmergencyStatus,
+    string
+  > = {
+    PENDING: t('waitingForOperator'),
+    ACCEPTED: t('requestAccepted'),
+    DISPATCHED: t(
+      'responderDispatched',
+    ),
+    RESPONDING: t(
+      'responderOnWay',
+    ),
+    COMPLETED: t(
+      'emergencyCompleted',
+    ),
+    CANCELLED: t(
+      'requestCancelled',
+    ),
+  }
 
-      try {
-        if (showLoading) {
-          setLoading(true)
-        }
+  const locale =
+    i18n.language === 'ru'
+      ? 'ru-RU'
+      : i18n.language === 'kk'
+        ? 'kk-KZ'
+        : 'en-US'
 
-        const result =
-          await getEmergency(
+  const loadEmergency =
+    useCallback(
+      async (
+        showLoading = false,
+      ) => {
+        if (
+          !Number.isInteger(
             emergencyId,
+          ) ||
+          emergencyId <= 0
+        ) {
+          setError(
+            t('invalidEmergencyId'),
           )
 
-        setEmergency(result)
-        setError('')
-      } catch (error) {
-        console.error(
-          'Emergency loading error:',
-          error,
-        )
-
-        setError(
-          error instanceof Error
-            ? error.message
-            : 'Could not load emergency',
-        )
-      } finally {
-        if (showLoading) {
           setLoading(false)
+          return
         }
-      }
-    },
-    [emergencyId],
-  )
+
+        try {
+          if (showLoading) {
+            setLoading(true)
+          }
+
+          const result =
+            await getEmergency(
+              emergencyId,
+            )
+
+          setEmergency(result)
+          setError('')
+        } catch (error) {
+          console.error(
+            'Emergency loading error:',
+            error,
+          )
+
+          setError(
+            error instanceof Error
+              ? error.message
+              : t(
+                  'couldNotLoadEmergency',
+                ),
+          )
+        } finally {
+          if (showLoading) {
+            setLoading(false)
+          }
+        }
+      },
+      [
+        emergencyId,
+        t,
+      ],
+    )
 
   useEffect(() => {
     loadEmergency(true)
@@ -270,15 +318,19 @@ export default function EmergencyStatusScreen() {
   }, [loadEmergency])
 
   const hasResponderLocation =
-    emergency?.responderLatitude != null &&
-    emergency?.responderLongitude != null
+    emergency?.responderLatitude !=
+      null &&
+    emergency?.responderLongitude !=
+      null
 
   const responderDistanceKm =
     useMemo(() => {
       if (
         !emergency ||
-        emergency.responderLatitude == null ||
-        emergency.responderLongitude == null
+        emergency.responderLatitude ==
+          null ||
+        emergency.responderLongitude ==
+          null
       ) {
         return null
       }
@@ -307,8 +359,10 @@ export default function EmergencyStatusScreen() {
   useEffect(() => {
     if (
       !emergency ||
-      emergency.responderLatitude == null ||
-      emergency.responderLongitude == null
+      emergency.responderLatitude ==
+        null ||
+      emergency.responderLongitude ==
+        null
     ) {
       return
     }
@@ -375,7 +429,9 @@ export default function EmergencyStatusScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.screen}>
+      <SafeAreaView
+        style={styles.screen}
+      >
         <View
           style={
             styles.loadingContainer
@@ -384,7 +440,7 @@ export default function EmergencyStatusScreen() {
           <Text
             style={styles.loadingLogo}
           >
-            112
+            ResQ
           </Text>
 
           <ActivityIndicator
@@ -396,7 +452,7 @@ export default function EmergencyStatusScreen() {
           <Text
             style={styles.loadingText}
           >
-            Loading emergency...
+            {t('loadingEmergency')}
           </Text>
         </View>
       </SafeAreaView>
@@ -405,30 +461,39 @@ export default function EmergencyStatusScreen() {
 
   if (error || !emergency) {
     return (
-      <SafeAreaView style={styles.screen}>
+      <SafeAreaView
+        style={styles.screen}
+      >
         <View
-          style={styles.errorContainer}
+          style={
+            styles.errorContainer
+          }
         >
           <Text
             style={styles.loadingLogo}
           >
-            112
+            ResQ
           </Text>
 
           <Text
             style={styles.errorTitle}
           >
-            Emergency request
+            {t('emergencyRequest')}
           </Text>
 
-          <Text style={styles.errorText}>
+          <Text
+            style={styles.errorText}
+          >
             {error ||
-              'Emergency request not found'}
+              t(
+                'emergencyRequestNotFound',
+              )}
           </Text>
 
           <Pressable
             style={({ pressed }) => [
               styles.primaryButton,
+
               pressed
                 ? styles.buttonPressed
                 : null,
@@ -444,7 +509,7 @@ export default function EmergencyStatusScreen() {
                 styles.primaryButtonText
               }
             >
-              Dashboard
+              {t('dashboard')}
             </Text>
           </Pressable>
         </View>
@@ -458,14 +523,19 @@ export default function EmergencyStatusScreen() {
     )
 
   const isClosed =
-    emergency.status === 'COMPLETED' ||
-    emergency.status === 'CANCELLED'
+    emergency.status ===
+      'COMPLETED' ||
+    emergency.status ===
+      'CANCELLED'
 
   const isCompleted =
-    emergency.status === 'COMPLETED'
+    emergency.status ===
+    'COMPLETED'
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView
+      style={styles.screen}
+    >
       <ScrollView
         contentContainerStyle={
           styles.content
@@ -479,13 +549,17 @@ export default function EmergencyStatusScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.logo}>
-              112
+              ResQ
             </Text>
 
             <Text
-              style={styles.requestNumber}
+              style={
+                styles.requestNumber
+              }
             >
-              REQUEST #{emergency.id}
+              {t('requestNumber', {
+                id: emergency.id,
+              })}
             </Text>
           </View>
 
@@ -508,13 +582,15 @@ export default function EmergencyStatusScreen() {
               ]}
             />
 
-            <Text style={styles.liveText}>
+            <Text
+              style={styles.liveText}
+            >
               {isCompleted
-                ? 'COMPLETED'
+                ? t('completed')
                 : emergency.status ===
                     'CANCELLED'
-                  ? 'CANCELLED'
-                  : 'LIVE'}
+                  ? t('cancelled')
+                  : t('live')}
             </Text>
           </View>
         </View>
@@ -529,11 +605,15 @@ export default function EmergencyStatusScreen() {
 
         <Text style={styles.subtitle}>
           {isClosed
-            ? 'This emergency request is no longer active.'
-            : 'Status updates automatically while the request is active.'}
+            ? t(
+                'closedEmergencySubtitle',
+              )
+            : t(
+                'activeEmergencySubtitle',
+              )}
         </Text>
 
-        {/* MAIN STATUS */}
+        {/* CURRENT STATUS */}
 
         <View
           style={[
@@ -556,7 +636,7 @@ export default function EmergencyStatusScreen() {
             <Text
               style={styles.statusLabel}
             >
-              CURRENT STATUS
+              {t('currentStatus')}
             </Text>
 
             {!isClosed ? (
@@ -576,7 +656,7 @@ export default function EmergencyStatusScreen() {
                     styles.statusLiveText
                   }
                 >
-                  LIVE
+                  {t('live')}
                 </Text>
               </View>
             ) : null}
@@ -587,7 +667,9 @@ export default function EmergencyStatusScreen() {
           >
             {responderArrived &&
             !isCompleted
-              ? 'Responder has arrived'
+              ? t(
+                  'responderHasArrived',
+                )
               : statusNames[
                   emergency.status
                 ]}
@@ -598,7 +680,7 @@ export default function EmergencyStatusScreen() {
           >
             {responderArrived &&
             !isCompleted
-              ? 'ON SCENE'
+              ? t('onSceneStatus')
               : emergency.status}
           </Text>
         </View>
@@ -609,13 +691,19 @@ export default function EmergencyStatusScreen() {
         !isClosed ? (
           <>
             <Text
-              style={styles.sectionLabel}
+              style={
+                styles.sectionLabel
+              }
             >
-              RESPONDER TRACKING
+              {t(
+                'responderTracking',
+              )}
             </Text>
 
             <View
-              style={styles.responderCard}
+              style={
+                styles.responderCard
+              }
             >
               <View
                 style={
@@ -637,7 +725,7 @@ export default function EmergencyStatusScreen() {
                         styles.responderIconText
                       }
                     >
-                      112
+                      ResQ
                     </Text>
                   </View>
 
@@ -651,7 +739,9 @@ export default function EmergencyStatusScreen() {
                         styles.responderEyebrow
                       }
                     >
-                      ASSIGNED RESPONSE UNIT
+                      {t(
+                        'assignedResponseUnit',
+                      )}
                     </Text>
 
                     <Text
@@ -659,7 +749,9 @@ export default function EmergencyStatusScreen() {
                         styles.responderTitle
                       }
                     >
-                      Emergency responder
+                      {t(
+                        'emergencyResponder',
+                      )}
                     </Text>
                   </View>
                 </View>
@@ -693,11 +785,15 @@ export default function EmergencyStatusScreen() {
                     ]}
                   >
                     {responderArrived
-                      ? 'ON SCENE'
+                      ? t(
+                          'onSceneStatus',
+                        )
                       : emergency.status ===
                           'RESPONDING'
-                        ? 'EN ROUTE'
-                        : 'DISPATCHED'}
+                        ? t('enRoute')
+                        : t(
+                            'dispatched',
+                          )}
                   </Text>
                 </View>
               </View>
@@ -732,7 +828,9 @@ export default function EmergencyStatusScreen() {
                         styles.arrivedNoticeTitle
                       }
                     >
-                      Responder has arrived
+                      {t(
+                        'responderHasArrived',
+                      )}
                     </Text>
 
                     <Text
@@ -740,10 +838,9 @@ export default function EmergencyStatusScreen() {
                         styles.arrivedNoticeText
                       }
                     >
-                      Emergency services are
-                      now at your location
-                      and handling the
-                      incident.
+                      {t(
+                        'responderArrivedDescription',
+                      )}
                     </Text>
                   </View>
                 </View>
@@ -772,7 +869,9 @@ export default function EmergencyStatusScreen() {
                           styles.liveTrackingText
                         }
                       >
-                        Live location active
+                        {t(
+                          'liveLocationActive',
+                        )}
                       </Text>
                     </View>
 
@@ -782,16 +881,20 @@ export default function EmergencyStatusScreen() {
                           styles.liveUpdatedText
                         }
                       >
-                        Updated{' '}
-                        {new Date(
-                          emergency.responderLocationUpdatedAt,
-                        ).toLocaleTimeString(
-                          [],
+                        {t(
+                          'updatedAtTime',
                           {
-                            hour:
-                              '2-digit',
-                            minute:
-                              '2-digit',
+                            time: new Date(
+                              emergency.responderLocationUpdatedAt,
+                            ).toLocaleTimeString(
+                              locale,
+                              {
+                                hour:
+                                  '2-digit',
+                                minute:
+                                  '2-digit',
+                              },
+                            ),
                           },
                         )}
                       </Text>
@@ -813,7 +916,9 @@ export default function EmergencyStatusScreen() {
                           styles.responderStatLabel
                         }
                       >
-                        DISTANCE
+                        {t(
+                          'distance',
+                        ).toUpperCase()}
                       </Text>
 
                       <Text
@@ -831,7 +936,9 @@ export default function EmergencyStatusScreen() {
                           styles.responderStatHint
                         }
                       >
-                        from your location
+                        {t(
+                          'fromYourLocation',
+                        )}
                       </Text>
                     </View>
 
@@ -851,7 +958,9 @@ export default function EmergencyStatusScreen() {
                           styles.responderStatLabel
                         }
                       >
-                        EST. ARRIVAL
+                        {t(
+                          'estimatedArrivalShort',
+                        )}
                       </Text>
 
                       <Text
@@ -859,7 +968,13 @@ export default function EmergencyStatusScreen() {
                           styles.responderStatValue
                         }
                       >
-                        ~{estimatedMinutes} min
+                        {t(
+                          'minutesShort',
+                          {
+                            minutes:
+                              estimatedMinutes,
+                          },
+                        )}
                       </Text>
 
                       <Text
@@ -867,23 +982,26 @@ export default function EmergencyStatusScreen() {
                           styles.responderStatHint
                         }
                       >
-                        approximate
+                        {t(
+                          'approximate',
+                        )}
                       </Text>
                     </View>
                   </View>
 
                   <View
-                    style={styles.etaInfo}
+                    style={
+                      styles.etaInfo
+                    }
                   >
                     <Text
                       style={
                         styles.etaInfoText
                       }
                     >
-                      ETA is estimated from
-                      live GPS distance and
-                      is not yet based on
-                      road routing.
+                      {t(
+                        'etaPrototypeNotice',
+                      )}
                     </Text>
                   </View>
                 </>
@@ -914,7 +1032,9 @@ export default function EmergencyStatusScreen() {
                         styles.waitingLocationTitle
                       }
                     >
-                      Responder assigned
+                      {t(
+                        'responderAssigned',
+                      )}
                     </Text>
 
                     <Text
@@ -922,10 +1042,9 @@ export default function EmergencyStatusScreen() {
                         styles.waitingLocationText
                       }
                     >
-                      Waiting for the
-                      responder to accept
-                      dispatch and begin
-                      sharing live location.
+                      {t(
+                        'waitingForResponderLocation',
+                      )}
                     </Text>
                   </View>
                 </View>
@@ -934,21 +1053,25 @@ export default function EmergencyStatusScreen() {
           </>
         ) : null}
 
-        {/* COMPLETED MESSAGE */}
+        {/* COMPLETED */}
 
         {isCompleted ? (
           <>
             <Text
-              style={styles.sectionLabel}
+              style={
+                styles.sectionLabel
+              }
             >
-              RESPONSE COMPLETE
+              {t('responseComplete')}
             </Text>
 
             <View
               style={styles.completeCard}
             >
               <View
-                style={styles.completeIcon}
+                style={
+                  styles.completeIcon
+                }
               >
                 <Text
                   style={
@@ -960,21 +1083,28 @@ export default function EmergencyStatusScreen() {
               </View>
 
               <View
-                style={styles.completeContent}
+                style={
+                  styles.completeContent
+                }
               >
                 <Text
-                  style={styles.completeTitle}
+                  style={
+                    styles.completeTitle
+                  }
                 >
-                  Emergency completed
+                  {t(
+                    'emergencyCompleted',
+                  )}
                 </Text>
 
                 <Text
-                  style={styles.completeText}
+                  style={
+                    styles.completeText
+                  }
                 >
-                  This response has been
-                  marked complete and is
-                  saved in your emergency
-                  history.
+                  {t(
+                    'completedSavedHistory',
+                  )}
                 </Text>
               </View>
             </View>
@@ -986,14 +1116,18 @@ export default function EmergencyStatusScreen() {
         <Text
           style={styles.sectionLabel}
         >
-          RESPONSE PROGRESS
+          {t('responseProgress')}
         </Text>
 
-        <View style={styles.progressCard}>
+        <View
+          style={styles.progressCard}
+        >
           <ProgressStep
             number="1"
-            title="Request sent"
-            description="Your emergency request was submitted."
+            title={t('requestSent')}
+            description={t(
+              'requestSentDescription',
+            )}
             completed={
               emergency.status !==
               'CANCELLED'
@@ -1002,8 +1136,12 @@ export default function EmergencyStatusScreen() {
 
           <ProgressStep
             number="2"
-            title="Request accepted"
-            description="An operator accepted your request."
+            title={t(
+              'requestAccepted',
+            )}
+            description={t(
+              'requestAcceptedDescription',
+            )}
             completed={hasReached(
               'ACCEPTED',
             )}
@@ -1011,8 +1149,12 @@ export default function EmergencyStatusScreen() {
 
           <ProgressStep
             number="3"
-            title="Responder dispatched"
-            description="A responder was assigned to your emergency."
+            title={t(
+              'responderDispatched',
+            )}
+            description={t(
+              'responderDispatchedDescription',
+            )}
             completed={hasReached(
               'DISPATCHED',
             )}
@@ -1022,13 +1164,21 @@ export default function EmergencyStatusScreen() {
             number="4"
             title={
               responderArrived
-                ? 'Responder arrived'
-                : 'Responder on the way'
+                ? t(
+                    'responderArrived',
+                  )
+                : t(
+                    'responderOnWay',
+                  )
             }
             description={
               responderArrived
-                ? 'Emergency services reached your location.'
-                : 'Emergency services are responding.'
+                ? t(
+                    'responderReachedLocation',
+                  )
+                : t(
+                    'emergencyServicesResponding',
+                  )
             }
             completed={hasReached(
               'RESPONDING',
@@ -1037,8 +1187,10 @@ export default function EmergencyStatusScreen() {
 
           <ProgressStep
             number="5"
-            title="Completed"
-            description="Emergency response completed."
+            title={t('completed')}
+            description={t(
+              'responseCompletedDescription',
+            )}
             completed={hasReached(
               'COMPLETED',
             )}
@@ -1050,10 +1202,12 @@ export default function EmergencyStatusScreen() {
         <Text
           style={styles.sectionLabel}
         >
-          LIVE RESPONSE MAP
+          {t('liveResponseMap')}
         </Text>
 
-        <View style={styles.mapContainer}>
+        <View
+          style={styles.mapContainer}
+        >
           <MapView
             ref={mapRef}
             style={styles.map}
@@ -1078,7 +1232,9 @@ export default function EmergencyStatusScreen() {
                 longitude:
                   emergency.longitude,
               }}
-              title="Your emergency location"
+              title={t(
+                'yourEmergencyLocation',
+              )}
               description={
                 emergencyNames[
                   emergency.type
@@ -1096,20 +1252,30 @@ export default function EmergencyStatusScreen() {
                   longitude:
                     emergency.responderLongitude!,
                 }}
-                title="Responder"
+                title={t(
+                  'responder',
+                )}
                 description={
                   responderArrived
-                    ? 'Responder has arrived'
-                    : 'Responder location'
+                    ? t(
+                        'responderHasArrived',
+                      )
+                    : t(
+                        'responderLocation',
+                      )
                 }
                 pinColor="#111827"
               />
             ) : null}
           </MapView>
 
-          <View style={styles.mapLegend}>
+          <View
+            style={styles.mapLegend}
+          >
             <View
-              style={styles.mapLegendItem}
+              style={
+                styles.mapLegendItem
+              }
             >
               <View
                 style={[
@@ -1123,7 +1289,7 @@ export default function EmergencyStatusScreen() {
                   styles.mapLegendText
                 }
               >
-                You
+                {t('you')}
               </Text>
             </View>
 
@@ -1145,22 +1311,34 @@ export default function EmergencyStatusScreen() {
                     styles.mapLegendText
                   }
                 >
-                  Responder
+                  {t('responder')}
                 </Text>
               </View>
             ) : null}
           </View>
         </View>
 
-        <View style={styles.mapInfoCard}>
-          <Text style={styles.mapInfoLabel}>
-            YOUR LOCATION
+        <View
+          style={styles.mapInfoCard}
+        >
+          <Text
+            style={styles.mapInfoLabel}
+          >
+            {t(
+              'yourLocation',
+            ).toUpperCase()}
           </Text>
 
-          <Text style={styles.mapInfoValue}>
-            {emergency.latitude.toFixed(6)}
+          <Text
+            style={styles.mapInfoValue}
+          >
+            {emergency.latitude.toFixed(
+              6,
+            )}
             {', '}
-            {emergency.longitude.toFixed(6)}
+            {emergency.longitude.toFixed(
+              6,
+            )}
           </Text>
 
           {hasResponderLocation ? (
@@ -1176,7 +1354,9 @@ export default function EmergencyStatusScreen() {
                   styles.mapInfoLabel
                 }
               >
-                RESPONDER LOCATION
+                {t(
+                  'responderLocation',
+                ).toUpperCase()}
               </Text>
 
               <Text
@@ -1201,14 +1381,18 @@ export default function EmergencyStatusScreen() {
         <Text
           style={styles.sectionLabel}
         >
-          EMERGENCY DETAILS
+          {t('emergencyDetails')}
         </Text>
 
-        <View style={styles.detailsCard}>
+        <View
+          style={styles.detailsCard}
+        >
           <Text
             style={styles.detailLabel}
           >
-            DESCRIPTION
+            {t(
+              'description',
+            ).toUpperCase()}
           </Text>
 
           <Text
@@ -1217,12 +1401,14 @@ export default function EmergencyStatusScreen() {
             {emergency.description}
           </Text>
 
-          <View style={styles.dividerLight} />
+          <View
+            style={styles.dividerLight}
+          />
 
           <Text
             style={styles.detailLabel}
           >
-            CREATED
+            {t('created').toUpperCase()}
           </Text>
 
           <Text
@@ -1230,7 +1416,7 @@ export default function EmergencyStatusScreen() {
           >
             {new Date(
               emergency.createdAt,
-            ).toLocaleString()}
+            ).toLocaleString(locale)}
           </Text>
 
           {emergency.responderAssignedAt ? (
@@ -1242,17 +1428,25 @@ export default function EmergencyStatusScreen() {
               />
 
               <Text
-                style={styles.detailLabel}
+                style={
+                  styles.detailLabel
+                }
               >
-                RESPONDER ASSIGNED
+                {t(
+                  'responderAssignedLabel',
+                )}
               </Text>
 
               <Text
-                style={styles.detailValue}
+                style={
+                  styles.detailValue
+                }
               >
                 {new Date(
                   emergency.responderAssignedAt,
-                ).toLocaleString()}
+                ).toLocaleString(
+                  locale,
+                )}
               </Text>
             </>
           ) : null}
@@ -1263,20 +1457,26 @@ export default function EmergencyStatusScreen() {
         <Text
           style={styles.sectionLabel}
         >
-          EMERGENCY CONTACTS
+          {t(
+            'emergencyContacts',
+          ).toUpperCase()}
         </Text>
 
         {emergency.notifiedContacts.length ===
         0 ? (
           <View
-            style={styles.emptyContacts}
+            style={
+              styles.emptyContacts
+            }
           >
             <Text
               style={
                 styles.emptyContactsTitle
               }
             >
-              No contacts attached
+              {t(
+                'noContactsAttached',
+              )}
             </Text>
 
             <Text
@@ -1284,8 +1484,9 @@ export default function EmergencyStatusScreen() {
                 styles.emptyContactsText
               }
             >
-              No emergency contacts were
-              attached to this request.
+              {t(
+                'noContactsAttachedDescription',
+              )}
             </Text>
           </View>
         ) : (
@@ -1364,7 +1565,7 @@ export default function EmergencyStatusScreen() {
               styles.primaryButtonText
             }
           >
-            Back to dashboard
+            {t('backToDashboard')}
           </Text>
         </Pressable>
       </ScrollView>
@@ -1429,7 +1630,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent:
+      'space-between',
     marginBottom: 28,
   },
 
@@ -1510,7 +1712,8 @@ const styles = StyleSheet.create({
   statusTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent:
+      'space-between',
   },
 
   statusLabel: {
@@ -1573,7 +1776,8 @@ const styles = StyleSheet.create({
   responderCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent:
+      'space-between',
   },
 
   responderIdentity: {
@@ -1650,7 +1854,8 @@ const styles = StyleSheet.create({
   liveTrackingHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent:
+      'space-between',
     marginTop: 18,
   },
 

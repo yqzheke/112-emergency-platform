@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import {
   ActivityIndicator,
@@ -19,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { register } from '../services/authService'
 
 export default function RegisterScreen() {
+  const { t } = useTranslation()
   const router = useRouter()
 
   const [fullName, setFullName] =
@@ -50,13 +52,15 @@ export default function RegisterScreen() {
 
     if (!trimmedName) {
       setError(
-        'Full name is required',
+        t('fullNameRequired'),
       )
       return
     }
 
     if (!trimmedEmail) {
-      setError('Email is required')
+      setError(
+        t('emailRequired'),
+      )
       return
     }
 
@@ -64,14 +68,14 @@ export default function RegisterScreen() {
       !trimmedEmail.includes('@')
     ) {
       setError(
-        'Enter a valid email',
+        t('invalidEmail'),
       )
       return
     }
 
     if (password.length < 8) {
       setError(
-        'Password must contain at least 8 characters',
+        t('passwordTooShort'),
       )
       return
     }
@@ -90,7 +94,7 @@ export default function RegisterScreen() {
       setError(
         error instanceof Error
           ? error.message
-          : 'Could not register',
+          : t('couldNotRegister'),
       )
     } finally {
       setLoading(false)
@@ -117,22 +121,21 @@ export default function RegisterScreen() {
           }
         >
           {/* BRAND */}
-          
 
           <View style={styles.brandRow}>
             <View style={styles.logoBadge}>
               <Text style={styles.logoText}>
-                112
+                ResQ
               </Text>
             </View>
 
             <View style={styles.brandText}>
               <Text style={styles.brandTitle}>
-                Emergency Response
+                {t('emergencyResponse')}
               </Text>
 
               <Text style={styles.brandSubtitle}>
-                Create your secure 112 account
+                {t('secureAccess')}
               </Text>
             </View>
           </View>
@@ -141,18 +144,15 @@ export default function RegisterScreen() {
 
           <View style={styles.intro}>
             <Text style={styles.eyebrow}>
-              CREATE ACCOUNT
+              {t('createAccountEyebrow')}
             </Text>
 
             <Text style={styles.title}>
-              Join 112
+              {t('join112')}
             </Text>
 
             <Text style={styles.subtitle}>
-              Create your account to request
-              emergency assistance, receive
-              safety alerts, and track active
-              responses.
+              {t('registerSubtitle')}
             </Text>
           </View>
 
@@ -160,7 +160,7 @@ export default function RegisterScreen() {
 
           <View style={styles.formCard}>
             <Text style={styles.label}>
-              Full name
+              {t('fullName')}
             </Text>
 
             <View style={styles.inputWrapper}>
@@ -177,7 +177,9 @@ export default function RegisterScreen() {
                   setFullName(value)
                   setError('')
                 }}
-                placeholder="Enter your full name"
+                placeholder={t(
+                  'fullNamePlaceholder',
+                )}
                 placeholderTextColor="#A0A7AF"
                 autoCapitalize="words"
                 editable={!loading}
@@ -185,7 +187,7 @@ export default function RegisterScreen() {
             </View>
 
             <Text style={styles.labelSpacing}>
-              Email
+              {t('email')}
             </Text>
 
             <View style={styles.inputWrapper}>
@@ -212,7 +214,7 @@ export default function RegisterScreen() {
             </View>
 
             <Text style={styles.labelSpacing}>
-              Password
+              {t('password')}
             </Text>
 
             <View style={styles.inputWrapper}>
@@ -229,7 +231,9 @@ export default function RegisterScreen() {
                   setPassword(value)
                   setError('')
                 }}
-                placeholder="Minimum 8 characters"
+                placeholder={t(
+                  'minimumPassword',
+                )}
                 placeholderTextColor="#A0A7AF"
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
@@ -264,7 +268,7 @@ export default function RegisterScreen() {
               />
 
               <Text style={styles.passwordHint}>
-                Use at least 8 characters.
+                {t('passwordHint')}
               </Text>
             </View>
 
@@ -309,7 +313,9 @@ export default function RegisterScreen() {
                       styles.loadingButtonText
                     }
                   >
-                    Creating account...
+                    {t(
+                      'creatingAccount',
+                    )}
                   </Text>
                 </>
               ) : (
@@ -319,7 +325,9 @@ export default function RegisterScreen() {
                       styles.primaryButtonText
                     }
                   >
-                    Create account
+                    {t(
+                      'createAccount',
+                    )}
                   </Text>
 
                   <Ionicons
@@ -336,7 +344,9 @@ export default function RegisterScreen() {
 
           <View style={styles.loginRow}>
             <Text style={styles.loginText}>
-              Already have an account?
+              {t(
+                'alreadyHaveAccount',
+              )}
             </Text>
 
             <Pressable
@@ -345,7 +355,7 @@ export default function RegisterScreen() {
               }
             >
               <Text style={styles.loginLink}>
-                Sign in
+                {t('signIn')}
               </Text>
             </Pressable>
           </View>
@@ -360,9 +370,7 @@ export default function RegisterScreen() {
             />
 
             <Text style={styles.footerText}>
-              Your account information is used
-              to securely provide emergency
-              response services.
+              {t('registerFooter')}
             </Text>
           </View>
         </ScrollView>
@@ -588,6 +596,7 @@ const styles = StyleSheet.create({
 
   buttonPressed: {
     opacity: 0.88,
+
     transform: [
       {
         scale: 0.99,

@@ -19,6 +19,8 @@ import {
   useRouter,
 } from 'expo-router'
 
+import { useTranslation } from 'react-i18next'
+
 import BottomNav from '../components/BottomNav'
 
 import { getEmergencies } from '../services/emergencyService'
@@ -29,29 +31,13 @@ import type {
   EmergencyType,
 } from '../types/emergency'
 
-const emergencyNames: Record<
-  EmergencyType,
-  string
-> = {
-  MEDICAL: 'Medical',
-  POLICE: 'Police',
-  FIRE: 'Fire & Rescue',
-}
-
-const statusLabels: Record<
-  EmergencyStatus,
-  string
-> = {
-  PENDING: 'Pending',
-  ACCEPTED: 'Accepted',
-  DISPATCHED: 'Dispatched',
-  RESPONDING: 'Responding',
-  COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled',
-}
-
 export default function HistoryScreen() {
   const router = useRouter()
+
+  const {
+    t,
+    i18n,
+  } = useTranslation()
 
   const [emergencies, setEmergencies] =
     useState<Emergency[]>([])
@@ -64,6 +50,34 @@ export default function HistoryScreen() {
 
   const [error, setError] =
     useState('')
+
+  const emergencyNames: Record<
+    EmergencyType,
+    string
+  > = {
+    MEDICAL: t('medical'),
+    POLICE: t('police'),
+    FIRE: t('fireRescue'),
+  }
+
+  const statusLabels: Record<
+    EmergencyStatus,
+    string
+  > = {
+    PENDING: t('pending'),
+    ACCEPTED: t('accepted'),
+    DISPATCHED: t('dispatched'),
+    RESPONDING: t('responding'),
+    COMPLETED: t('completed'),
+    CANCELLED: t('cancelled'),
+  }
+
+  const locale =
+    i18n.language === 'ru'
+      ? 'ru-RU'
+      : i18n.language === 'kk'
+        ? 'kk-KZ'
+        : 'en-US'
 
   const loadHistory = useCallback(
     async (
@@ -88,7 +102,9 @@ export default function HistoryScreen() {
         setError(
           error instanceof Error
             ? error.message
-            : 'Could not load emergency history',
+            : t(
+                'couldNotLoadHistory',
+              ),
         )
       } finally {
         if (showLoading) {
@@ -98,7 +114,7 @@ export default function HistoryScreen() {
         setRefreshing(false)
       }
     },
-    [],
+    [t],
   )
 
   useFocusEffect(
@@ -114,7 +130,9 @@ export default function HistoryScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.screen}>
+      <SafeAreaView
+        style={styles.screen}
+      >
         <View
           style={
             styles.loadingContainer
@@ -123,7 +141,7 @@ export default function HistoryScreen() {
           <Text
             style={styles.loadingLogo}
           >
-            112
+            ResQ
           </Text>
 
           <ActivityIndicator
@@ -135,7 +153,7 @@ export default function HistoryScreen() {
           <Text
             style={styles.loadingText}
           >
-            Loading history...
+            {t('loadingHistory')}
           </Text>
         </View>
       </SafeAreaView>
@@ -143,7 +161,9 @@ export default function HistoryScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView
+      style={styles.screen}
+    >
       <ScrollView
         contentContainerStyle={
           styles.content
@@ -162,32 +182,39 @@ export default function HistoryScreen() {
         {/* HEADER */}
 
         <View style={styles.header}>
-          <View style={styles.headerText}>
+          <View
+            style={styles.headerText}
+          >
             <Text style={styles.logo}>
-              112
+              ResQ
             </Text>
 
-            <Text style={styles.eyebrow}>
-              YOUR REQUESTS
+            <Text
+              style={styles.eyebrow}
+            >
+              {t('yourRequests')}
             </Text>
 
             <Text style={styles.title}>
-              Emergency history
+              {t('emergencyHistory')}
             </Text>
 
             <Text
               style={styles.subtitle}
             >
-              Review your active and
-              previous emergency requests.
+              {t(
+                'historyPageSubtitle',
+              )}
             </Text>
           </View>
 
           <Pressable
             style={({ pressed }) => [
               styles.backButton,
-              pressed &&
-                styles.buttonPressed,
+
+              pressed
+                ? styles.buttonPressed
+                : null,
             ]}
             onPress={() =>
               router.replace(
@@ -205,8 +232,12 @@ export default function HistoryScreen() {
 
         {/* SUMMARY */}
 
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryItem}>
+        <View
+          style={styles.summaryCard}
+        >
+          <View
+            style={styles.summaryItem}
+          >
             <Text
               style={
                 styles.summaryValue
@@ -220,15 +251,19 @@ export default function HistoryScreen() {
                 styles.summaryLabel
               }
             >
-              Total requests
+              {t('totalRequests')}
             </Text>
           </View>
 
           <View
-            style={styles.summaryDivider}
+            style={
+              styles.summaryDivider
+            }
           />
 
-          <View style={styles.summaryItem}>
+          <View
+            style={styles.summaryItem}
+          >
             <Text
               style={
                 styles.summaryValue
@@ -250,15 +285,19 @@ export default function HistoryScreen() {
                 styles.summaryLabel
               }
             >
-              Active
+              {t('active')}
             </Text>
           </View>
 
           <View
-            style={styles.summaryDivider}
+            style={
+              styles.summaryDivider
+            }
           />
 
-          <View style={styles.summaryItem}>
+          <View
+            style={styles.summaryItem}
+          >
             <Text
               style={
                 styles.summaryValue
@@ -278,7 +317,7 @@ export default function HistoryScreen() {
                 styles.summaryLabel
               }
             >
-              Completed
+              {t('completed')}
             </Text>
           </View>
         </View>
@@ -286,11 +325,15 @@ export default function HistoryScreen() {
         {/* ERROR */}
 
         {error ? (
-          <View style={styles.errorCard}>
+          <View
+            style={styles.errorCard}
+          >
             <Text
               style={styles.errorTitle}
             >
-              Could not refresh history
+              {t(
+                'couldNotRefreshHistory',
+              )}
             </Text>
 
             <Text
@@ -302,8 +345,10 @@ export default function HistoryScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.retryButton,
-                pressed &&
-                  styles.buttonPressed,
+
+                pressed
+                  ? styles.buttonPressed
+                  : null,
               ]}
               onPress={() =>
                 loadHistory(true)
@@ -314,7 +359,7 @@ export default function HistoryScreen() {
                   styles.retryButtonText
                 }
               >
-                Try again
+                {t('retry')}
               </Text>
             </Pressable>
           </View>
@@ -324,7 +369,9 @@ export default function HistoryScreen() {
 
         {!error &&
         emergencies.length === 0 ? (
-          <View style={styles.emptyCard}>
+          <View
+            style={styles.emptyCard}
+          >
             <View
               style={styles.emptyIcon}
             >
@@ -333,29 +380,31 @@ export default function HistoryScreen() {
                   styles.emptyIconText
                 }
               >
-                112
+                ResQ
               </Text>
             </View>
 
             <Text
               style={styles.emptyTitle}
             >
-              No emergencies yet
+              {t('noEmergenciesYet')}
             </Text>
 
             <Text
               style={styles.emptyText}
             >
-              Your emergency requests will
-              appear here after you submit
-              them.
+              {t(
+                'noEmergenciesYetDescription',
+              )}
             </Text>
 
             <Pressable
               style={({ pressed }) => [
                 styles.emptyButton,
-                pressed &&
-                  styles.buttonPressed,
+
+                pressed
+                  ? styles.buttonPressed
+                  : null,
               ]}
               onPress={() =>
                 router.replace(
@@ -368,7 +417,9 @@ export default function HistoryScreen() {
                   styles.emptyButtonText
                 }
               >
-                Back to dashboard
+                {t(
+                  'backToDashboard',
+                )}
               </Text>
             </Pressable>
           </View>
@@ -386,7 +437,7 @@ export default function HistoryScreen() {
                   styles.listEyebrow
                 }
               >
-                ALL REQUESTS
+                {t('allRequests')}
               </Text>
 
               <Text
@@ -421,11 +472,13 @@ export default function HistoryScreen() {
                       }) => [
                         styles.card,
 
-                        active &&
-                          styles.activeCard,
+                        active
+                          ? styles.activeCard
+                          : null,
 
-                        pressed &&
-                          styles.cardPressed,
+                        pressed
+                          ? styles.cardPressed
+                          : null,
                       ]}
                       onPress={() =>
                         router.push({
@@ -455,8 +508,13 @@ export default function HistoryScreen() {
                               styles.requestId
                             }
                           >
-                            REQUEST #
-                            {emergency.id}
+                            {t(
+                              'requestNumber',
+                              {
+                                id:
+                                  emergency.id,
+                              },
+                            )}
                           </Text>
 
                           <Text
@@ -561,7 +619,9 @@ export default function HistoryScreen() {
                               styles.dateLabel
                             }
                           >
-                            CREATED
+                            {t(
+                              'created',
+                            ).toUpperCase()}
                           </Text>
 
                           <Text
@@ -571,7 +631,9 @@ export default function HistoryScreen() {
                           >
                             {new Date(
                               emergency.createdAt,
-                            ).toLocaleString()}
+                            ).toLocaleString(
+                              locale,
+                            )}
                           </Text>
                         </View>
 
@@ -597,9 +659,10 @@ export default function HistoryScreen() {
           </>
         ) : null}
 
-        <Text style={styles.footerText}>
-          Pull down to refresh your emergency
-          history.
+        <Text
+          style={styles.footerText}
+        >
+          {t('pullToRefreshHistory')}
         </Text>
       </ScrollView>
 
@@ -1001,6 +1064,7 @@ const styles = StyleSheet.create({
 
   buttonPressed: {
     opacity: 0.86,
+
     transform: [
       {
         scale: 0.99,
@@ -1010,6 +1074,7 @@ const styles = StyleSheet.create({
 
   cardPressed: {
     opacity: 0.82,
+
     transform: [
       {
         scale: 0.99,

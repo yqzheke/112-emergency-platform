@@ -14,9 +14,11 @@ import {
 
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useTranslation } from 'react-i18next'
 
 export default function ForgotPasswordScreen() {
   const router = useRouter()
+  const { t } = useTranslation()
 
   const [email, setEmail] =
     useState('')
@@ -30,20 +32,24 @@ export default function ForgotPasswordScreen() {
 
     if (!trimmedEmail) {
       setMessage(
-        'Enter your email address.',
+        t('enterEmailAddress'),
       )
+
       return
     }
 
     if (!trimmedEmail.includes('@')) {
       setMessage(
-        'Enter a valid email address.',
+        t('invalidEmail'),
       )
+
       return
     }
 
     setMessage(
-      'Password recovery is not available yet. This feature will be added in a future version.',
+      t(
+        'passwordRecoveryUnavailable',
+      ),
     )
   }
 
@@ -88,9 +94,13 @@ export default function ForgotPasswordScreen() {
               />
             </Pressable>
 
-            <View style={styles.logoBadge}>
-              <Text style={styles.logoText}>
-                112
+            <View
+              style={styles.logoBadge}
+            >
+              <Text
+                style={styles.logoText}
+              >
+                ResQ
               </Text>
             </View>
           </View>
@@ -98,26 +108,29 @@ export default function ForgotPasswordScreen() {
           {/* INTRO */}
 
           <Text style={styles.eyebrow}>
-            ACCOUNT RECOVERY
+            {t('accountRecovery')}
           </Text>
 
           <Text style={styles.title}>
-            Forgot password?
+            {t('forgotPasswordTitle')}
           </Text>
 
           <Text style={styles.subtitle}>
-            Enter the email connected to
-            your 112 account.
+            {t(
+              'forgotPasswordEmailDescription',
+            )}
           </Text>
 
           {/* FORM */}
 
           <View style={styles.formCard}>
             <Text style={styles.label}>
-              Email
+              {t('email')}
             </Text>
 
-            <View style={styles.inputWrapper}>
+            <View
+              style={styles.inputWrapper}
+            >
               <Ionicons
                 name="mail-outline"
                 size={19}
@@ -140,14 +153,22 @@ export default function ForgotPasswordScreen() {
             </View>
 
             {message ? (
-              <View style={styles.messageCard}>
+              <View
+                style={
+                  styles.messageCard
+                }
+              >
                 <Ionicons
                   name="information-circle-outline"
                   size={17}
                   color="#59636D"
                 />
 
-                <Text style={styles.messageText}>
+                <Text
+                  style={
+                    styles.messageText
+                  }
+                >
                   {message}
                 </Text>
               </View>
@@ -168,7 +189,7 @@ export default function ForgotPasswordScreen() {
                   styles.primaryButtonText
                 }
               >
-                Continue
+                {t('continue')}
               </Text>
 
               <Ionicons
@@ -182,8 +203,10 @@ export default function ForgotPasswordScreen() {
           {/* BACK TO LOGIN */}
 
           <View style={styles.loginRow}>
-            <Text style={styles.loginText}>
-              Remember your password?
+            <Text
+              style={styles.loginText}
+            >
+              {t('rememberPassword')}
             </Text>
 
             <Pressable
@@ -191,8 +214,10 @@ export default function ForgotPasswordScreen() {
                 router.replace('/login')
               }
             >
-              <Text style={styles.loginLink}>
-                Sign in
+              <Text
+                style={styles.loginLink}
+              >
+                {t('signIn')}
               </Text>
             </Pressable>
           </View>
@@ -206,10 +231,12 @@ export default function ForgotPasswordScreen() {
               color="#8B949E"
             />
 
-            <Text style={styles.footerText}>
-              Password recovery is currently
-              a placeholder and does not send
-              recovery emails yet.
+            <Text
+              style={styles.footerText}
+            >
+              {t(
+                'passwordRecoveryPlaceholderNotice',
+              )}
             </Text>
           </View>
         </ScrollView>

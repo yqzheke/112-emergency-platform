@@ -9,9 +9,11 @@ import {
 
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useTranslation } from 'react-i18next'
 
 export default function HelpSupportScreen() {
   const router = useRouter()
+  const { t } = useTranslation()
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -29,6 +31,7 @@ export default function HelpSupportScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.backButton,
+
               pressed
                 ? styles.pressed
                 : null,
@@ -46,7 +49,7 @@ export default function HelpSupportScreen() {
 
           <View style={styles.logoBadge}>
             <Text style={styles.logoText}>
-              112
+              ResQ
             </Text>
           </View>
         </View>
@@ -54,17 +57,15 @@ export default function HelpSupportScreen() {
         {/* INTRO */}
 
         <Text style={styles.eyebrow}>
-          HELP & SUPPORT
+          {t('helpSupportTitle')}
         </Text>
 
         <Text style={styles.title}>
-          How can we help?
+          {t('howCanWeHelp')}
         </Text>
 
         <Text style={styles.subtitle}>
-          Find answers about the 112 app,
-          emergency requests, your account,
-          and responder tracking.
+          {t('helpSupportIntro')}
         </Text>
 
         {/* AI */}
@@ -72,6 +73,7 @@ export default function HelpSupportScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.aiCard,
+
             pressed
               ? styles.pressed
               : null,
@@ -89,7 +91,11 @@ export default function HelpSupportScreen() {
               />
             </View>
 
-            <View style={styles.availableBadge}>
+            <View
+              style={
+                styles.availableBadge
+              }
+            >
               <View
                 style={
                   styles.availableDot
@@ -101,26 +107,26 @@ export default function HelpSupportScreen() {
                   styles.availableText
                 }
               >
-                AVAILABLE
+                {t('available')}
               </Text>
             </View>
           </View>
 
           <Text style={styles.aiTitle}>
-            Ask 112 AI
+            {t('ask112AI')}
           </Text>
 
           <Text style={styles.aiText}>
-            Get help using the platform,
-            understanding emergency services,
-            or asking general safety questions.
+            {t('helpAiCardText')}
           </Text>
 
           <View style={styles.aiAction}>
             <Text
-              style={styles.aiActionText}
+              style={
+                styles.aiActionText
+              }
             >
-              Open assistant
+              {t('openAssistant')}
             </Text>
 
             <Ionicons
@@ -133,8 +139,12 @@ export default function HelpSupportScreen() {
 
         {/* FAQ */}
 
-        <Text style={styles.sectionLabel}>
-          FREQUENTLY ASKED QUESTIONS
+        <Text
+          style={styles.sectionLabel}
+        >
+          {t(
+            'frequentlyAskedQuestions',
+          )}
         </Text>
 
         <View style={styles.faqCard}>
@@ -146,16 +156,21 @@ export default function HelpSupportScreen() {
             />
           </View>
 
-          <View style={styles.faqContent}>
-            <Text style={styles.faqTitle}>
-              When is my location shared?
+          <View
+            style={styles.faqContent}
+          >
+            <Text
+              style={styles.faqTitle}
+            >
+              {t('whenLocationShared')}
             </Text>
 
-            <Text style={styles.faqText}>
-              Your location is shared when
-              you submit an emergency request
-              so emergency services can locate
-              you.
+            <Text
+              style={styles.faqText}
+            >
+              {t(
+                'whenLocationSharedAnswer',
+              )}
             </Text>
           </View>
         </View>
@@ -169,16 +184,21 @@ export default function HelpSupportScreen() {
             />
           </View>
 
-          <View style={styles.faqContent}>
-            <Text style={styles.faqTitle}>
-              Can I track the responder?
+          <View
+            style={styles.faqContent}
+          >
+            <Text
+              style={styles.faqTitle}
+            >
+              {t('canTrackResponder')}
             </Text>
 
-            <Text style={styles.faqText}>
-              Yes. Once a responder shares
-              live GPS, the emergency status
-              screen can show their location
-              and approximate arrival time.
+            <Text
+              style={styles.faqText}
+            >
+              {t(
+                'canTrackResponderAnswer',
+              )}
             </Text>
           </View>
         </View>
@@ -192,15 +212,21 @@ export default function HelpSupportScreen() {
             />
           </View>
 
-          <View style={styles.faqContent}>
-            <Text style={styles.faqTitle}>
-              What are emergency contacts?
+          <View
+            style={styles.faqContent}
+          >
+            <Text
+              style={styles.faqTitle}
+            >
+              {t('whatAreContacts')}
             </Text>
 
-            <Text style={styles.faqText}>
-              They are trusted people linked
-              to your profile who can be
-              attached to emergency requests.
+            <Text
+              style={styles.faqText}
+            >
+              {t(
+                'whatAreContactsAnswer',
+              )}
             </Text>
           </View>
         </View>
@@ -214,28 +240,39 @@ export default function HelpSupportScreen() {
             />
           </View>
 
-          <View style={styles.faqContent}>
-            <Text style={styles.faqTitle}>
-              Does 112 AI dispatch help?
+          <View
+            style={styles.faqContent}
+          >
+            <Text
+              style={styles.faqTitle}
+            >
+              {t('doesAiDispatch')}
             </Text>
 
-            <Text style={styles.faqText}>
-              No. 112 AI can guide you, but
-              emergency services are only
-              contacted through the actual
-              emergency request flow.
+            <Text
+              style={styles.faqText}
+            >
+              {t(
+                'doesAiDispatchAnswer',
+              )}
             </Text>
           </View>
         </View>
 
         {/* CONTACT */}
 
-        <Text style={styles.sectionLabel}>
-          SUPPORT
+        <Text
+          style={styles.sectionLabel}
+        >
+          {t('support')}
         </Text>
 
-        <View style={styles.supportCard}>
-          <View style={styles.supportIcon}>
+        <View
+          style={styles.supportCard}
+        >
+          <View
+            style={styles.supportIcon}
+          >
             <Ionicons
               name="chatbubble-ellipses-outline"
               size={21}
@@ -243,18 +280,23 @@ export default function HelpSupportScreen() {
             />
           </View>
 
-          <View style={styles.supportContent}>
+          <View
+            style={
+              styles.supportContent
+            }
+          >
             <Text
               style={styles.supportTitle}
             >
-              Contact Support
+              {t('contactSupport')}
             </Text>
 
             <Text
               style={styles.supportText}
             >
-              Direct support messaging will
-              be added in a future version.
+              {t(
+                'contactSupportFuture',
+              )}
             </Text>
           </View>
         </View>
@@ -266,10 +308,12 @@ export default function HelpSupportScreen() {
             color="#7A838D"
           />
 
-          <Text style={styles.noticeText}>
-            For active emergencies, use the
-            emergency request feature instead
-            of Help & Support.
+          <Text
+            style={styles.noticeText}
+          >
+            {t(
+              'activeEmergencySupportNotice',
+            )}
           </Text>
         </View>
       </ScrollView>
@@ -522,6 +566,7 @@ const styles = StyleSheet.create({
 
   pressed: {
     opacity: 0.82,
+
     transform: [
       {
         scale: 0.99,

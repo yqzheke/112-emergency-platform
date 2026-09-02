@@ -18,6 +18,8 @@ import {
   useRouter,
 } from 'expo-router'
 
+import { useTranslation } from 'react-i18next'
+
 import { analyzeEmergency } from '../services/aiService'
 
 import type {
@@ -28,24 +30,6 @@ type EmergencyRequestType =
   | 'medical'
   | 'police'
   | 'fire'
-
-const emergencyNames: Record<
-  EmergencyRequestType,
-  string
-> = {
-  medical: 'Medical Emergency',
-  police: 'Police Emergency',
-  fire: 'Fire Emergency',
-}
-
-const emergencyLabels: Record<
-  EmergencyRequestType,
-  string
-> = {
-  medical: 'MEDICAL',
-  police: 'POLICE',
-  fire: 'FIRE & RESCUE',
-}
 
 function isEmergencyType(
   value: unknown,
@@ -59,6 +43,7 @@ function isEmergencyType(
 
 export default function EmergencyScreen() {
   const router = useRouter()
+  const { t } = useTranslation()
 
   const params =
     useLocalSearchParams<{
@@ -86,6 +71,24 @@ export default function EmergencyScreen() {
   const [aiError, setAiError] =
     useState('')
 
+  const emergencyNames: Record<
+    EmergencyRequestType,
+    string
+  > = {
+    medical: t('medicalEmergency'),
+    police: t('policeEmergency'),
+    fire: t('fireEmergency'),
+  }
+
+  const emergencyLabels: Record<
+    EmergencyRequestType,
+    string
+  > = {
+    medical: t('medicalLabel'),
+    police: t('policeLabel'),
+    fire: t('fireLabel'),
+  }
+
   const handleAnalyze = async () => {
     const cleanDescription =
       description.trim()
@@ -94,7 +97,7 @@ export default function EmergencyScreen() {
 
     if (!cleanDescription) {
       setAiError(
-        'Describe the emergency before using AI Assist.',
+        t('describeBeforeAI'),
       )
       return
     }
@@ -117,7 +120,7 @@ export default function EmergencyScreen() {
       setAiError(
         error instanceof Error
           ? error.message
-          : 'AI Assist is unavailable',
+          : t('aiAssistUnavailable'),
       )
     } finally {
       setAiLoading(false)
@@ -132,7 +135,7 @@ export default function EmergencyScreen() {
 
     if (!cleanDescription) {
       setError(
-        'Please briefly describe the emergency.',
+        t('brieflyDescribeEmergency'),
       )
       return
     }
@@ -179,27 +182,30 @@ export default function EmergencyScreen() {
           <Text
             style={styles.invalidLogo}
           >
-            112
+            ResQ
           </Text>
 
           <Text
             style={styles.invalidTitle}
           >
-            Invalid emergency type
+            {t('invalidEmergencyType')}
           </Text>
 
           <Text
             style={styles.invalidText}
           >
-            Return to the dashboard and
-            select an emergency service.
+            {t(
+              'invalidEmergencyTypeDescription',
+            )}
           </Text>
 
           <Pressable
             style={({ pressed }) => [
               styles.primaryButton,
-              pressed &&
-                styles.buttonPressed,
+
+              pressed
+                ? styles.buttonPressed
+                : null,
             ]}
             onPress={() =>
               router.replace(
@@ -212,7 +218,7 @@ export default function EmergencyScreen() {
                 styles.primaryButtonText
               }
             >
-              Back to dashboard
+              {t('backToDashboard')}
             </Text>
           </Pressable>
         </View>
@@ -245,8 +251,10 @@ export default function EmergencyScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.backButton,
-                pressed &&
-                  styles.buttonPressed,
+
+                pressed
+                  ? styles.buttonPressed
+                  : null,
               ]}
               onPress={() =>
                 router.back()
@@ -265,7 +273,7 @@ export default function EmergencyScreen() {
               style={styles.logoBadge}
             >
               <Text style={styles.logo}>
-                112
+                ResQ
               </Text>
             </View>
           </View>
@@ -295,10 +303,9 @@ export default function EmergencyScreen() {
           </Text>
 
           <Text style={styles.subtitle}>
-            Tell us what happened. Keep the
-            description short and clear so
-            the operator can understand the
-            situation quickly.
+            {t(
+              'emergencyDescriptionIntro',
+            )}
           </Text>
 
           {/* DESCRIPTION */}
@@ -309,13 +316,13 @@ export default function EmergencyScreen() {
             }
           >
             <Text style={styles.label}>
-              What happened?
+              {t('whatHappened')}
             </Text>
 
             <Text
               style={styles.requiredText}
             >
-              Required
+              {t('fieldRequired')}
             </Text>
           </View>
 
@@ -337,7 +344,9 @@ export default function EmergencyScreen() {
                 setAiAnalysis(null)
               }
             }}
-            placeholder="Example: A person has collapsed and is not responding."
+            placeholder={t(
+              'emergencyExample',
+            )}
             placeholderTextColor="#9CA3AF"
             multiline
             textAlignVertical="top"
@@ -352,8 +361,9 @@ export default function EmergencyScreen() {
                 styles.inputFooterText
               }
             >
-              Include the most important
-              details first.
+              {t(
+                'importantDetailsFirst',
+              )}
             </Text>
 
             <Text
@@ -385,13 +395,13 @@ export default function EmergencyScreen() {
                 <Text
                   style={styles.aiEyebrow}
                 >
-                  AI EMERGENCY ASSIST
+                  {t('aiEmergencyAssist')}
                 </Text>
 
                 <Text
                   style={styles.aiTitle}
                 >
-                  Organize your report
+                  {t('organizeReport')}
                 </Text>
               </View>
 
@@ -411,10 +421,9 @@ export default function EmergencyScreen() {
             <Text
               style={styles.aiDescription}
             >
-              AI can summarize your report,
-              suggest the likely service,
-              and highlight useful details
-              for the operator.
+              {t(
+                'aiEmergencyDescription',
+              )}
             </Text>
 
             <View style={styles.aiInfoRow}>
@@ -425,9 +434,7 @@ export default function EmergencyScreen() {
               <Text
                 style={styles.aiInfoText}
               >
-                Optional — AI is not
-                required to send an
-                emergency request.
+                {t('aiOptional')}
               </Text>
             </View>
 
@@ -435,12 +442,14 @@ export default function EmergencyScreen() {
               style={({ pressed }) => [
                 styles.aiButton,
 
-                aiLoading &&
-                  styles.disabledButton,
+                aiLoading
+                  ? styles.disabledButton
+                  : null,
 
                 pressed &&
-                  !aiLoading &&
-                  styles.buttonPressed,
+                !aiLoading
+                  ? styles.buttonPressed
+                  : null,
               ]}
               disabled={aiLoading}
               onPress={handleAnalyze}
@@ -457,7 +466,7 @@ export default function EmergencyScreen() {
                       styles.aiLoadingText
                     }
                   >
-                    Analyzing...
+                    {t('analyzing')}
                   </Text>
                 </>
               ) : (
@@ -467,7 +476,7 @@ export default function EmergencyScreen() {
                       styles.aiButtonText
                     }
                   >
-                    Analyze with AI
+                    {t('analyzeWithAI')}
                   </Text>
 
                   <Text
@@ -497,9 +506,7 @@ export default function EmergencyScreen() {
               style={styles.analysisCard}
             >
               <View
-                style={
-                  styles.analysisTop
-                }
+                style={styles.analysisTop}
               >
                 <View>
                   <Text
@@ -507,7 +514,7 @@ export default function EmergencyScreen() {
                       styles.analysisEyebrow
                     }
                   >
-                    AI ANALYSIS
+                    {t('aiAnalysis')}
                   </Text>
 
                   <Text
@@ -515,7 +522,7 @@ export default function EmergencyScreen() {
                       styles.analysisTitle
                     }
                   >
-                    Intake summary
+                    {t('intakeSummary')}
                   </Text>
                 </View>
 
@@ -535,7 +542,7 @@ export default function EmergencyScreen() {
                       styles.analysisReadyText
                     }
                   >
-                    READY
+                    {t('ready')}
                   </Text>
                 </View>
               </View>
@@ -543,7 +550,7 @@ export default function EmergencyScreen() {
               <Text
                 style={styles.resultLabel}
               >
-                LIKELY SERVICE
+                {t('likelyService')}
               </Text>
 
               <Text
@@ -552,12 +559,14 @@ export default function EmergencyScreen() {
                 {aiAnalysis.service}
               </Text>
 
-              <View style={styles.divider} />
+              <View
+                style={styles.divider}
+              />
 
               <Text
                 style={styles.resultLabel}
               >
-                OPERATOR SUMMARY
+                {t('operatorSummary')}
               </Text>
 
               <Text
@@ -566,12 +575,14 @@ export default function EmergencyScreen() {
                 {aiAnalysis.summary}
               </Text>
 
-              <View style={styles.divider} />
+              <View
+                style={styles.divider}
+              />
 
               <Text
                 style={styles.resultLabel}
               >
-                URGENCY
+                {t('urgency')}
               </Text>
 
               <Text
@@ -593,7 +604,7 @@ export default function EmergencyScreen() {
                       styles.resultLabel
                     }
                   >
-                    IMPORTANT DETAILS
+                    {t('importantDetails')}
                   </Text>
 
                   {aiAnalysis.importantDetails.map(
@@ -637,13 +648,11 @@ export default function EmergencyScreen() {
                       styles.resultLabel
                     }
                   >
-                    OPTIONAL FOLLOW-UP
+                    {t('optionalFollowUp')}
                   </Text>
 
                   <Text
-                    style={
-                      styles.resultText
-                    }
+                    style={styles.resultText}
                   >
                     {
                       aiAnalysis.followUpQuestion
@@ -662,11 +671,9 @@ export default function EmergencyScreen() {
                     styles.aiDisclaimer
                   }
                 >
-                  AI assists emergency
-                  intake and may be
-                  inaccurate. Your original
-                  description is still sent
-                  with the request.
+                  {t(
+                    'aiIntakeDisclaimer',
+                  )}
                 </Text>
               </View>
             </View>
@@ -681,8 +688,9 @@ export default function EmergencyScreen() {
               style={({ pressed }) => [
                 styles.primaryButton,
 
-                pressed &&
-                  styles.buttonPressed,
+                pressed
+                  ? styles.buttonPressed
+                  : null,
               ]}
               onPress={handleContinue}
             >
@@ -691,7 +699,7 @@ export default function EmergencyScreen() {
                   styles.primaryButtonText
                 }
               >
-                Continue
+                {t('continue')}
               </Text>
 
               <Text
@@ -706,9 +714,9 @@ export default function EmergencyScreen() {
             <Text
               style={styles.continueNote}
             >
-              Next you will confirm your
-              current location and review
-              the request before sending it.
+              {t(
+                'continueEmergencyNote',
+              )}
             </Text>
           </View>
         </ScrollView>
@@ -1174,6 +1182,7 @@ const styles = StyleSheet.create({
 
   buttonPressed: {
     opacity: 0.86,
+
     transform: [
       {
         scale: 0.99,

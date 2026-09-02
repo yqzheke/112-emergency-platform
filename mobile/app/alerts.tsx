@@ -18,6 +18,8 @@ import {
   useFocusEffect,
 } from 'expo-router'
 
+import { useTranslation } from 'react-i18next'
+
 import BottomNav from '../components/BottomNav'
 
 import { getAlerts } from '../services/alertService'
@@ -27,16 +29,12 @@ import type {
   SafetyAlert,
 } from '../types/alert'
 
-const severityNames: Record<
-  AlertSeverity,
-  string
-> = {
-  INFO: 'INFORMATION',
-  WARNING: 'WARNING',
-  CRITICAL: 'CRITICAL',
-}
-
 export default function AlertsScreen() {
+  const {
+    t,
+    i18n,
+  } = useTranslation()
+
   const [alerts, setAlerts] =
     useState<SafetyAlert[]>([])
 
@@ -48,6 +46,22 @@ export default function AlertsScreen() {
 
   const [error, setError] =
     useState('')
+
+  const locale =
+    i18n.language === 'ru'
+      ? 'ru-RU'
+      : i18n.language === 'kk'
+        ? 'kk-KZ'
+        : 'en-US'
+
+  const severityNames: Record<
+    AlertSeverity,
+    string
+  > = {
+    INFO: t('informationSeverity'),
+    WARNING: t('warningSeverity'),
+    CRITICAL: t('criticalSeverity'),
+  }
 
   const loadAlerts = useCallback(
     async (
@@ -72,14 +86,14 @@ export default function AlertsScreen() {
         setError(
           error instanceof Error
             ? error.message
-            : 'Could not load alerts',
+            : t('couldNotLoadAlerts'),
         )
       } finally {
         setLoading(false)
         setRefreshing(false)
       }
     },
-    [],
+    [t],
   )
 
   useFocusEffect(
@@ -99,7 +113,7 @@ export default function AlertsScreen() {
           <Text
             style={styles.loadingLogo}
           >
-            112
+            ResQ
           </Text>
 
           <ActivityIndicator
@@ -111,7 +125,7 @@ export default function AlertsScreen() {
           <Text
             style={styles.loadingText}
           >
-            Loading safety alerts...
+            {t('loadingSafetyAlerts')}
           </Text>
         </View>
       </SafeAreaView>
@@ -142,23 +156,21 @@ export default function AlertsScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.logo}>
-              112
+              ResQ
             </Text>
 
             <Text style={styles.eyebrow}>
-              PUBLIC SAFETY
+              {t('publicSafety')}
             </Text>
 
             <Text style={styles.title}>
-              Alerts
+              {t('safetyAlerts')}
             </Text>
 
             <Text
               style={styles.subtitle}
             >
-              Official safety information
-              and important notices for
-              your area.
+              {t('alertsPageSubtitle')}
             </Text>
           </View>
         </View>
@@ -170,7 +182,9 @@ export default function AlertsScreen() {
             style={styles.summaryIcon}
           >
             <Text
-              style={styles.summaryIconText}
+              style={
+                styles.summaryIconText
+              }
             >
               !
             </Text>
@@ -183,20 +197,19 @@ export default function AlertsScreen() {
               style={styles.summaryTitle}
             >
               {alerts.length === 0
-                ? 'No active alerts'
-                : `${alerts.length} ${
-                    alerts.length === 1
-                      ? 'active alert'
-                      : 'active alerts'
-                  }`}
+                ? t('noActiveAlerts')
+                : t('activeAlert', {
+                    count:
+                      alerts.length,
+                  })}
             </Text>
 
             <Text
               style={styles.summaryText}
             >
-              Safety notices are published
-              through the 112 operator
-              system.
+              {t(
+                'alertsPublishedThrough112',
+              )}
             </Text>
           </View>
         </View>
@@ -208,7 +221,7 @@ export default function AlertsScreen() {
             <Text
               style={styles.errorTitle}
             >
-              Could not load alerts
+              {t('couldNotLoadAlerts')}
             </Text>
 
             <Text
@@ -220,8 +233,10 @@ export default function AlertsScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.retryButton,
-                pressed &&
-                  styles.buttonPressed,
+
+                pressed
+                  ? styles.buttonPressed
+                  : null,
               ]}
               onPress={() =>
                 loadAlerts()
@@ -230,7 +245,7 @@ export default function AlertsScreen() {
               <Text
                 style={styles.retryText}
               >
-                Try again
+                {t('retry')}
               </Text>
             </Pressable>
           </View>
@@ -253,21 +268,22 @@ export default function AlertsScreen() {
                   styles.safeBadgeText
                 }
               >
-                ALL CLEAR
+                {t('allClear')}
               </Text>
             </View>
 
             <Text
               style={styles.emptyTitle}
             >
-              No active safety alerts
+              {t('noSafetyAlerts')}
             </Text>
 
             <Text
               style={styles.emptyText}
             >
-              There are currently no active
-              public safety notices.
+              {t(
+                'noSafetyAlertsDescription',
+              )}
             </Text>
           </View>
         ) : null}
@@ -284,7 +300,7 @@ export default function AlertsScreen() {
                   styles.sectionLabel
                 }
               >
-                ACTIVE NOTICES
+                {t('activeNotices')}
               </Text>
 
               <Text
@@ -303,21 +319,34 @@ export default function AlertsScreen() {
                 <AlertCard
                   key={alert.id}
                   alert={alert}
+                  severityName={
+                    severityNames[
+                      alert.severity
+                    ]
+                  }
+                  publishedLabel={t(
+                    'published',
+                  )}
+                  locale={locale}
                 />
               ))}
             </View>
           </>
         ) : null}
 
+        {/* FOOTER */}
+
         <View style={styles.footerInfo}>
-          <View style={styles.footerDot} />
+          <View
+            style={styles.footerDot}
+          />
 
           <Text
             style={styles.footerNote}
           >
-            Pull down to refresh for the
-            latest public safety
-            information.
+            {t(
+              'pullToRefreshAlerts',
+            )}
           </Text>
         </View>
       </ScrollView>
@@ -329,8 +358,14 @@ export default function AlertsScreen() {
 
 function AlertCard({
   alert,
+  severityName,
+  publishedLabel,
+  locale,
 }: {
   alert: SafetyAlert
+  severityName: string
+  publishedLabel: string
+  locale: string
 }) {
   const critical =
     alert.severity === 'CRITICAL'
@@ -412,7 +447,7 @@ function AlertCard({
                 : null,
             ]}
           >
-            {severityNames[alert.severity]}
+            {severityName}
           </Text>
         </View>
 
@@ -442,7 +477,7 @@ function AlertCard({
         <Text
           style={styles.alertDateLabel}
         >
-          PUBLISHED
+          {publishedLabel}
         </Text>
 
         <Text
@@ -450,7 +485,7 @@ function AlertCard({
         >
           {new Date(
             alert.createdAt,
-          ).toLocaleString()}
+          ).toLocaleString(locale)}
         </Text>
       </View>
     </View>
@@ -828,6 +863,7 @@ const styles = StyleSheet.create({
 
   buttonPressed: {
     opacity: 0.86,
+
     transform: [
       {
         scale: 0.99,

@@ -395,7 +395,7 @@ export default function ResponderScreen() {
           style={styles.loadingContainer}
         >
           <Text style={styles.loadingLogo}>
-            112
+            ResQ
           </Text>
 
           <ActivityIndicator
@@ -435,7 +435,7 @@ export default function ResponderScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.logo}>
-              112
+              ResQ
             </Text>
 
             <Text
@@ -963,7 +963,7 @@ export default function ResponderScreen() {
                           }
                         >
                           {isSharing
-                            ? 'Your position is being shared with the 112 operator and the citizen in real time.'
+                            ? 'Your position is being shared with the ResQ operator and the citizen in real time.'
                             : 'Live GPS must be active while responding so the operator and citizen can track your position.'}
                         </Text>
                       </View>
@@ -1231,7 +1231,7 @@ export default function ResponderScreen() {
         <Text
           style={styles.footerNote}
         >
-          112 Responder Platform ·
+          ResQ Responder Platform ·
           Emergency response system
         </Text>
       </ScrollView>

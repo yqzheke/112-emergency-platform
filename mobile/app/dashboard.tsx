@@ -14,6 +14,7 @@ import {
 
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useTranslation } from 'react-i18next'
 
 import { getStoredUser } from '../lib/auth'
 import BottomNav from '../components/BottomNav'
@@ -27,6 +28,7 @@ type EmergencyRequestType =
 
 export default function DashboardScreen() {
   const router = useRouter()
+  const { t } = useTranslation()
 
   const [user, setUser] =
     useState<User | null>(null)
@@ -78,19 +80,21 @@ export default function DashboardScreen() {
         <View style={styles.header}>
           <View style={styles.headerText}>
             <Text style={styles.greeting}>
-              Hey {firstName},
+              {t('heyUser', {
+                name: firstName,
+              })}
             </Text>
 
             <Text
               style={styles.greetingSub}
             >
-              How can 112 help you today?
+              {t('dashboardQuestion')}
             </Text>
           </View>
 
           <View style={styles.logoBadge}>
             <Text style={styles.logoText}>
-              112
+              ResQ
             </Text>
           </View>
         </View>
@@ -98,7 +102,7 @@ export default function DashboardScreen() {
         {/* HERO */}
 
         <Text style={styles.sectionLabel}>
-          EMERGENCY ASSISTANCE
+          {t('emergencyAssistance')}
         </Text>
 
         <View style={styles.heroCard}>
@@ -112,21 +116,20 @@ export default function DashboardScreen() {
             <Text
               style={styles.heroStatusText}
             >
-              112 READY
+              {t('ready112')}
             </Text>
           </View>
 
           <Text style={styles.heroTitle}>
-            Need emergency help?
+            {t('needEmergencyHelp')}
           </Text>
 
           <Text
             style={styles.heroDescription}
           >
-            Choose the emergency service
-            you need and share your
-            location with the response
-            system.
+            {t(
+              'emergencyHelpDescription',
+            )}
           </Text>
 
           <Pressable
@@ -144,14 +147,18 @@ export default function DashboardScreen() {
             <Text
               style={styles.heroButtonText}
             >
-              Start emergency request
+              {t(
+                'startEmergencyRequest',
+              )}
             </Text>
 
             <Ionicons
               name="arrow-forward"
               size={16}
               color="#111827"
-              style={styles.heroButtonIcon}
+              style={
+                styles.heroButtonIcon
+              }
             />
           </Pressable>
         </View>
@@ -160,7 +167,7 @@ export default function DashboardScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionLabel}>
-            112 AI ASSISTANT
+            {t('aiAssistantSection')}
           </Text>
 
           <Text
@@ -168,8 +175,9 @@ export default function DashboardScreen() {
               styles.sectionDescription
             }
           >
-            Get help understanding emergency
-            services and using the platform.
+            {t(
+              'aiAssistantDescription',
+            )}
           </Text>
         </View>
 
@@ -195,31 +203,31 @@ export default function DashboardScreen() {
             </View>
 
             <View style={styles.aiBadge}>
-              <View style={styles.aiBadgeDot} />
+              <View
+                style={styles.aiBadgeDot}
+              />
 
               <Text
                 style={styles.aiBadgeText}
               >
-                AVAILABLE
+                {t('available')}
               </Text>
             </View>
           </View>
 
           <Text style={styles.aiTitle}>
-            Ask 112 AI
+            {t('ask112AI')}
           </Text>
 
           <Text style={styles.aiSubtitle}>
-            Ask questions about emergency
-            services, prepare a request, or get
-            help navigating the 112 platform.
+            {t('aiCardDescription')}
           </Text>
 
           <View style={styles.aiActionRow}>
             <Text
               style={styles.aiActionText}
             >
-              Open assistant
+              {t('openAssistant')}
             </Text>
 
             <View
@@ -238,7 +246,7 @@ export default function DashboardScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionLabel}>
-            ONE-TAP SERVICES
+            {t('oneTapServices')}
           </Text>
 
           <Text
@@ -246,12 +254,11 @@ export default function DashboardScreen() {
               styles.sectionDescription
             }
           >
-            Select the emergency service
-            you need.
+            {t(
+              'selectEmergencyService',
+            )}
           </Text>
         </View>
-
-        {/* MEDICAL */}
 
         <Pressable
           style={({ pressed }) => [
@@ -290,14 +297,15 @@ export default function DashboardScreen() {
               style={styles.cardTextContent}
             >
               <Text style={styles.cardTitle}>
-                Medical
+                {t('medical')}
               </Text>
 
               <Text
                 style={styles.cardSubtitle}
               >
-                Ambulance and medical
-                assistance
+                {t(
+                  'medicalDescription',
+                )}
               </Text>
             </View>
           </View>
@@ -310,8 +318,6 @@ export default function DashboardScreen() {
             />
           </View>
         </Pressable>
-
-        {/* POLICE */}
 
         <Pressable
           style={({ pressed }) => [
@@ -350,14 +356,15 @@ export default function DashboardScreen() {
               style={styles.cardTextContent}
             >
               <Text style={styles.cardTitle}>
-                Police
+                {t('police')}
               </Text>
 
               <Text
                 style={styles.cardSubtitle}
               >
-                Police and security
-                assistance
+                {t(
+                  'policeDescription',
+                )}
               </Text>
             </View>
           </View>
@@ -370,8 +377,6 @@ export default function DashboardScreen() {
             />
           </View>
         </Pressable>
-
-        {/* FIRE */}
 
         <Pressable
           style={({ pressed }) => [
@@ -410,13 +415,13 @@ export default function DashboardScreen() {
               style={styles.cardTextContent}
             >
               <Text style={styles.cardTitle}>
-                Fire & Rescue
+                {t('fireRescue')}
               </Text>
 
               <Text
                 style={styles.cardSubtitle}
               >
-                Fire and rescue assistance
+                {t('fireDescription')}
               </Text>
             </View>
           </View>
@@ -434,7 +439,7 @@ export default function DashboardScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionLabel}>
-            MORE
+            {t('more')}
           </Text>
 
           <Text
@@ -442,7 +447,9 @@ export default function DashboardScreen() {
               styles.sectionDescription
             }
           >
-            Manage your emergency setup.
+            {t(
+              'manageEmergencySetup',
+            )}
           </Text>
         </View>
 
@@ -472,7 +479,7 @@ export default function DashboardScreen() {
             <Text
               style={styles.secondaryTitle}
             >
-              Emergency Contacts
+              {t('emergencyContacts')}
             </Text>
 
             <Text
@@ -480,8 +487,9 @@ export default function DashboardScreen() {
                 styles.secondarySubtitle
               }
             >
-              Manage people linked to your
-              emergency profile.
+              {t(
+                'emergencyContactsDescription',
+              )}
             </Text>
           </View>
 
@@ -508,9 +516,9 @@ export default function DashboardScreen() {
           />
 
           <Text style={styles.footerText}>
-            Your location is shared when you
-            submit an emergency request so
-            responders can locate you.
+            {t(
+              'locationSharingFooter',
+            )}
           </Text>
         </View>
       </ScrollView>

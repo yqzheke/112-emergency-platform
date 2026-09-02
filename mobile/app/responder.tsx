@@ -164,7 +164,7 @@ export default function ResponderDashboard() {
                 styles.loadingLogoText
               }
             >
-              112
+              ResQ
             </Text>
           </View>
 
@@ -223,7 +223,7 @@ export default function ResponderDashboard() {
                   styles.logoText
                 }
               >
-                112
+                ResQ
               </Text>
             </View>
 
@@ -901,7 +901,7 @@ export default function ResponderDashboard() {
         </View>
 
         <Text style={styles.footer}>
-          112 Responder Platform
+          ResQ Responder Platform
         </Text>
       </ScrollView>
       <ResponderBottomNav active="home" />

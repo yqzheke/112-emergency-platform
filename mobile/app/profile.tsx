@@ -15,6 +15,7 @@ import {
 
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useTranslation } from 'react-i18next'
 
 import BottomNav from '../components/BottomNav'
 
@@ -27,6 +28,7 @@ import type { User } from '../types/auth'
 
 export default function ProfileScreen() {
   const router = useRouter()
+  const { t } = useTranslation()
 
   const [user, setUser] =
     useState<User | null>(null)
@@ -49,15 +51,15 @@ export default function ProfileScreen() {
 
   const handleLogout = () => {
     Alert.alert(
-      'Log out?',
-      'You will need to sign in again to access your account.',
+      t('logoutQuestion'),
+      t('logoutConfirm'),
       [
         {
-          text: 'Cancel',
+          text: t('cancel'),
           style: 'cancel',
         },
         {
-          text: 'Log out',
+          text: t('logout'),
           style: 'destructive',
 
           onPress: async () => {
@@ -93,13 +95,13 @@ export default function ProfileScreen() {
             <View style={styles.brandRow}>
               <View style={styles.logoBadge}>
                 <Text style={styles.logoText}>
-                  112
+                  ResQ
                 </Text>
               </View>
 
               <View>
                 <Text style={styles.brandTitle}>
-                  Your account
+                  {t('yourAccount')}
                 </Text>
 
                 <Text
@@ -107,23 +109,21 @@ export default function ProfileScreen() {
                     styles.brandSubtitle
                   }
                 >
-                  Emergency profile
+                  {t('emergencyProfile')}
                 </Text>
               </View>
             </View>
 
             <Text style={styles.eyebrow}>
-              PROFILE
+              {t('profile').toUpperCase()}
             </Text>
 
             <Text style={styles.title}>
-              Account & safety
+              {t('accountAndSafety')}
             </Text>
 
             <Text style={styles.subtitle}>
-              Manage your emergency profile,
-              contacts, support options, and
-              account access.
+              {t('profileSubtitle')}
             </Text>
           </View>
 
@@ -166,7 +166,7 @@ export default function ProfileScreen() {
             >
               <Text style={styles.name}>
                 {user?.fullName ||
-                  'Loading...'}
+                  t('loading')}
               </Text>
 
               <Text style={styles.email}>
@@ -206,8 +206,7 @@ export default function ProfileScreen() {
                   styles.accountStatusText
                 }
               >
-                Account ready for emergency
-                use
+                {t('accountReady')}
               </Text>
             </View>
 
@@ -216,7 +215,7 @@ export default function ProfileScreen() {
                 styles.accountStatusLabel
               }
             >
-              ACTIVE
+              {t('active')}
             </Text>
           </View>
         </View>
@@ -224,7 +223,7 @@ export default function ProfileScreen() {
         {/* SAFETY */}
 
         <Text style={styles.sectionLabel}>
-          SAFETY SETTINGS
+          {t('safetySettings')}
         </Text>
 
         <View style={styles.settingCard}>
@@ -247,7 +246,7 @@ export default function ProfileScreen() {
             <Text
               style={styles.settingTitle}
             >
-              Automatic GPS Sharing
+              {t('automaticGpsSharing')}
             </Text>
 
             <Text
@@ -255,9 +254,7 @@ export default function ProfileScreen() {
                 styles.settingDescription
               }
             >
-              Your location is shared when
-              you submit an emergency
-              request.
+              {t('gpsSharingDescription')}
             </Text>
           </View>
 
@@ -269,7 +266,7 @@ export default function ProfileScreen() {
             <Text
               style={styles.enabledText}
             >
-              Enabled
+              {t('enabled')}
             </Text>
           </View>
         </View>
@@ -305,7 +302,7 @@ export default function ProfileScreen() {
             <Text
               style={styles.settingTitle}
             >
-              Emergency Contacts
+              {t('emergencyContacts')}
             </Text>
 
             <Text
@@ -313,8 +310,9 @@ export default function ProfileScreen() {
                 styles.settingDescription
               }
             >
-              Manage trusted people linked
-              to your emergency requests.
+              {t(
+                'emergencyContactsDescription',
+              )}
             </Text>
           </View>
 
@@ -330,7 +328,7 @@ export default function ProfileScreen() {
         {/* SUPPORT */}
 
         <Text style={styles.sectionLabel}>
-          SUPPORT
+          {t('support')}
         </Text>
 
         <Pressable
@@ -366,7 +364,7 @@ export default function ProfileScreen() {
             <Text
               style={styles.settingTitle}
             >
-              Help & Support
+              {t('helpSupport')}
             </Text>
 
             <Text
@@ -374,8 +372,7 @@ export default function ProfileScreen() {
                 styles.settingDescription
               }
             >
-              Get answers, contact support,
-              or ask 112 AI for help.
+              {t('helpSupportDescription')}
             </Text>
           </View>
 
@@ -421,7 +418,7 @@ export default function ProfileScreen() {
             <Text
               style={styles.settingTitle}
             >
-              Ask 112 AI
+              {t('ask112AI')}
             </Text>
 
             <Text
@@ -429,9 +426,7 @@ export default function ProfileScreen() {
                 styles.settingDescription
               }
             >
-              Ask questions about safety,
-              emergency services, and using
-              the platform.
+              {t('askAiDescription')}
             </Text>
           </View>
 
@@ -447,7 +442,7 @@ export default function ProfileScreen() {
         {/* ACCOUNT */}
 
         <Text style={styles.sectionLabel}>
-          ACCOUNT
+          {t('account')}
         </Text>
 
         <Pressable
@@ -476,7 +471,7 @@ export default function ProfileScreen() {
             <Text
               style={styles.logoutTitle}
             >
-              Log out
+              {t('logout')}
             </Text>
 
             <Text
@@ -484,7 +479,7 @@ export default function ProfileScreen() {
                 styles.logoutDescription
               }
             >
-              Sign out from this device.
+              {t('logoutDescription')}
             </Text>
           </View>
 
@@ -505,9 +500,7 @@ export default function ProfileScreen() {
           />
 
           <Text style={styles.footerText}>
-            Keep your account information
-            and emergency contacts up to
-            date.
+            {t('keepAccountUpdated')}
           </Text>
         </View>
       </ScrollView>

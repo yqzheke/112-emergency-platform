@@ -22,6 +22,8 @@ import {
   useRouter,
 } from 'expo-router'
 
+import { useTranslation } from 'react-i18next'
+
 import {
   createContact,
   deleteContact,
@@ -32,6 +34,7 @@ import type { Contact } from '../types/contact'
 
 export default function ContactsScreen() {
   const router = useRouter()
+  const { t } = useTranslation()
 
   const [contacts, setContacts] =
     useState<Contact[]>([])
@@ -79,12 +82,14 @@ export default function ContactsScreen() {
         setServerError(
           error instanceof Error
             ? error.message
-            : 'Could not load contacts',
+            : t(
+                'couldNotLoadContacts',
+              ),
         )
       } finally {
         setLoading(false)
       }
-    }, [])
+    }, [t])
 
   useFocusEffect(
     useCallback(() => {
@@ -107,7 +112,7 @@ export default function ContactsScreen() {
 
     if (!trimmedName) {
       setNameError(
-        'Contact name is required',
+        t('contactNameRequired'),
       )
 
       hasError = true
@@ -115,7 +120,7 @@ export default function ContactsScreen() {
 
     if (!trimmedPhone) {
       setPhoneError(
-        'Phone number is required',
+        t('phoneNumberRequired'),
       )
 
       hasError = true
@@ -146,7 +151,9 @@ export default function ContactsScreen() {
       setServerError(
         error instanceof Error
           ? error.message
-          : 'Could not add contact',
+          : t(
+              'couldNotAddContact',
+            ),
       )
     } finally {
       setSaving(false)
@@ -157,16 +164,21 @@ export default function ContactsScreen() {
     contact: Contact,
   ) => {
     Alert.alert(
-      'Delete contact?',
-      `Remove ${contact.name} from your emergency contacts?`,
+      t('deleteContactPrompt'),
+      t(
+        'deleteContactNamedDescription',
+        {
+          name: contact.name,
+        },
+      ),
       [
         {
-          text: 'Cancel',
+          text: t('cancel'),
           style: 'cancel',
         },
 
         {
-          text: 'Delete',
+          text: t('delete'),
           style: 'destructive',
 
           onPress: () => {
@@ -201,7 +213,9 @@ export default function ContactsScreen() {
       setServerError(
         error instanceof Error
           ? error.message
-          : 'Could not delete contact',
+          : t(
+              'couldNotDeleteContact',
+            ),
       )
     } finally {
       setDeletingId(null)
@@ -227,32 +241,42 @@ export default function ContactsScreen() {
             false
           }
         >
+          {/* HEADER */}
+
           <View style={styles.header}>
-            <View style={styles.headerText}>
+            <View
+              style={styles.headerText}
+            >
               <Text style={styles.logo}>
-                112
+                ResQ
               </Text>
 
-              <Text style={styles.eyebrow}>
-                SAFETY NETWORK
+              <Text
+                style={styles.eyebrow}
+              >
+                {t('safetyNetwork')}
               </Text>
 
               <Text style={styles.title}>
-                Emergency contacts
+                {t('emergencyContacts')}
               </Text>
 
-              <Text style={styles.subtitle}>
-                Add trusted people who may
-                need to be contacted during
-                an emergency.
+              <Text
+                style={styles.subtitle}
+              >
+                {t(
+                  'contactsPageSubtitle',
+                )}
               </Text>
             </View>
 
             <Pressable
               style={({ pressed }) => [
                 styles.backButton,
-                pressed &&
-                  styles.buttonPressed,
+
+                pressed
+                  ? styles.buttonPressed
+                  : null,
               ]}
               onPress={() =>
                 router.back()
@@ -266,51 +290,70 @@ export default function ContactsScreen() {
             </Pressable>
           </View>
 
-          <View style={styles.summaryCard}>
+          {/* SUMMARY */}
+
+          <View
+            style={styles.summaryCard}
+          >
             <View
               style={styles.summaryIcon}
             >
               <Text
-                style={styles.summaryIconText}
+                style={
+                  styles.summaryIconText
+                }
               >
                 +
               </Text>
             </View>
 
             <View
-              style={styles.summaryContent}
+              style={
+                styles.summaryContent
+              }
             >
               <Text
-                style={styles.summaryTitle}
+                style={
+                  styles.summaryTitle
+                }
               >
-                {contacts.length}{' '}
-                {contacts.length === 1
-                  ? 'saved contact'
-                  : 'saved contacts'}
+                {t('savedContact', {
+                  count:
+                    contacts.length,
+                })}
               </Text>
 
               <Text
-                style={styles.summaryText}
+                style={
+                  styles.summaryText
+                }
               >
-                These contacts can be
-                associated with your
-                emergency requests.
+                {t(
+                  'savedContactsDescription',
+                )}
               </Text>
             </View>
           </View>
 
-          <Text style={styles.sectionLabel}>
-            ADD CONTACT
+          {/* ADD CONTACT */}
+
+          <Text
+            style={styles.sectionLabel}
+          >
+            {t('addContactSection')}
           </Text>
 
-          <View style={styles.formCard}>
+          <View
+            style={styles.formCard}
+          >
             <Text style={styles.label}>
-              Name
+              {t('name')}
             </Text>
 
             <TextInput
               style={[
                 styles.input,
+
                 nameError
                   ? styles.inputError
                   : null,
@@ -321,13 +364,17 @@ export default function ContactsScreen() {
                 setNameError('')
                 setServerError('')
               }}
-              placeholder="Example: Mom"
+              placeholder={t(
+                'nameExample',
+              )}
               placeholderTextColor="#9CA3AF"
               autoCapitalize="words"
             />
 
             {nameError ? (
-              <Text style={styles.error}>
+              <Text
+                style={styles.error}
+              >
                 {nameError}
               </Text>
             ) : null}
@@ -335,12 +382,13 @@ export default function ContactsScreen() {
             <Text
               style={styles.labelSpacing}
             >
-              Phone number
+              {t('phoneNumber')}
             </Text>
 
             <TextInput
               style={[
                 styles.input,
+
                 phoneError
                   ? styles.inputError
                   : null,
@@ -357,23 +405,31 @@ export default function ContactsScreen() {
             />
 
             {phoneError ? (
-              <Text style={styles.error}>
+              <Text
+                style={styles.error}
+              >
                 {phoneError}
               </Text>
             ) : null}
 
             {serverError ? (
               <View
-                style={styles.serverErrorCard}
+                style={
+                  styles.serverErrorCard
+                }
               >
                 <Text
-                  style={styles.serverErrorTitle}
+                  style={
+                    styles.serverErrorTitle
+                  }
                 >
-                  Action failed
+                  {t('actionFailed')}
                 </Text>
 
                 <Text
-                  style={styles.serverError}
+                  style={
+                    styles.serverError
+                  }
                 >
                   {serverError}
                 </Text>
@@ -383,11 +439,15 @@ export default function ContactsScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.primaryButton,
-                saving &&
-                  styles.disabledButton,
+
+                saving
+                  ? styles.disabledButton
+                  : null,
+
                 pressed &&
-                  !saving &&
-                  styles.buttonPressed,
+                !saving
+                  ? styles.buttonPressed
+                  : null,
               ]}
               onPress={handleAdd}
               disabled={saving}
@@ -399,9 +459,11 @@ export default function ContactsScreen() {
                   />
 
                   <Text
-                    style={styles.savingText}
+                    style={
+                      styles.savingText
+                    }
                   >
-                    Adding contact...
+                    {t('addingContact')}
                   </Text>
                 </>
               ) : (
@@ -410,20 +472,32 @@ export default function ContactsScreen() {
                     styles.primaryButtonText
                   }
                 >
-                  Add emergency contact
+                  {t(
+                    'addEmergencyContact',
+                  )}
                 </Text>
               )}
             </Pressable>
           </View>
 
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionLabel}>
-              SAVED CONTACTS
+          {/* SAVED CONTACTS */}
+
+          <View
+            style={styles.sectionHeader}
+          >
+            <Text
+              style={styles.sectionLabel}
+            >
+              {t(
+                'savedContactsSection',
+              )}
             </Text>
 
             {!loading ? (
               <Text
-                style={styles.sectionCount}
+                style={
+                  styles.sectionCount
+                }
               >
                 {contacts.length}
               </Text>
@@ -431,24 +505,32 @@ export default function ContactsScreen() {
           </View>
 
           {loading ? (
-            <View style={styles.loadingBox}>
+            <View
+              style={styles.loadingBox}
+            >
               <ActivityIndicator
                 color="#111827"
               />
 
               <Text
-                style={styles.loadingText}
+                style={
+                  styles.loadingText
+                }
               >
-                Loading contacts...
+                {t('loadingContacts')}
               </Text>
             </View>
           ) : contacts.length === 0 ? (
-            <View style={styles.emptyCard}>
+            <View
+              style={styles.emptyCard}
+            >
               <View
                 style={styles.emptyIcon}
               >
                 <Text
-                  style={styles.emptyIconText}
+                  style={
+                    styles.emptyIconText
+                  }
                 >
                   +
                 </Text>
@@ -457,97 +539,122 @@ export default function ContactsScreen() {
               <Text
                 style={styles.emptyTitle}
               >
-                No contacts yet
+                {t('noContactsYet')}
               </Text>
 
               <Text
                 style={styles.emptyText}
               >
-                Add someone you trust using
-                the form above.
+                {t(
+                  'noContactsYetDescription',
+                )}
               </Text>
             </View>
           ) : (
-            <View style={styles.contactList}>
-              {contacts.map((contact) => (
-                <View
-                  key={contact.id}
-                  style={styles.contactCard}
-                >
+            <View
+              style={styles.contactList}
+            >
+              {contacts.map(
+                (contact) => (
                   <View
-                    style={styles.contactAvatar}
+                    key={contact.id}
+                    style={
+                      styles.contactCard
+                    }
                   >
-                    <Text
+                    <View
                       style={
-                        styles.contactAvatarText
+                        styles.contactAvatar
                       }
                     >
-                      {contact.name
-                        .charAt(0)
-                        .toUpperCase()}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={
-                      styles.contactInformation
-                    }
-                  >
-                    <Text
-                      style={styles.contactName}
-                    >
-                      {contact.name}
-                    </Text>
-
-                    <Text
-                      style={styles.contactPhone}
-                    >
-                      {contact.phone}
-                    </Text>
-                  </View>
-
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.deleteButton,
-                      pressed &&
-                        styles.deleteButtonPressed,
-                    ]}
-                    onPress={() =>
-                      confirmDelete(contact)
-                    }
-                    disabled={
-                      deletingId ===
-                      contact.id
-                    }
-                  >
-                    {deletingId ===
-                    contact.id ? (
-                      <ActivityIndicator
-                        size="small"
-                        color="#B42318"
-                      />
-                    ) : (
                       <Text
                         style={
-                          styles.deleteText
+                          styles.contactAvatarText
                         }
                       >
-                        Delete
+                        {contact.name
+                          .charAt(0)
+                          .toUpperCase()}
                       </Text>
-                    )}
-                  </Pressable>
-                </View>
-              ))}
+                    </View>
+
+                    <View
+                      style={
+                        styles.contactInformation
+                      }
+                    >
+                      <Text
+                        style={
+                          styles.contactName
+                        }
+                      >
+                        {contact.name}
+                      </Text>
+
+                      <Text
+                        style={
+                          styles.contactPhone
+                        }
+                      >
+                        {contact.phone}
+                      </Text>
+                    </View>
+
+                    <Pressable
+                      style={({
+                        pressed,
+                      }) => [
+                        styles.deleteButton,
+
+                        pressed
+                          ? styles.deleteButtonPressed
+                          : null,
+                      ]}
+                      onPress={() =>
+                        confirmDelete(
+                          contact,
+                        )
+                      }
+                      disabled={
+                        deletingId ===
+                        contact.id
+                      }
+                    >
+                      {deletingId ===
+                      contact.id ? (
+                        <ActivityIndicator
+                          size="small"
+                          color="#B42318"
+                        />
+                      ) : (
+                        <Text
+                          style={
+                            styles.deleteText
+                          }
+                        >
+                          {t('delete')}
+                        </Text>
+                      )}
+                    </Pressable>
+                  </View>
+                ),
+              )}
             </View>
           )}
 
-          <View style={styles.infoCard}>
-            <View style={styles.infoDot} />
+          {/* NOTICE */}
 
-            <Text style={styles.infoText}>
-              Only add people you trust and
-              keep their phone numbers up to
-              date.
+          <View style={styles.infoCard}>
+            <View
+              style={styles.infoDot}
+            />
+
+            <Text
+              style={styles.infoText}
+            >
+              {t(
+                'trustedContactsNotice',
+              )}
             </Text>
           </View>
         </ScrollView>
@@ -571,7 +678,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    justifyContent:
+      'space-between',
   },
 
   headerText: {
