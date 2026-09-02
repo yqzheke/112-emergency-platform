@@ -6,18 +6,88 @@ import {
 
 import { API_URL } from '../lib/api'
 
+import './SafetyAlertsPanel.css'
+
 import type {
   AlertSeverity,
   SafetyAlert,
 } from '../types/alert'
+
+function AlertIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 3 3.5 20h17L12 3Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M12 9v4.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+
+      <circle
+        cx="12"
+        cy="17"
+        r="1"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
+function BroadcastIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="2"
+        fill="currentColor"
+      />
+
+      <path
+        d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M5.3 5.3a9.5 9.5 0 0 0 0 13.4M18.7 5.3a9.5 9.5 0 0 1 0 13.4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
 
 function SafetyAlertsPanel() {
   const [alerts, setAlerts] =
     useState<SafetyAlert[]>([])
 
   const [title, setTitle] = useState('')
-  const [message, setMessage] = useState('')
-  const [region, setRegion] = useState('')
+  const [message, setMessage] =
+    useState('')
+  const [region, setRegion] =
+    useState('')
 
   const [severity, setSeverity] =
     useState<AlertSeverity>('INFO')
@@ -31,18 +101,23 @@ function SafetyAlertsPanel() {
   const [updatingId, setUpdatingId] =
     useState<number | null>(null)
 
-  const [error, setError] = useState('')
+  const [error, setError] =
+    useState('')
 
   const getToken = () =>
     localStorage.getItem('token')
 
-  const loadAlerts = useCallback(
-    async () => {
+  const loadAlerts =
+    useCallback(async () => {
       const token = getToken()
 
       if (!token) {
-        setError('Authentication required')
+        setError(
+          'Authentication required',
+        )
+
         setLoading(false)
+
         return
       }
 
@@ -51,15 +126,17 @@ function SafetyAlertsPanel() {
           `${API_URL}/alerts/manage`,
           {
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization:
+                `Bearer ${token}`,
             },
           },
         )
 
-        const data = (await response.json()) as {
-          alerts?: SafetyAlert[]
-          message?: string
-        }
+        const data =
+          (await response.json()) as {
+            alerts?: SafetyAlert[]
+            message?: string
+          }
 
         if (!response.ok) {
           throw new Error(
@@ -81,18 +158,21 @@ function SafetyAlertsPanel() {
       } finally {
         setLoading(false)
       }
-    },
-    [],
-  )
+    }, [])
 
   useEffect(() => {
     loadAlerts()
   }, [loadAlerts])
 
   const handlePublish = async () => {
-    const cleanTitle = title.trim()
-    const cleanMessage = message.trim()
-    const cleanRegion = region.trim()
+    const cleanTitle =
+      title.trim()
+
+    const cleanMessage =
+      message.trim()
+
+    const cleanRegion =
+      region.trim()
 
     setError('')
 
@@ -104,13 +184,17 @@ function SafetyAlertsPanel() {
       setError(
         'Title, message and region are required.',
       )
+
       return
     }
 
     const token = getToken()
 
     if (!token) {
-      setError('Authentication required')
+      setError(
+        'Authentication required',
+      )
+
       return
     }
 
@@ -123,8 +207,11 @@ function SafetyAlertsPanel() {
           method: 'POST',
 
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            'Content-Type':
+              'application/json',
+
+            Authorization:
+              `Bearer ${token}`,
           },
 
           body: JSON.stringify({
@@ -136,10 +223,11 @@ function SafetyAlertsPanel() {
         },
       )
 
-      const data = (await response.json()) as {
-        alert?: SafetyAlert
-        message?: string
-      }
+      const data =
+        (await response.json()) as {
+          alert?: SafetyAlert
+          message?: string
+        }
 
       if (!response.ok) {
         throw new Error(
@@ -173,7 +261,10 @@ function SafetyAlertsPanel() {
     const token = getToken()
 
     if (!token) {
-      setError('Authentication required')
+      setError(
+        'Authentication required',
+      )
+
       return
     }
 
@@ -187,20 +278,25 @@ function SafetyAlertsPanel() {
           method: 'PATCH',
 
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            'Content-Type':
+              'application/json',
+
+            Authorization:
+              `Bearer ${token}`,
           },
 
           body: JSON.stringify({
-            isActive: !alert.isActive,
+            isActive:
+              !alert.isActive,
           }),
         },
       )
 
-      const data = (await response.json()) as {
-        alert?: SafetyAlert
-        message?: string
-      }
+      const data =
+        (await response.json()) as {
+          alert?: SafetyAlert
+          message?: string
+        }
 
       if (!response.ok) {
         throw new Error(
@@ -223,62 +319,103 @@ function SafetyAlertsPanel() {
     }
   }
 
+  const activeAlerts =
+    alerts.filter(
+      (alert) => alert.isActive,
+    ).length
+
   return (
-    <section className="alerts-panel">
-      <div className="alerts-heading">
+    <section className="resq-safety-panel">
+      <div className="resq-safety-header">
         <div>
-          <p className="alerts-eyebrow">
-            PUBLIC SAFETY
-          </p>
+          <span className="resq-safety-eyebrow">
+            RESQ SAFETY NETWORK
+          </span>
 
-          <h2>ResQ Alerts</h2>
+          <h2>
+            Public Safety Alerts
+          </h2>
 
-          <p className="alerts-description">
-            Publish official safety information
-            for users of the ResQ application.
+          <p>
+            Publish verified safety
+            information directly to ResQ
+            users.
           </p>
+        </div>
+
+        <div className="resq-safety-summary">
+          <div className="resq-safety-summary-icon">
+            <BroadcastIcon />
+          </div>
+
+          <div>
+            <strong>
+              {activeAlerts}
+            </strong>
+
+            <span>
+              Active notices
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="alert-form-card">
-        <div className="alert-form-grid">
-          <div className="alert-field">
-            <label htmlFor="alert-title">
+      <div className="resq-alert-compose">
+        <div className="resq-alert-compose-header">
+          <div>
+            <span>
+              CREATE ALERT
+            </span>
+
+            <h3>
+              Broadcast safety information
+            </h3>
+          </div>
+
+          <div className="resq-alert-compose-icon">
+            <AlertIcon />
+          </div>
+        </div>
+
+        <div className="resq-alert-form-grid">
+          <label className="resq-alert-field resq-alert-title-field">
+            <span>
               Alert title
-            </label>
+            </span>
 
             <input
-              id="alert-title"
               value={title}
               onChange={(event) =>
-                setTitle(event.target.value)
+                setTitle(
+                  event.target.value,
+                )
               }
               placeholder="Severe Weather Warning"
             />
-          </div>
+          </label>
 
-          <div className="alert-field">
-            <label htmlFor="alert-region">
+          <label className="resq-alert-field">
+            <span>
               Region
-            </label>
+            </span>
 
             <input
-              id="alert-region"
               value={region}
               onChange={(event) =>
-                setRegion(event.target.value)
+                setRegion(
+                  event.target.value,
+                )
               }
               placeholder="Astana"
             />
-          </div>
+          </label>
 
-          <div className="alert-field">
-            <label htmlFor="alert-severity">
+          <label className="resq-alert-field">
+            <span>
               Severity
-            </label>
+            </span>
 
             <select
-              id="alert-severity"
               value={severity}
               onChange={(event) =>
                 setSeverity(
@@ -299,107 +436,155 @@ function SafetyAlertsPanel() {
                 Critical
               </option>
             </select>
-          </div>
+          </label>
         </div>
 
-        <div className="alert-field">
-          <label htmlFor="alert-message">
+        <label className="resq-alert-field">
+          <span>
             Public message
-          </label>
+          </span>
 
           <textarea
-            id="alert-message"
             value={message}
             onChange={(event) =>
-              setMessage(event.target.value)
+              setMessage(
+                event.target.value,
+              )
             }
-            placeholder="Enter the safety information users should receive..."
-            rows={4}
+            placeholder="Enter verified public safety information..."
+            rows={5}
             maxLength={800}
           />
 
-          <span className="alert-counter">
+          <small>
             {message.length}/800
-          </span>
-        </div>
+          </small>
+        </label>
 
         {error && (
-          <p className="alert-error">
-            {error}
-          </p>
+          <div className="resq-alert-error">
+            <AlertIcon />
+
+            <span>
+              {error}
+            </span>
+          </div>
         )}
 
-        <button
-          className="alert-publish-button"
-          type="button"
-          disabled={publishing}
-          onClick={handlePublish}
-        >
-          {publishing
-            ? 'Publishing...'
-            : 'Publish safety alert'}
-        </button>
+        <div className="resq-alert-compose-footer">
+          <div>
+            <span className="resq-alert-secure-dot" />
+
+            Published alerts become
+            visible to ResQ users.
+          </div>
+
+          <button
+            type="button"
+            disabled={publishing}
+            onClick={handlePublish}
+          >
+            <BroadcastIcon />
+
+            {publishing
+              ? 'Publishing...'
+              : 'Publish alert'}
+          </button>
+        </div>
       </div>
 
-      <div className="alerts-list-heading">
-        <h3>Published alerts</h3>
+      <div className="resq-alert-list-heading">
+        <div>
+          <span>
+            ALERT HISTORY
+          </span>
 
-        <span>
+          <h3>
+            Published alerts
+          </h3>
+        </div>
+
+        <div className="resq-alert-count">
           {alerts.length}
-        </span>
+        </div>
       </div>
 
       {loading ? (
-        <div className="alert-empty">
-          Loading alerts...
+        <div className="resq-alert-empty">
+          Loading safety alerts...
         </div>
       ) : alerts.length === 0 ? (
-        <div className="alert-empty">
-          No safety alerts have been published.
+        <div className="resq-alert-empty">
+          <div>
+            <BroadcastIcon />
+          </div>
+
+          <strong>
+            No alerts published
+          </strong>
+
+          <span>
+            Safety broadcasts will appear
+            here.
+          </span>
         </div>
       ) : (
-        <div className="alerts-list">
+        <div className="resq-alert-list">
           {alerts.map((alert) => (
             <article
               key={alert.id}
-              className={`operator-alert-card severity-${alert.severity.toLowerCase()}`}
+              className={`resq-alert-card severity-${alert.severity.toLowerCase()}`}
             >
-              <div className="operator-alert-top">
-                <div>
-                  <div className="operator-alert-badges">
-                    <span
-                      className={`severity-badge severity-badge-${alert.severity.toLowerCase()}`}
-                    >
-                      {alert.severity}
-                    </span>
-
-                    <span
-                      className={
-                        alert.isActive
-                          ? 'active-badge'
-                          : 'inactive-badge'
-                      }
-                    >
-                      {alert.isActive
-                        ? 'ACTIVE'
-                        : 'INACTIVE'}
-                    </span>
+              <div className="resq-alert-card-top">
+                <div className="resq-alert-card-main">
+                  <div
+                    className={`resq-alert-severity-icon severity-${alert.severity.toLowerCase()}`}
+                  >
+                    <AlertIcon />
                   </div>
 
-                  <h4>{alert.title}</h4>
+                  <div>
+                    <div className="resq-alert-badges">
+                      <span
+                        className={`resq-alert-severity severity-${alert.severity.toLowerCase()}`}
+                      >
+                        {
+                          alert.severity
+                        }
+                      </span>
+
+                      <span
+                        className={`resq-alert-state ${
+                          alert.isActive
+                            ? 'active'
+                            : 'inactive'
+                        }`}
+                      >
+                        {alert.isActive
+                          ? 'ACTIVE'
+                          : 'INACTIVE'}
+                      </span>
+                    </div>
+
+                    <h4>
+                      {alert.title}
+                    </h4>
+                  </div>
                 </div>
 
                 <button
                   type="button"
-                  className="alert-toggle-button"
+                  className="resq-alert-toggle"
                   disabled={
-                    updatingId === alert.id
+                    updatingId ===
+                    alert.id
                   }
                   onClick={() =>
                     handleToggle(alert)
                   }
                 >
-                  {updatingId === alert.id
+                  {updatingId ===
+                  alert.id
                     ? 'Updating...'
                     : alert.isActive
                       ? 'Deactivate'
@@ -407,20 +592,32 @@ function SafetyAlertsPanel() {
                 </button>
               </div>
 
-              <p className="operator-alert-message">
+              <p className="resq-alert-message">
                 {alert.message}
               </p>
 
-              <div className="operator-alert-footer">
-                <span>
-                  {alert.region}
-                </span>
+              <div className="resq-alert-meta">
+                <div>
+                  <span>
+                    REGION
+                  </span>
 
-                <span>
-                  {new Date(
-                    alert.createdAt,
-                  ).toLocaleString()}
-                </span>
+                  <strong>
+                    {alert.region}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>
+                    PUBLISHED
+                  </span>
+
+                  <strong>
+                    {new Date(
+                      alert.createdAt,
+                    ).toLocaleString()}
+                  </strong>
+                </div>
               </div>
             </article>
           ))}

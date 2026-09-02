@@ -139,7 +139,11 @@
 .operator-login-intro {
   max-width: 500px;
 
-  margin-top: auto;
+  margin-top: clamp(
+    80px,
+    10vh,
+    115px
+  );
 }
 
 .operator-login-intro > p {
@@ -635,9 +639,7 @@
   font-size: 7px;
 }
 
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
+/* RESPONSIVE */
 
 @media (max-width: 900px) {
   .operator-login-page {
@@ -650,16 +652,13 @@
 
   .operator-login-form-side {
     min-height: 100vh;
-
     padding: 40px 24px;
   }
 
   .operator-login-mobile-brand {
     display: flex;
     align-items: center;
-
     gap: 11px;
-
     margin-bottom: 50px;
   }
 
@@ -676,15 +675,12 @@
 
   .operator-login-mobile-brand strong {
     color: #182230;
-
     font-size: 11px;
   }
 
   .operator-login-mobile-brand span {
     margin-top: 3px;
-
     color: #98a2b3;
-
     font-size: 8px;
   }
 }
@@ -692,7 +688,6 @@
 @media (max-width: 480px) {
   .operator-login-form-side {
     align-items: flex-start;
-
     padding:
       28px 20px
       50px;
