@@ -362,12 +362,12 @@ function Login() {
         <div className="operator-login-visual-inner">
           <div className="operator-login-brand">
             <div className="operator-login-logo">
-              112
+              ResQ
             </div>
 
             <div>
               <strong>
-                112 Control Center
+                ResQ Control Center
               </strong>
 
               <span>
@@ -474,12 +474,12 @@ function Login() {
         <div className="operator-login-form-wrapper">
           <div className="operator-login-mobile-brand">
             <div className="operator-login-logo">
-              112
+              ResQ
             </div>
 
             <div>
               <strong>
-                112 Control
+                ResQ Control
               </strong>
 
               <span>
@@ -523,7 +523,7 @@ function Login() {
                 <input
                   type="email"
                   value={email}
-                  placeholder="operator@112.kz"
+                  placeholder="operator@ResQ.kz"
                   autoComplete="email"
                   disabled={loading}
                   onChange={(event) => {
@@ -669,7 +669,7 @@ function Login() {
         </div>
 
         <footer className="operator-login-footer">
-          112 Emergency Operations Platform
+          ResQ Emergency Operations Platform
         </footer>
       </section>
     </div>

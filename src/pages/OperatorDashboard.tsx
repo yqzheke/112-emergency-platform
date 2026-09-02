@@ -27,17 +27,21 @@ const emergencyNames: Record<
   FIRE: 'Fire & Rescue',
 }
 
-/* =========================================================
-   ICONS
-   Inline SVG so we do not need another package.
-   ========================================================= */
+const emergencyCodes: Record<
+  OperatorEmergency['type'],
+  string
+> = {
+  MEDICAL: 'MED',
+  POLICE: 'POL',
+  FIRE: 'FIRE',
+}
 
 type IconProps = {
   size?: number
   className?: string
 }
 
-function DashboardIcon({
+function GridIcon({
   size = 18,
   className,
 }: IconProps) {
@@ -107,7 +111,7 @@ function EmergencyIcon({
       aria-hidden="true"
     >
       <path
-        d="M12 3L3.5 20h17L12 3Z"
+        d="M12 3 3.5 20h17L12 3Z"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinejoin="round"
@@ -161,7 +165,7 @@ function ResponderIcon({
   )
 }
 
-function AlertIcon({
+function BellIcon({
   size = 18,
   className,
 }: IconProps) {
@@ -224,7 +228,6 @@ function RefreshIcon({
 
 function LogoutIcon({
   size = 17,
-  className,
 }: IconProps) {
   return (
     <svg
@@ -232,7 +235,6 @@ function LogoutIcon({
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      className={className}
       aria-hidden="true"
     >
       <path
@@ -240,11 +242,10 @@ function LogoutIcon({
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
-        strokeLinejoin="round"
       />
 
       <path
-        d="M13 8l4 4-4 4"
+        d="m14 8 4 4-4 4"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
@@ -252,7 +253,7 @@ function LogoutIcon({
       />
 
       <path
-        d="M17 12H9"
+        d="M18 12H9"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
@@ -263,7 +264,6 @@ function LogoutIcon({
 
 function ActivityIcon({
   size = 18,
-  className,
 }: IconProps) {
   return (
     <svg
@@ -271,7 +271,6 @@ function ActivityIcon({
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      className={className}
       aria-hidden="true"
     >
       <path
@@ -287,7 +286,6 @@ function ActivityIcon({
 
 function CheckIcon({
   size = 18,
-  className,
 }: IconProps) {
   return (
     <svg
@@ -295,7 +293,6 @@ function CheckIcon({
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      className={className}
       aria-hidden="true"
     >
       <path
@@ -311,7 +308,6 @@ function CheckIcon({
 
 function ClockIcon({
   size = 18,
-  className,
 }: IconProps) {
   return (
     <svg
@@ -319,7 +315,6 @@ function ClockIcon({
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      className={className}
       aria-hidden="true"
     >
       <circle
@@ -340,9 +335,35 @@ function ClockIcon({
   )
 }
 
-function scrollToSection(
-  id: string,
-) {
+function LocationIcon({
+  size = 18,
+}: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+
+      <circle
+        cx="12"
+        cy="10"
+        r="2.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+    </svg>
+  )
+}
+
+function scrollToSection(id: string) {
   document
     .getElementById(id)
     ?.scrollIntoView({
@@ -425,6 +446,7 @@ function OperatorDashboard() {
             data.message ||
               'Could not load emergencies',
           )
+
           return
         }
 
@@ -460,7 +482,7 @@ function OperatorDashboard() {
         console.error(error)
 
         setError(
-          'Could not connect to the server',
+          'Could not connect to the ResQ server',
         )
       } finally {
         setLoading(false)
@@ -503,6 +525,7 @@ function OperatorDashboard() {
             data.message ||
               'Could not load responders',
           )
+
           return
         }
 
@@ -522,12 +545,10 @@ function OperatorDashboard() {
     loadEmergencies()
     loadResponders()
 
-    const interval = window.setInterval(
-      () => {
+    const interval =
+      window.setInterval(() => {
         loadEmergencies()
-      },
-      5000,
-    )
+      }, 5000)
 
     return () => {
       window.clearInterval(interval)
@@ -585,6 +606,7 @@ function OperatorDashboard() {
           data.message ||
             'Could not accept emergency',
         )
+
         return
       }
 
@@ -593,7 +615,7 @@ function OperatorDashboard() {
       console.error(error)
 
       setError(
-        'Could not connect to the server',
+        'Could not connect to the ResQ server',
       )
     } finally {
       setUpdatingId(null)
@@ -612,6 +634,7 @@ function OperatorDashboard() {
       setError(
         'Select a responder first.',
       )
+
       return
     }
 
@@ -660,10 +683,12 @@ function OperatorDashboard() {
           data.message ||
             'Could not assign responder',
         )
+
         return
       }
 
       await loadEmergencies()
+      await loadResponders()
     } catch (error) {
       console.error(error)
 
@@ -714,6 +739,10 @@ function OperatorDashboard() {
         !responder.isBusy,
     ).length
 
+  const busyResponders =
+    responders.length -
+    availableResponders
+
   const handleLogout = () => {
     clearAuth()
     navigate('/login')
@@ -721,79 +750,97 @@ function OperatorDashboard() {
 
   if (loading) {
     return (
-      <div className="operator-enterprise-loading">
-        <div className="operator-enterprise-loading-logo">
-          112
+      <div className="resq-control-loading">
+        <div className="resq-control-loading-mark">
+          R
         </div>
 
-        <strong>
-          Loading Emergency Operations
-        </strong>
+        <div>
+          <strong>
+            ResQ Control
+          </strong>
 
-        <span>
-          Connecting to control center...
-        </span>
+          <span>
+            Initializing emergency
+            operations...
+          </span>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="operator-shell">
-      {/* ==============================================
-          SIDEBAR
-          ============================================== */}
+    <div className="resq-control-shell">
+      {/* SIDEBAR */}
 
-      <aside className="operator-sidebar">
-        <div className="operator-sidebar-brand">
-          <div className="operator-sidebar-logo">
-            112
+      <aside className="resq-sidebar">
+        <div className="resq-brand">
+          <div className="resq-brand-mark">
+            R
           </div>
 
-          <div>
-            <strong>112 Control</strong>
+          <div className="resq-brand-copy">
+            <strong>ResQ</strong>
+
             <span>
-              Emergency Operations
+              Emergency Control
             </span>
           </div>
         </div>
 
-        <div className="operator-sidebar-divider" />
+        <div className="resq-sidebar-status">
+          <span className="resq-online-dot" />
 
-        <nav className="operator-nav">
-          <span className="operator-nav-label">
-            OPERATIONS
+          <div>
+            <strong>
+              Network online
+            </strong>
+
+            <span>
+              Operations synchronized
+            </span>
+          </div>
+        </div>
+
+        <nav className="resq-nav">
+          <span className="resq-nav-label">
+            COMMAND
           </span>
 
           <button
             type="button"
-            className="operator-nav-item active"
+            className="resq-nav-item active"
             onClick={() =>
               scrollToSection(
-                'operator-overview',
+                'resq-overview',
               )
             }
           >
-            <DashboardIcon />
+            <GridIcon />
 
-            <span>Overview</span>
+            <span>
+              Overview
+            </span>
           </button>
 
           <button
             type="button"
-            className="operator-nav-item"
+            className="resq-nav-item"
             onClick={() =>
               scrollToSection(
-                'operator-incidents',
+                'resq-incidents',
               )
             }
           >
             <EmergencyIcon />
 
-            <span>Emergencies</span>
+            <span>
+              Incidents
+            </span>
 
             {activeEmergencies.length >
               0 && (
-              <span className="operator-nav-count">
+              <span className="resq-nav-count danger">
                 {
                   activeEmergencies.length
                 }
@@ -803,107 +850,113 @@ function OperatorDashboard() {
 
           <button
             type="button"
-            className="operator-nav-item"
+            className="resq-nav-item"
             onClick={() =>
               scrollToSection(
-                'operator-incidents',
+                'resq-responders',
               )
             }
           >
             <ResponderIcon />
 
-            <span>Responders</span>
+            <span>
+              Responders
+            </span>
 
-            <span className="operator-nav-count neutral">
+            <span className="resq-nav-count">
               {availableResponders}
             </span>
           </button>
 
           <button
             type="button"
-            className="operator-nav-item"
+            className="resq-nav-item"
             onClick={() =>
               scrollToSection(
-                'operator-alerts',
+                'resq-alerts',
               )
             }
           >
-            <AlertIcon />
+            <BellIcon />
 
-            <span>Safety Alerts</span>
+            <span>
+              Safety Alerts
+            </span>
           </button>
         </nav>
 
-        <div className="operator-sidebar-spacer" />
+        <div className="resq-sidebar-spacer" />
 
-        <div className="operator-system-card">
-          <div className="operator-system-row">
-            <span className="operator-online-dot" />
+        <div className="resq-side-system">
+          <div className="resq-side-system-top">
+            <ActivityIcon />
 
-            <div>
-              <strong>
-                System operational
-              </strong>
-
-              <span>
-                Live sync every 5 seconds
-              </span>
-            </div>
+            <span>
+              SYSTEM STATUS
+            </span>
           </div>
+
+          <strong>
+            Fully operational
+          </strong>
+
+          <p>
+            Live incident synchronization
+            every 5 seconds.
+          </p>
         </div>
 
-        <div className="operator-sidebar-profile">
-          <div className="operator-avatar">
+        <div className="resq-user">
+          <div className="resq-user-avatar">
             OP
           </div>
 
-          <div className="operator-profile-copy">
-            <strong>Operator</strong>
+          <div className="resq-user-copy">
+            <strong>
+              Operator
+            </strong>
+
             <span>
-              Control center
+              Control Center
             </span>
           </div>
 
           <button
             type="button"
-            className="operator-sidebar-logout"
+            className="resq-logout"
             onClick={handleLogout}
-            title="Sign out"
             aria-label="Sign out"
+            title="Sign out"
           >
             <LogoutIcon />
           </button>
         </div>
       </aside>
 
-      {/* ==============================================
-          WORKSPACE
-          ============================================== */}
+      {/* WORKSPACE */}
 
-      <div className="operator-workspace">
-        {/* TOP BAR */}
-
-        <header className="operator-topbar">
-          <div>
-            <p className="operator-topbar-eyebrow">
-              EMERGENCY OPERATIONS
-            </p>
+      <div className="resq-workspace">
+        <header className="resq-topbar">
+          <div className="resq-topbar-heading">
+            <span>
+              RESQ COMMAND CENTER
+            </span>
 
             <h1>
-              Control Center
+              Emergency Operations
             </h1>
           </div>
 
-          <div className="operator-topbar-actions">
-            <div className="operator-live-pill">
+          <div className="resq-topbar-actions">
+            <div className="resq-live-status">
               <span />
 
-              Live
+              LIVE
             </div>
 
             <button
               type="button"
-              className="operator-refresh-button"
+              className="resq-refresh"
               onClick={() => {
                 loadEmergencies()
                 loadResponders()
@@ -911,189 +964,189 @@ function OperatorDashboard() {
             >
               <RefreshIcon />
 
-              <span>Refresh</span>
+              Refresh
             </button>
           </div>
         </header>
 
-        <main className="operator-content">
-          {/* ============================================
-              OVERVIEW
-              ============================================ */}
+        <main className="resq-main">
+          {/* OVERVIEW */}
 
           <section
-            id="operator-overview"
-            className="operator-overview"
+            id="resq-overview"
+            className="resq-overview"
           >
-            <div className="operator-page-heading">
+            <div className="resq-overview-header">
               <div>
+                <span className="resq-section-eyebrow">
+                  OPERATIONAL PICTURE
+                </span>
+
                 <h2>
-                  Operations overview
+                  Live command overview
                 </h2>
 
                 <p>
-                  Monitor active incidents,
-                  responder availability and
-                  emergency operations.
+                  Real-time incident,
+                  responder, and dispatch
+                  intelligence.
                 </p>
               </div>
 
-              <div className="operator-last-sync">
+              <div className="resq-auto-sync">
                 <ActivityIcon size={16} />
 
-                <span>
-                  Auto-refresh enabled
-                </span>
+                Auto sync active
               </div>
             </div>
 
-            <div className="operator-kpi-grid">
-              <div className="operator-kpi-card">
-                <div className="operator-kpi-icon blue">
-                  <ActivityIcon />
-                </div>
-
-                <div className="operator-kpi-content">
+            <div className="resq-kpi-grid">
+              <div className="resq-kpi-card primary">
+                <div className="resq-kpi-top">
                   <span>
-                    Active incidents
+                    ACTIVE INCIDENTS
                   </span>
 
-                  <strong>
-                    {
-                      activeEmergencies.length
-                    }
-                  </strong>
-
-                  <small>
-                    Currently open
-                  </small>
+                  <div className="resq-kpi-icon">
+                    <EmergencyIcon />
+                  </div>
                 </div>
+
+                <strong>
+                  {activeEmergencies.length}
+                </strong>
+
+                <p>
+                  Open emergency requests
+                </p>
               </div>
 
-              <div className="operator-kpi-card">
-                <div className="operator-kpi-icon amber">
-                  <ClockIcon />
-                </div>
-
-                <div className="operator-kpi-content">
+              <div className="resq-kpi-card warning">
+                <div className="resq-kpi-top">
                   <span>
-                    Awaiting action
+                    AWAITING REVIEW
                   </span>
 
-                  <strong>
-                    {pendingCount}
-                  </strong>
-
-                  <small>
-                    Pending operator review
-                  </small>
+                  <div className="resq-kpi-icon">
+                    <ClockIcon />
+                  </div>
                 </div>
+
+                <strong>
+                  {pendingCount}
+                </strong>
+
+                <p>
+                  Require operator action
+                </p>
               </div>
 
-              <div className="operator-kpi-card">
-                <div className="operator-kpi-icon green">
-                  <ResponderIcon />
-                </div>
-
-                <div className="operator-kpi-content">
+              <div className="resq-kpi-card success">
+                <div className="resq-kpi-top">
                   <span>
-                    Available responders
+                    RESPONDERS READY
                   </span>
 
-                  <strong>
-                    {availableResponders}
-                  </strong>
-
-                  <small>
-                    {responders.length}{' '}
-                    registered
-                  </small>
+                  <div className="resq-kpi-icon">
+                    <ResponderIcon />
+                  </div>
                 </div>
+
+                <strong>
+                  {availableResponders}
+                </strong>
+
+                <p>
+                  {busyResponders} currently
+                  engaged
+                </p>
               </div>
 
-              <div className="operator-kpi-card">
-                <div className="operator-kpi-icon slate">
-                  <CheckIcon />
-                </div>
-
-                <div className="operator-kpi-content">
+              <div className="resq-kpi-card neutral">
+                <div className="resq-kpi-top">
                   <span>
-                    Closed incidents
+                    CLOSED INCIDENTS
                   </span>
 
-                  <strong>
-                    {
-                      completedEmergencies.length
-                    }
-                  </strong>
-
-                  <small>
-                    Completed or cancelled
-                  </small>
+                  <div className="resq-kpi-icon">
+                    <CheckIcon />
+                  </div>
                 </div>
+
+                <strong>
+                  {
+                    completedEmergencies.length
+                  }
+                </strong>
+
+                <p>
+                  Completed or cancelled
+                </p>
               </div>
             </div>
           </section>
 
           {error && (
-            <div className="control-error">
-              {error}
+            <div className="resq-error">
+              <EmergencyIcon size={17} />
+
+              <span>
+                {error}
+              </span>
             </div>
           )}
 
-          {/* ============================================
-              OPERATIONS GRID
-              ============================================ */}
+          {/* COMMAND GRID */}
 
-          <div className="operator-operations-grid">
-            {/* LIVE INCIDENTS */}
-
+          <div className="resq-command-grid">
             <section
-              id="operator-incidents"
-              className="operator-incidents-panel"
+              id="resq-incidents"
+              className="resq-incidents"
             >
-              <div className="operator-panel-header">
+              <div className="resq-panel-header">
                 <div>
-                  <span className="operator-panel-eyebrow">
-                    LIVE QUEUE
+                  <span className="resq-section-eyebrow">
+                    INCIDENT COMMAND
                   </span>
 
                   <h2>
-                    Active emergencies
+                    Live incident queue
                   </h2>
 
                   <p>
-                    Incoming and ongoing
-                    emergency requests.
+                    Review, accept, dispatch,
+                    and monitor emergencies.
                   </p>
                 </div>
 
-                <div className="operator-open-count">
-                  <span className="operator-open-count-dot" />
+                <div className="resq-open-pill">
+                  <span />
 
                   {
                     activeEmergencies.length
                   }{' '}
-                  open
+                  ACTIVE
                 </div>
               </div>
 
               {activeEmergencies.length ===
               0 ? (
-                <div className="control-empty">
-                  <CheckIcon size={24} />
+                <div className="resq-empty-state">
+                  <div className="resq-empty-icon">
+                    <CheckIcon size={22} />
+                  </div>
 
                   <strong>
-                    No active emergencies
+                    No active incidents
                   </strong>
 
                   <span>
-                    New requests will
-                    automatically appear here.
+                    Incoming requests will
+                    appear here automatically.
                   </span>
                 </div>
               ) : (
-                <div className="request-list">
+                <div className="resq-incident-list">
                   {activeEmergencies.map(
                     (emergency) => {
                       const responderArrived =
@@ -1110,54 +1163,60 @@ function OperatorDashboard() {
                       return (
                         <article
                           key={emergency.id}
-                          className="request-card"
+                          className={`resq-incident-card service-${emergency.type.toLowerCase()}`}
                         >
-                          {/* INCIDENT HEADER */}
+                          <div className="resq-incident-header">
+                            <div className="resq-incident-heading">
+                              <div className="resq-incident-code">
+                                <span>
+                                  {
+                                    emergencyCodes[
+                                      emergency
+                                        .type
+                                    ]
+                                  }
+                                </span>
 
-                          <div className="request-card-header">
-                            <div className="request-heading">
-                              <div className="operator-incident-id">
-                                #
-                                {
-                                  emergency.id
-                                }
+                                <strong>
+                                  #
+                                  {
+                                    emergency.id
+                                  }
+                                </strong>
                               </div>
 
                               <div>
-                                <div className="operator-incident-title-row">
-                                  <strong className="operator-incident-name">
-                                    {
-                                      emergencyNames[
-                                        emergency
-                                          .type
-                                      ]
-                                    }{' '}
-                                    Emergency
-                                  </strong>
+                                <span className="resq-incident-kicker">
+                                  {
+                                    emergencyNames[
+                                      emergency
+                                        .type
+                                    ]
+                                  }{' '}
+                                  RESPONSE
+                                </span>
 
-                                  <span
-                                    className={`request-type type-${emergency.type.toLowerCase()}`}
-                                  >
-                                    {
-                                      emergencyNames[
-                                        emergency
-                                          .type
-                                      ]
-                                    }
-                                  </span>
-                                </div>
+                                <h3>
+                                  {
+                                    emergencyNames[
+                                      emergency
+                                        .type
+                                    ]
+                                  }{' '}
+                                  Emergency
+                                </h3>
 
-                                <span className="operator-incident-time">
+                                <p>
                                   Received{' '}
                                   {new Date(
                                     emergency.createdAt,
                                   ).toLocaleString()}
-                                </span>
+                                </p>
                               </div>
                             </div>
 
                             <span
-                              className={`request-status status-${emergency.status.toLowerCase()}`}
+                              className={`resq-status status-${emergency.status.toLowerCase()}`}
                             >
                               {responderArrived
                                 ? 'ON SCENE'
@@ -1165,26 +1224,22 @@ function OperatorDashboard() {
                             </span>
                           </div>
 
-                          {/* DESCRIPTION */}
-
-                          <div className="operator-incident-section">
-                            <span className="operator-field-label">
+                          <div className="resq-incident-description">
+                            <span>
                               INCIDENT DESCRIPTION
                             </span>
 
-                            <p className="request-description">
+                            <p>
                               {
                                 emergency.description
                               }
                             </p>
                           </div>
 
-                          {/* META */}
-
-                          <div className="request-meta-grid">
+                          <div className="resq-meta-grid">
                             <div>
                               <span>
-                                Caller
+                                CALLER
                               </span>
 
                               <strong>
@@ -1198,7 +1253,7 @@ function OperatorDashboard() {
 
                             <div>
                               <span>
-                                Received
+                                RECEIVED
                               </span>
 
                               <strong>
@@ -1218,7 +1273,7 @@ function OperatorDashboard() {
 
                             <div>
                               <span>
-                                Coordinates
+                                LOCATION
                               </span>
 
                               <strong>
@@ -1233,33 +1288,29 @@ function OperatorDashboard() {
                             </div>
                           </div>
 
-                          {/* AI ANALYSIS */}
-
                           {emergency.aiSummary && (
-                            <div className="operator-ai-card">
-                              <div className="operator-ai-header">
+                            <div className="resq-ai-intelligence">
+                              <div className="resq-ai-heading">
                                 <div>
-                                  <span className="operator-ai-label">
-                                    AI INTAKE
-                                    ANALYSIS
+                                  <span>
+                                    RESQ AI
                                   </span>
 
                                   <strong>
-                                    Emergency
+                                    Incident
                                     intelligence
                                   </strong>
                                 </div>
 
-                                <span className="operator-ai-badge">
+                                <div className="resq-ai-mark">
                                   AI
-                                </span>
+                                </div>
                               </div>
 
-                              <div className="operator-ai-grid">
+                              <div className="resq-ai-metrics">
                                 <div>
                                   <span>
-                                    Suggested
-                                    service
+                                    SERVICE
                                   </span>
 
                                   <strong>
@@ -1270,7 +1321,7 @@ function OperatorDashboard() {
 
                                 <div>
                                   <span>
-                                    Urgency
+                                    URGENCY
                                   </span>
 
                                   <strong>
@@ -1280,9 +1331,9 @@ function OperatorDashboard() {
                                 </div>
                               </div>
 
-                              <div className="operator-ai-summary">
+                              <div className="resq-ai-summary">
                                 <span>
-                                  Summary
+                                  OPERATOR SUMMARY
                                 </span>
 
                                 <p>
@@ -1293,10 +1344,9 @@ function OperatorDashboard() {
                               </div>
 
                               {emergency.aiImportantDetails && (
-                                <div className="operator-ai-details">
+                                <div className="resq-ai-details">
                                   <span>
-                                    Important
-                                    details
+                                    IMPORTANT DETAILS
                                   </span>
 
                                   {(() => {
@@ -1331,39 +1381,34 @@ function OperatorDashboard() {
                                 </div>
                               )}
 
-                              <p className="operator-ai-note">
-                                AI-generated
-                                intake assistance.
-                                Operator
-                                verification is
-                                required.
+                              <p className="resq-ai-disclaimer">
+                                AI-assisted intake.
+                                Operator verification
+                                remains required.
                               </p>
                             </div>
                           )}
 
-                          {/* MAP */}
-
-                          <div className="operator-map-section-header">
+                          <div className="resq-map-heading">
                             <div>
-                              <span className="operator-field-label">
-                                LIVE INCIDENT
-                                MAP
+                              <span>
+                                LIVE RESPONSE MAP
                               </span>
 
                               <strong>
-                                Location &
-                                responder
-                                tracking
+                                Incident &
+                                responder tracking
                               </strong>
                             </div>
 
-                            <span className="operator-map-live-badge">
+                            <div className="resq-map-live">
                               <span />
+
                               LIVE
-                            </span>
+                            </div>
                           </div>
 
-                          <div className="operator-map-wrapper">
+                          <div className="resq-map-shell">
                             <EmergencyMap
                               latitude={
                                 emergency.latitude
@@ -1380,101 +1425,99 @@ function OperatorDashboard() {
                             />
                           </div>
 
-                          <div className="operator-tracking-status">
-                            <div className="operator-tracking-row">
-                              <span
-                                className={`operator-tracking-dot ${
-                                  emergency.responderLatitude !=
+                          <div className="resq-tracking">
+                            <div className="resq-tracking-top">
+                              <div>
+                                <span
+                                  className={`resq-tracking-dot ${
+                                    emergency.responderLatitude !=
+                                      null &&
+                                    emergency.responderLongitude !=
+                                      null
+                                      ? 'active'
+                                      : 'waiting'
+                                  }`}
+                                />
+
+                                <strong>
+                                  {emergency.responderLatitude !=
                                     null &&
                                   emergency.responderLongitude !=
                                     null
-                                    ? 'active'
-                                    : 'waiting'
-                                }`}
-                              />
+                                    ? 'Responder GPS live'
+                                    : emergency.assignedResponder
+                                      ? 'Waiting for responder GPS'
+                                      : 'No responder assigned'}
+                                </strong>
+                              </div>
 
-                              <strong>
-                                {emergency.responderLatitude !=
-                                  null &&
-                                emergency.responderLongitude !=
-                                  null
-                                  ? 'Responder GPS live'
-                                  : emergency.assignedResponder
-                                    ? 'Waiting for responder GPS'
-                                    : 'No responder assigned'}
-                              </strong>
+                              {emergency.responderLocationUpdatedAt && (
+                                <span>
+                                  Updated{' '}
+                                  {new Date(
+                                    emergency.responderLocationUpdatedAt,
+                                  ).toLocaleTimeString(
+                                    [],
+                                    {
+                                      hour:
+                                        '2-digit',
+                                      minute:
+                                        '2-digit',
+                                      second:
+                                        '2-digit',
+                                    },
+                                  )}
+                                </span>
+                              )}
                             </div>
 
-                            {emergency.responderLocationUpdatedAt && (
-                              <span className="operator-tracking-time">
-                                Last updated{' '}
-                                {new Date(
-                                  emergency.responderLocationUpdatedAt,
-                                ).toLocaleTimeString(
-                                  [],
-                                  {
-                                    hour:
-                                      '2-digit',
-                                    minute:
-                                      '2-digit',
-                                    second:
-                                      '2-digit',
-                                  },
-                                )}
-                              </span>
-                            )}
-
-                            <div className="operator-map-legend">
+                            <div className="resq-map-legend">
                               <div>
-                                <span className="legend-marker emergency" />
-                                <span>
-                                  Emergency
-                                </span>
+                                <span className="resq-legend emergency" />
+
+                                Emergency
                               </div>
 
                               <div>
-                                <span className="legend-marker responder" />
-                                <span>
-                                  Responder
-                                </span>
+                                <span className="resq-legend responder" />
+
+                                Responder
                               </div>
                             </div>
                           </div>
 
-                          {/* RESPONDER */}
-
-                          <div className="operator-responder-section">
-                            <div className="operator-responder-header">
+                          <section
+                            id="resq-responders"
+                            className="resq-dispatch-section"
+                          >
+                            <div className="resq-dispatch-header">
                               <div>
                                 <span>
-                                  RESPONDER
-                                  ASSIGNMENT
+                                  RESPONDER DISPATCH
                                 </span>
 
                                 <strong>
                                   {emergency.assignedResponder
                                     ? responderArrived
-                                      ? 'Responder on scene'
+                                      ? 'Unit on scene'
                                       : responderEnRoute
-                                        ? 'Responder en route'
-                                        : 'Responder assigned'
-                                    : 'No responder assigned'}
+                                        ? 'Unit en route'
+                                        : 'Unit assigned'
+                                    : 'Awaiting responder'}
                                 </strong>
                               </div>
 
                               <ResponderIcon
-                                size={19}
+                                size={20}
                               />
                             </div>
 
                             {emergency.assignedResponder ? (
-                              <div className="assigned-responder-card">
-                                <div className="operator-responder-identity">
-                                  <div className="operator-responder-avatar">
+                              <div className="resq-assigned-unit">
+                                <div className="resq-unit-identity">
+                                  <div className="resq-unit-avatar">
                                     {emergency.assignedResponder.fullName
-                                      .charAt(
-                                        0,
-                                      )
+                                      .charAt(0)
                                       .toUpperCase()}
                                   </div>
 
@@ -1497,7 +1540,7 @@ function OperatorDashboard() {
                                   </div>
                                 </div>
 
-                                <span className="responder-assigned-badge">
+                                <span className="resq-unit-status">
                                   {responderArrived
                                     ? 'ON SCENE'
                                     : responderEnRoute
@@ -1507,14 +1550,13 @@ function OperatorDashboard() {
                               </div>
                             ) : emergency.status ===
                               'ACCEPTED' ? (
-                              <div className="responder-assignment-controls">
+                              <div className="resq-assignment-controls">
                                 <select
                                   value={
                                     selectedResponders[
                                       emergency
                                         .id
-                                    ] ??
-                                    ''
+                                    ] ?? ''
                                   }
                                   onChange={(
                                     event,
@@ -1540,8 +1582,7 @@ function OperatorDashboard() {
                                   }}
                                 >
                                   <option value="">
-                                    Select
-                                    available
+                                    Select available
                                     responder
                                   </option>
 
@@ -1587,32 +1628,23 @@ function OperatorDashboard() {
                                   {assigningId ===
                                   emergency.id
                                     ? 'Assigning...'
-                                    : 'Assign responder'}
+                                    : 'Dispatch responder'}
                                 </button>
                               </div>
                             ) : (
-                              <p className="responder-empty-note">
+                              <p className="resq-dispatch-note">
                                 Accept this
-                                emergency before
+                                incident before
                                 assigning a
                                 responder.
                               </p>
                             )}
 
-                            {responders.length ===
-                              0 && (
-                              <p className="responder-empty-note">
-                                No responder
-                                accounts are
-                                currently
-                                available.
-                              </p>
-                            )}
-
-                            <div className="operator-responder-timeline">
+                            <div className="resq-response-timeline">
                               {emergency.responderAssignedAt && (
-                                <p className="responder-time">
+                                <p>
                                   <span />
+
                                   Assigned{' '}
                                   {new Date(
                                     emergency.responderAssignedAt,
@@ -1621,47 +1653,20 @@ function OperatorDashboard() {
                               )}
 
                               {emergency.responderAcceptedAt && (
-                                <p className="responder-time">
+                                <p>
                                   <span />
-                                  Assignment
-                                  accepted{' '}
+
+                                  Accepted{' '}
                                   {new Date(
                                     emergency.responderAcceptedAt,
                                   ).toLocaleString()}
                                 </p>
                               )}
 
-                              {emergency.responderLocationUpdatedAt &&
-                                !responderArrived && (
-                                  <p className="responder-time">
-                                    <span />
-                                    GPS updated{' '}
-                                    {new Date(
-                                      emergency.responderLocationUpdatedAt,
-                                    ).toLocaleTimeString()}
-                                  </p>
-                                )}
-
-                              {emergency.responderLatitude !=
-                                null &&
-                                emergency.responderLongitude !=
-                                  null && (
-                                  <p className="responder-time">
-                                    <span />
-                                    GPS{' '}
-                                    {emergency.responderLatitude.toFixed(
-                                      5,
-                                    )}
-                                    ,{' '}
-                                    {emergency.responderLongitude.toFixed(
-                                      5,
-                                    )}
-                                  </p>
-                                )}
-
                               {emergency.responderArrivedAt && (
-                                <p className="responder-time">
+                                <p>
                                   <span />
+
                                   Arrived{' '}
                                   {new Date(
                                     emergency.responderArrivedAt,
@@ -1669,40 +1674,33 @@ function OperatorDashboard() {
                                 </p>
                               )}
                             </div>
-                          </div>
+                          </section>
 
-                          {/* CONTACTS */}
+                          <div className="resq-contact-section">
+                            <div className="resq-contact-heading">
+                              <span>
+                                EMERGENCY CONTACTS
+                              </span>
 
-                          <div className="operator-contact-section">
-                            <div className="operator-contact-header">
-                              <div>
-                                <span>
-                                  EMERGENCY
-                                  CONTACTS
-                                </span>
-
-                                <strong>
-                                  {
-                                    emergency
-                                      .notifiedContacts
-                                      .length
-                                  }{' '}
-                                  attached
-                                </strong>
-                              </div>
+                              <strong>
+                                {
+                                  emergency
+                                    .notifiedContacts
+                                    .length
+                                }{' '}
+                                attached
+                              </strong>
                             </div>
 
                             {emergency
                               .notifiedContacts
-                              .length ===
-                            0 ? (
-                              <p className="operator-no-contacts">
+                              .length === 0 ? (
+                              <p className="resq-contact-empty">
                                 No emergency
-                                contacts attached
-                                to this request.
+                                contacts attached.
                               </p>
                             ) : (
-                              <div className="operator-contact-list">
+                              <div className="resq-contact-list">
                                 {emergency.notifiedContacts.map(
                                   (
                                     contact,
@@ -1711,7 +1709,7 @@ function OperatorDashboard() {
                                       key={
                                         contact.id
                                       }
-                                      className="operator-contact-item"
+                                      className="resq-contact"
                                     >
                                       <div>
                                         <strong>
@@ -1727,7 +1725,7 @@ function OperatorDashboard() {
                                         </span>
                                       </div>
 
-                                      <span className="notification-simulation">
+                                      <span className="resq-contact-state">
                                         Prepared
                                       </span>
                                     </div>
@@ -1735,40 +1733,24 @@ function OperatorDashboard() {
                                 )}
                               </div>
                             )}
-
-                            {emergency
-                              .notifiedContacts
-                              .length >
-                              0 && (
-                              <p className="notification-note">
-                                Contact
-                                notification
-                                delivery is
-                                simulated in this
-                                MVP.
-                              </p>
-                            )}
                           </div>
-
-                          {/* ACTION */}
 
                           {emergency.status ===
                             'PENDING' && (
-                            <div className="request-footer">
+                            <div className="resq-next-action">
                               <div>
-                                <span className="operator-field-label">
+                                <span>
                                   NEXT ACTION
                                 </span>
 
-                                <div className="request-next">
-                                  Review and
-                                  accept this
-                                  incoming request.
-                                </div>
+                                <strong>
+                                  Review and accept
+                                  incoming incident
+                                </strong>
                               </div>
 
                               <button
-                                className="request-primary-action"
+                                type="button"
                                 disabled={
                                   updatingId ===
                                   emergency.id
@@ -1782,7 +1764,7 @@ function OperatorDashboard() {
                                 {updatingId ===
                                 emergency.id
                                   ? 'Accepting...'
-                                  : 'Accept request'}
+                                  : 'Accept incident'}
                               </button>
                             </div>
                           )}
@@ -1790,53 +1772,41 @@ function OperatorDashboard() {
                           {emergency.status ===
                             'ACCEPTED' &&
                             !emergency.assignedResponder && (
-                              <div className="request-footer">
-                                <div className="request-next">
-                                  Select and
-                                  assign an
-                                  available
-                                  responder above.
-                                </div>
+                              <div className="resq-operation-note">
+                                ResQ is waiting
+                                for a responder to
+                                be assigned.
                               </div>
                             )}
 
                           {emergency.status ===
                             'DISPATCHED' && (
-                            <div className="request-footer">
-                              <div className="request-next">
-                                Waiting for the
-                                responder to
-                                accept the
-                                assignment.
+                              <div className="resq-operation-note">
+                                Responder dispatched.
+                                Waiting for field
+                                acceptance.
                               </div>
-                            </div>
-                          )}
+                            )}
 
                           {emergency.status ===
                             'RESPONDING' &&
                             !responderArrived && (
-                              <div className="request-footer">
-                                <div className="request-next">
-                                  Responder is en
-                                  route. Live
-                                  status is
-                                  controlled by
-                                  the responder
-                                  application.
-                                </div>
+                              <div className="resq-operation-note">
+                                Responder en route.
+                                Live field status is
+                                synchronized with
+                                ResQ Control.
                               </div>
                             )}
 
                           {emergency.status ===
                             'RESPONDING' &&
                             responderArrived && (
-                              <div className="request-footer">
-                                <div className="request-next">
-                                  Responder is on
-                                  scene. Waiting
-                                  for incident
-                                  completion.
-                                </div>
+                              <div className="resq-operation-note">
+                                Responder on scene.
+                                Incident remains
+                                active until field
+                                completion.
                               </div>
                             )}
                         </article>
@@ -1847,67 +1817,144 @@ function OperatorDashboard() {
               )}
             </section>
 
-            {/* RIGHT COLUMN */}
+            {/* RIGHT INTELLIGENCE COLUMN */}
 
-            <aside className="operator-right-column">
-              <div className="control-side-card">
-                <div className="operator-side-card-header">
+            <aside className="resq-right-column">
+              <section className="resq-side-panel">
+                <div className="resq-side-panel-heading">
                   <div>
-                    <p className="control-side-label">
+                    <span>
+                      FIELD NETWORK
+                    </span>
+
+                    <h3>
+                      Responders
+                    </h3>
+                  </div>
+
+                  <ResponderIcon />
+                </div>
+
+                <div className="resq-network-summary">
+                  <div>
+                    <strong>
+                      {availableResponders}
+                    </strong>
+
+                    <span>
+                      Available
+                    </span>
+                  </div>
+
+                  <div>
+                    <strong>
+                      {busyResponders}
+                    </strong>
+
+                    <span>
+                      Engaged
+                    </span>
+                  </div>
+                </div>
+
+                <div className="resq-responder-list">
+                  {responders
+                    .slice(0, 6)
+                    .map(
+                      (responder) => (
+                        <div
+                          key={
+                            responder.id
+                          }
+                          className="resq-responder-row"
+                        >
+                          <div className="resq-responder-row-main">
+                            <div className="resq-mini-avatar">
+                              {responder.fullName
+                                .charAt(0)
+                                .toUpperCase()}
+                            </div>
+
+                            <div>
+                              <strong>
+                                {
+                                  responder.fullName
+                                }
+                              </strong>
+
+                              <span>
+                                {responder.isBusy
+                                  ? `Incident #${responder.activeEmergencyId}`
+                                  : 'Ready for dispatch'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span
+                            className={`resq-responder-state ${
+                              responder.isBusy
+                                ? 'busy'
+                                : 'available'
+                            }`}
+                          >
+                            {responder.isBusy
+                              ? 'BUSY'
+                              : 'READY'}
+                          </span>
+                        </div>
+                      ),
+                    )}
+                </div>
+              </section>
+
+              <section className="resq-side-panel">
+                <div className="resq-side-panel-heading">
+                  <div>
+                    <span>
                       RECENT ACTIVITY
-                    </p>
+                    </span>
 
                     <h3>
                       Closed incidents
                     </h3>
                   </div>
 
-                  <CheckIcon
-                    size={18}
-                  />
+                  <CheckIcon />
                 </div>
 
                 {completedEmergencies.length ===
                 0 ? (
-                  <div className="control-side-empty">
+                  <div className="resq-side-empty">
                     No closed incidents yet.
                   </div>
                 ) : (
-                  <div className="closed-list">
+                  <div className="resq-closed-list">
                     {completedEmergencies
-                      .slice(0, 7)
+                      .slice(0, 6)
                       .map(
                         (emergency) => (
                           <div
                             key={
                               emergency.id
                             }
-                            className="closed-item"
+                            className="resq-closed-item"
                           >
-                            <div className="closed-item-left">
-                              <div className="closed-incident-icon">
-                                <CheckIcon
-                                  size={13}
-                                />
-                              </div>
+                            <div>
+                              <strong>
+                                #
+                                {
+                                  emergency.id
+                                }
+                              </strong>
 
-                              <div>
-                                <strong>
-                                  Incident #
-                                  {
-                                    emergency.id
-                                  }
-                                </strong>
-
-                                <span>
-                                  {
-                                    emergencyNames[
-                                      emergency
-                                        .type
-                                    ]
-                                  }
-                                </span>
-                              </div>
+                              <span>
+                                {
+                                  emergencyNames[
+                                    emergency
+                                      .type
+                                  ]
+                                }
+                              </span>
                             </div>
 
                             <span>
@@ -1920,18 +1967,18 @@ function OperatorDashboard() {
                       )}
                   </div>
                 )}
-              </div>
+              </section>
 
-              <div className="operator-status-card">
-                <div className="operator-status-card-header">
-                  <span className="operator-online-dot" />
+              <section className="resq-system-health">
+                <div className="resq-health-heading">
+                  <span className="resq-online-dot" />
 
                   <strong>
-                    Operations status
+                    ResQ systems online
                   </strong>
                 </div>
 
-                <div className="operator-status-metric">
+                <div className="resq-health-row">
                   <span>
                     API connection
                   </span>
@@ -1941,38 +1988,65 @@ function OperatorDashboard() {
                   </strong>
                 </div>
 
-                <div className="operator-status-metric">
+                <div className="resq-health-row">
                   <span>
                     Incident sync
                   </span>
 
                   <strong>
-                    5 seconds
+                    5 sec
                   </strong>
                 </div>
 
-                <div className="operator-status-metric">
+                <div className="resq-health-row">
                   <span>
-                    Responder network
+                    Field units
                   </span>
 
                   <strong>
-                    {responders.length}{' '}
-                    units
+                    {
+                      responders.length
+                    }
                   </strong>
                 </div>
-              </div>
+
+                <div className="resq-health-row">
+                  <span>
+                    Location services
+                  </span>
+
+                  <strong className="healthy">
+                    Active
+                  </strong>
+                </div>
+              </section>
             </aside>
           </div>
 
-          {/* ============================================
-              SAFETY ALERTS
-              ============================================ */}
+          {/* ALERTS */}
 
           <section
-            id="operator-alerts"
-            className="operator-alerts-section"
+            id="resq-alerts"
+            className="resq-alerts"
           >
+            <div className="resq-alerts-heading">
+              <div>
+                <span className="resq-section-eyebrow">
+                  PUBLIC SAFETY
+                </span>
+
+                <h2>
+                  Safety communications
+                </h2>
+
+                <p>
+                  Publish and manage
+                  operational alerts through
+                  ResQ.
+                </p>
+              </div>
+            </div>
+
             <SafetyAlertsPanel />
           </section>
         </main>

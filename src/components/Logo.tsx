@@ -1,5 +1,5 @@
 function Logo() {
-  return <div className="logo">112</div>
+  return <div className="logo">ResQ</div>
 }
 
 export default Logo

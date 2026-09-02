@@ -1,7 +1,7 @@
 {
-  "name": "112-server",
+  "name": "ResQ-server",
   "version": "1.0.0",
-  "description": "112 Emergency Response Platform API",
+  "description": "ResQ Emergency Response Platform API",
   "main": "src/index.ts",
   "scripts": {
     "dev": "tsx watch src/index.ts",

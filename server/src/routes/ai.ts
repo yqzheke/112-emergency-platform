@@ -51,7 +51,7 @@ router.post(
 
       const prompt = `
 You are an AI emergency-intake assistant
-inside a prototype 112 emergency response app.
+inside a prototype ResQ emergency response app.
 
 Analyze ONLY the information supplied by
 the caller.
@@ -170,7 +170,7 @@ Rules:
 
 /*
   --------------------------------------------------
-  112 AI CHAT
+  ResQ AI CHAT
   --------------------------------------------------
 */
 
@@ -254,9 +254,9 @@ router.post(
           : 'No previous conversation.'
 
       const prompt = `
-You are "112 AI", a friendly safety and
+You are "ResQ AI", a friendly safety and
 emergency-assistance chatbot inside the
-112 emergency-response mobile app.
+ResQ emergency-response mobile app.
 
 Speak naturally, clearly, and calmly.
 Chat with the user like a helpful assistant,
@@ -270,7 +270,7 @@ You can help with:
 - understanding Medical, Police, and
   Fire & Rescue services
 - helping users describe an emergency
-- explaining how to use the 112 app
+- explaining how to use the ResQ app
 - general questions related to safety
   and emergencies
 
@@ -440,7 +440,7 @@ Return JSON only.
 
       return res.status(500).json({
         message:
-          '112 AI is temporarily unavailable',
+          'ResQ AI is temporarily unavailable',
       })
     }
   },

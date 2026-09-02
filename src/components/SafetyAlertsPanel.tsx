@@ -231,11 +231,11 @@ function SafetyAlertsPanel() {
             PUBLIC SAFETY
           </p>
 
-          <h2>112 Alerts</h2>
+          <h2>ResQ Alerts</h2>
 
           <p className="alerts-description">
             Publish official safety information
-            for users of the 112 application.
+            for users of the ResQ application.
           </p>
         </div>
       </div>

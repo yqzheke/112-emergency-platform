@@ -51,7 +51,7 @@ app.use(express.json())
 */
 app.get('/api/health', (_req, res) => {
   res.json({
-    message: '112 API is running',
+    message: 'ResQ API is running',
   })
 })
 
@@ -70,6 +70,6 @@ app.use('/api/responder', responderRoutes)
 */
 app.listen(PORT, () => {
   console.log(
-    `112 API running on http://localhost:${PORT}`,
+    `ResQ API running on http://localhost:${PORT}`,
   )
 })
